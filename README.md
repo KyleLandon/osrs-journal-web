@@ -19,12 +19,12 @@ git add .
 git commit -m "Initial OSRS Journal web app"
 ```
 
-On GitHub: **New repository** → name e.g. `osrs-journal-web` → do not add README.
+**Live repo:** https://github.com/KyleLandon/osrs-journal-web
+
+To push updates after syncing from the monorepo:
 
 ```bash
-git remote add origin https://github.com/YOUR_USER/osrs-journal-web.git
-git branch -M main
-git push -u origin main
+git push
 ```
 
 ### 2. Connect Cloudflare Pages
