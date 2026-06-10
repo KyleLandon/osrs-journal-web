@@ -52,8 +52,8 @@ git push
 `worker.js` + `wrangler.toml` serve all static files (`index.html`,
 `supabase-config.json`, `quest-reqs-data.json`, `assets/`).
 
-The Worker **name** in `wrangler.toml` must match your Cloudflare Worker name.
-If yours differs, edit `name = "..."` before pushing.
+The Worker **name** in `wrangler.toml` (`osrsjournal`) must match your
+Cloudflare Worker / Workers Builds project name.
 
 ### 3. Environment variables (Production)
 

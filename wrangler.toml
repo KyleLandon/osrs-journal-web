@@ -1,4 +1,4 @@
-name = "osrs-journal-web"
+name = "osrsjournal"
 main = "worker.js"
 compatibility_date = "2024-06-10"
 
