@@ -5,6 +5,7 @@
   "description": "OSRS Journal web app — journal.osrsjournal.com",
   "scripts": {
     "build": "node build.mjs",
+    "deploy": "wrangler deploy",
     "sync": "node sync-from-monorepo.mjs"
   }
 }

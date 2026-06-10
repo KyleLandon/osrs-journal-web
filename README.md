@@ -42,17 +42,18 @@ git push
 | Build output directory | `/` |
 | Deploy command | *(leave empty — Pages uploads files automatically)* |
 
-**Option B — Workers deploy command**
-
-If your project uses **Deploy command: `npx wrangler deploy`**, the repo includes
-`wrangler.toml` so static files (including `supabase-config.json`) are uploaded.
+**Workers Builds (deploy command required)**
 
 | Setting | Value |
 |---------|--------|
 | Build command | `npm run build` |
-| Deploy command | `npx wrangler deploy` |
+| Deploy command | `npm run deploy` |
 
-Do **not** use Option A and B at the same time.
+`worker.js` + `wrangler.toml` serve all static files (`index.html`,
+`supabase-config.json`, `quest-reqs-data.json`, `assets/`).
+
+The Worker **name** in `wrangler.toml` must match your Cloudflare Worker name.
+If yours differs, edit `name = "..."` before pushing.
 
 ### 3. Environment variables (Production)
 

@@ -1,6 +1,8 @@
-# Static site deploy for Cloudflare (used when deploy command is `npx wrangler deploy`)
 name = "osrs-journal-web"
+main = "worker.js"
 compatibility_date = "2024-06-10"
 
 [assets]
 directory = "."
+binding = "ASSETS"
+not_found_handling = "404"
