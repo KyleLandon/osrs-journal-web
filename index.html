@@ -1,0 +1,3205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="OSRS Journal — live-synced stats, quests, gear, and AI-ready account exports.">
+<title>OSRS Journal</title>
+<link rel="icon" href="assets/favicon-32.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0b0e14;
+  --bg-subtle: #0f1319;
+  --surface: #13171f;
+  --card: #171b26;
+  --card-hover: #1c2130;
+  --elevated: #1e2433;
+  --border: #2a3142;
+  --border-subtle: #222833;
+  --accent: #3b82f6;
+  --accent-hover: #60a5fa;
+  --accent-dark: #1d4ed8;
+  --accent-soft: rgba(59, 130, 246, 0.12);
+  --accent-glow: rgba(59, 130, 246, 0.22);
+  --text: #f1f5f9;
+  --text-dim: #94a3b8;
+  --text-muted: #64748b;
+  --green: #22c55e;
+  --green-soft: rgba(34, 197, 94, 0.12);
+  --red: #ef4444;
+  --red-soft: rgba(239, 68, 68, 0.12);
+  --orange: #f59e0b;
+  --orange-soft: rgba(245, 158, 11, 0.12);
+  --blue: #60a5fa;
+  --purple: #a78bfa;
+  --gold: #fbbf24;
+  --radius: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
+  --max-width: 1180px;
+  --nav-height: 64px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(29, 78, 216, 0.18), transparent),
+    radial-gradient(ellipse 60% 40% at 100% 0%, rgba(59, 130, 246, 0.08), transparent);
+  color: var(--text);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Top navigation */
+.top-nav {
+  position: sticky; top: 0; z-index: 200;
+  background: rgba(11, 14, 20, 0.92);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-sm);
+}
+.nav-container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 20px;
+  height: var(--nav-height);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--text);
+  flex-shrink: 0;
+}
+.brand-logo {
+  height: 32px;
+  width: auto;
+  display: block;
+}
+.nav-search {
+  flex: 1;
+  max-width: 360px;
+  display: flex;
+  gap: 8px;
+}
+.nav-search input {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 9px 14px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-family: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.nav-search input::placeholder { color: var(--text-muted); }
+.nav-search input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.nav-actions { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.auth-panel {
+  position: fixed; top: var(--nav-height); right: 16px; z-index: 300;
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  padding: 16px; width: 280px; box-shadow: var(--shadow);
+}
+.auth-panel.hidden { display: none; }
+.auth-panel input {
+  width: 100%; background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: 8px 12px; border-radius: var(--radius);
+  font-size: 13px; margin-bottom: 8px;
+}
+.auth-panel label { display: block; font-size: 12px; color: var(--text-dim); margin-bottom: 4px; }
+.auth-oauth-row { display: flex; gap: 8px; margin-bottom: 10px; }
+.auth-oauth-row button { flex: 1; font-size: 12px; padding: 8px 10px; }
+.auth-divider { text-align: center; font-size: 11px; color: var(--text-muted); margin: 10px 0; }
+.privacy-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  font-size: 12px; color: var(--text-dim); margin: 10px 0; padding: 8px 0;
+  border-top: 1px solid var(--border-subtle);
+}
+.privacy-row input { width: auto; margin: 0; }
+.btn-secondary {
+  background: var(--surface); border: 1px solid var(--border); color: var(--text);
+  padding: 8px 14px; border-radius: var(--radius); cursor: pointer; font-size: 13px;
+}
+.btn-secondary:hover { border-color: var(--accent); }
+.status-msg { font-size: 12px; color: var(--text-muted); }
+.status-msg.error { color: var(--red); }
+.status-msg.ok { color: var(--green); }
+.live-dot {
+  display: inline-block; width: 7px; height: 7px;
+  background: var(--green); border-radius: 50%;
+  margin-right: 6px; animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
+
+/* Buttons */
+button {
+  font-family: inherit;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 9px 16px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+button:hover { background: var(--card-hover); border-color: #3d4660; }
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent-dark), var(--accent));
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 2px 8px var(--accent-glow);
+}
+.btn-primary:hover { background: linear-gradient(135deg, #2563eb, var(--accent-hover)); border-color: transparent; }
+
+/* Main layout */
+.main { max-width: var(--max-width); margin: 0 auto; padding: 24px 20px 48px; }
+
+/* Profile hero (WOM-style player card) */
+.profile-section { display: none; margin-bottom: 20px; }
+.profile-section.visible { display: block; }
+.profile-card {
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border);
+  background: linear-gradient(135deg, var(--card) 0%, var(--elevated) 60%, rgba(29, 78, 216, 0.08) 100%);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.profile-top {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border-subtle);
+  flex-wrap: wrap;
+}
+.profile-identity { display: flex; align-items: center; gap: 14px; flex: 1; min-width: 0; }
+.profile-avatar {
+  width: 52px; height: 52px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, var(--accent-dark), var(--accent));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; font-weight: 800; color: #fff;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px var(--accent-glow);
+}
+.profile-name {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--text);
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.profile-meta { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+.cb-badge {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 8px 16px;
+  border-radius: var(--radius-lg);
+  font-size: 13px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.cb-badge strong { color: var(--accent-hover); font-size: 1.1rem; font-weight: 800; }
+.profile-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1px;
+  background: var(--border-subtle);
+}
+.stat-box {
+  background: rgba(19, 23, 31, 0.6);
+  padding: 16px 20px;
+}
+.stat-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.stat-value {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1;
+  letter-spacing: -0.5px;
+}
+.stat-value.gold { color: var(--gold); }
+.stat-sub { font-size: 11px; color: var(--text-dim); margin-top: 5px; }
+.gold-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--gold);
+  font-size: 1.6rem;
+  font-weight: 800;
+  font-family: inherit;
+  letter-spacing: -0.5px;
+  padding: 0;
+}
+.gold-input:focus { outline: none; }
+.gold-input:read-only { opacity: 0.9; cursor: default; }
+
+/* Page shell + tabs */
+.page-shell {
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+.page-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-subtle);
+  overflow-x: auto;
+}
+.tab {
+  padding: 8px 16px;
+  cursor: pointer;
+  border: none;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+}
+.tab:hover { color: var(--text); background: var(--accent-soft); }
+.tab.active { color: #fff; background: var(--accent); box-shadow: 0 2px 8px var(--accent-glow); }
+
+.page-content { padding: 24px; }
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* Section headers */
+.section-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 14px;
+}
+.section-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+
+/* Skills Grid */
+.skills-section { margin-bottom: 32px; }
+.skills-section:last-child { margin-bottom: 0; }
+.skills-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 8px; }
+.skill-card {
+  background: var(--card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: border-color 0.15s, background 0.15s;
+}
+.skill-card:hover { border-color: var(--border); background: var(--card-hover); }
+.skill-card.skill-overall {
+  border-color: rgba(59, 130, 246, 0.35);
+  background: linear-gradient(135deg, var(--card), rgba(29, 78, 216, 0.1));
+}
+.skill-icon { font-size: 22px; width: 30px; text-align: center; flex-shrink: 0; }
+.skill-info { flex: 1; min-width: 0; }
+.skill-name { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.skill-level { font-size: 22px; font-weight: 800; color: var(--text); line-height: 1.1; letter-spacing: -0.5px; }
+.skill-card.skill-overall .skill-level { color: var(--accent-hover); }
+.skill-xp { font-size: 10px; color: var(--text-dim); margin-top: 1px; }
+.skill-bar { height: 3px; background: var(--border-subtle); border-radius: 99px; margin-top: 6px; overflow: hidden; }
+.skill-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent-dark), var(--accent-hover)); border-radius: 99px; }
+
+/* Equipment */
+.equip-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.equip-paper {
+  background: var(--card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+}
+.equip-doll { display: grid; gap: 8px; }
+.equip-row { display: flex; gap: 8px; justify-content: center; }
+.equip-slot { flex: 1; max-width: 160px; }
+.equip-slot.spacer { visibility: hidden; }
+.slot-label { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+.slot-select {
+  width: 100%;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 7px 8px;
+  border-radius: var(--radius);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+}
+.slot-select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.equip-stats { background: var(--bg-subtle); border-radius: var(--radius); padding: 14px; border: 1px solid var(--border-subtle); }
+.equip-stat-row { display: flex; justify-content: space-between; font-size: 12px; padding: 5px 0; border-bottom: 1px solid var(--border-subtle); }
+.equip-stat-row:last-child { border: none; }
+.equip-stat-label { color: var(--text-dim); }
+.equip-stat-val { color: var(--accent-hover); font-weight: 700; }
+.equip-style-tabs { display: flex; gap: 6px; margin-bottom: 16px; }
+.style-btn { padding: 6px 14px; font-size: 12px; border-radius: var(--radius); }
+.style-btn.active { background: var(--accent); color: #fff; border-color: transparent; }
+
+/* Quests */
+.quest-banner {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  margin-bottom: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1px;
+  background: var(--border-subtle);
+  overflow: hidden;
+}
+.qp-stat {
+  background: var(--card);
+  padding: 16px 20px;
+  text-align: center;
+}
+.qp-stat .num { font-size: 1.75rem; font-weight: 800; color: var(--text); line-height: 1; letter-spacing: -0.5px; }
+.qp-stat .lbl { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+.quest-filter {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 12px;
+  background: var(--card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+.filter-btn { padding: 6px 14px; font-size: 12px; border-radius: 99px; font-weight: 600; }
+.filter-btn.active { background: var(--accent); color: #fff; border-color: transparent; }
+.quest-toolbar { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.quest-sort {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 10px 12px;
+  background: var(--card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+.quest-sort-label { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-right: 4px; }
+.sort-btn { padding: 6px 14px; font-size: 12px; border-radius: 99px; font-weight: 600; }
+.sort-btn.active { background: var(--elevated); color: var(--accent-hover); border-color: var(--accent); }
+.quest-search {
+  flex: 1;
+  min-width: 180px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-family: inherit;
+}
+.quest-search:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.quest-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
+.quest-item {
+  background: var(--card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+  transition: border-color 0.15s;
+}
+.quest-item:hover { border-color: var(--border); }
+.quest-item.done { background: rgba(34, 197, 94, 0.04); border-color: rgba(34, 197, 94, 0.2); }
+.quest-item.done .quest-name { color: var(--text-muted); }
+.quest-item.done .quest-name a { text-decoration: line-through; }
+.quest-name a, .quest-req-tag.quest a, .boss-reqs a { color: inherit; text-decoration: none; }
+.quest-name a:hover, .quest-req-tag.quest a:hover, .boss-reqs a:hover { color: var(--accent-hover); text-decoration: underline; }
+.quest-item.done .quest-name a:hover { text-decoration: line-through underline; }
+.quest-cb {
+  width: 18px; height: 18px;
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700;
+}
+.quest-item.done .quest-cb { background: var(--green); border-color: var(--green); color: #fff; }
+.quest-name { font-size: 13px; font-weight: 500; flex: 1; }
+.quest-meta { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+.quest-qp { font-size: 10px; font-weight: 700; color: var(--accent-hover); background: var(--accent-soft); padding: 2px 7px; border-radius: 99px; }
+.quest-sync-note { font-size: 12px; color: var(--text-muted); }
+.quest-diff { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 99px; }
+.diff-novice { background: var(--green-soft); color: #4ade80; }
+.diff-intermediate { background: var(--accent-soft); color: var(--blue); }
+.diff-experienced { background: var(--orange-soft); color: var(--orange); }
+.diff-master { background: var(--red-soft); color: #f87171; }
+.diff-grandmaster { background: rgba(167, 139, 250, 0.15); color: var(--purple); }
+.diff-special { background: rgba(34, 211, 238, 0.12); color: #22d3ee; }
+
+/* Export panel */
+.export-hero {
+  background: var(--card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin-bottom: 20px;
+}
+.export-hero h2 {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.export-hero p { font-size: 13px; line-height: 1.65; color: var(--text-dim); max-width: 680px; }
+.export-toolbar { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; align-items: center; }
+.export-toolbar-label { font-size: 12px; font-weight: 600; color: var(--text-muted); }
+.export-format-btn { padding: 6px 14px; font-size: 12px; border-radius: 99px; }
+.export-format-btn.active { background: var(--accent); color: #fff; border-color: transparent; }
+.export-preview {
+  width: 100%;
+  min-height: 420px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  color: var(--text-dim);
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 12px;
+  line-height: 1.55;
+  padding: 16px;
+  resize: vertical;
+}
+.export-status { font-size: 12px; color: var(--green); margin-top: 10px; min-height: 18px; font-weight: 500; }
+.export-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.export-chip {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 99px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+}
+.export-chip strong { color: var(--accent-hover); }
+
+/* Boss tracker */
+.upgrade-category { margin-bottom: 32px; }
+.upgrade-category:last-child { margin-bottom: 0; }
+.upgrade-cat-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+}
+.boss-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.boss-card {
+  background: var(--card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  transition: border-color 0.15s;
+}
+.boss-card:hover { border-color: var(--border); }
+.boss-card.unlocked { border-color: rgba(34, 197, 94, 0.35); background: rgba(34, 197, 94, 0.04); }
+.boss-card.close { border-color: rgba(245, 158, 11, 0.35); }
+.boss-card.locked { opacity: 0.55; }
+.boss-name { font-size: 14px; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.2px; }
+.boss-reqs { font-size: 11px; color: var(--text-dim); line-height: 1.65; }
+.boss-drops { font-size: 11px; color: var(--text-dim); margin-top: 6px; }
+.boss-status { font-size: 11px; font-weight: 700; margin-top: 8px; }
+.boss-status.yes { color: var(--green); }
+.boss-status.close { color: var(--orange); }
+.boss-status.no { color: var(--red); }
+
+/* Misc */
+.hint {
+  color: var(--text-muted);
+  font-size: 13px;
+  text-align: center;
+  padding: 48px 24px;
+  background: var(--card);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+}
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+/* Sync status banner */
+.sync-banner {
+  max-width: var(--max-width);
+  margin: 0 auto 16px;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+}
+.sync-banner.warn { background: var(--orange-soft); color: var(--orange); border-color: rgba(245, 158, 11, 0.25); }
+.sync-banner.ok { background: var(--green-soft); color: var(--green); border-color: rgba(34, 197, 94, 0.25); }
+.sync-banner.hidden { display: none; }
+.sync-banner.partial { background: var(--accent-soft); color: var(--blue); border-color: rgba(59, 130, 246, 0.25); }
+
+/* Synced equipment */
+.equip-sync-section {
+  background: var(--card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.equip-sync-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: var(--green-soft);
+  color: var(--green);
+  margin-left: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.equip-sync-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; margin-top: 14px; }
+.equip-sync-slot {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+}
+.equip-sync-slot .item-name { font-size: 12px; color: var(--text); font-weight: 600; }
+.equip-sync-slot.empty .item-name { color: var(--text-muted); font-style: italic; font-weight: 400; }
+.equip-sync-hint { font-size: 12px; color: var(--text-muted); margin-top: 12px; }
+.bank-gear-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+.bank-gear-chip {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 11px;
+  border-radius: 99px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.bank-gear-chip .qty { color: var(--text-muted); margin-left: 4px; font-weight: 400; }
+.equip-simulator-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  margin: 8px 0 14px;
+}
+
+/* Quest states */
+.quest-item.in-progress { border-color: rgba(245, 158, 11, 0.35); background: rgba(245, 158, 11, 0.04); }
+.quest-item.in-progress .quest-cb { border-color: var(--orange); color: var(--orange); }
+.quest-item.in-progress .quest-name { color: var(--orange); }
+.quest-item.blocked { border-color: rgba(239, 68, 68, 0.25); }
+.quest-item.has-blockers { flex-direction: column; align-items: stretch; gap: 0; }
+.quest-item-main { display: flex; align-items: center; gap: 8px; width: 100%; }
+.quest-missing { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-subtle); }
+.quest-missing-label { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.quest-missing-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+.quest-req-tag { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 99px; }
+.quest-req-tag.skill { background: var(--red-soft); color: #f87171; }
+.quest-req-tag.quest { background: var(--orange-soft); color: var(--orange); }
+.quest-grid.blocked-view { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+
+/* Quest banner sync note row */
+.quest-banner-footer {
+  grid-column: 1 / -1;
+  background: var(--card);
+  padding: 10px 20px;
+  text-align: right;
+  border-top: 1px solid var(--border-subtle);
+}
+
+@media (max-width: 768px) {
+  .nav-container { gap: 12px; }
+  .nav-search { max-width: none; }
+  .profile-top { padding: 16px; }
+  .profile-name { font-size: 1.25rem; }
+  .equip-layout { grid-template-columns: 1fr; }
+  .two-col { grid-template-columns: 1fr; }
+  .skills-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+  .page-content { padding: 16px; }
+  .main { padding: 16px 12px 40px; }
+}
+</style>
+</head>
+<body>
+
+<header class="top-nav">
+  <div class="nav-container">
+    <a class="nav-brand" href="#">
+      <img src="assets/logo-nav.png" alt="OSRS Journal" class="brand-logo" height="32">
+    </a>
+    <div class="nav-search">
+      <input id="rsnInput" type="text" placeholder="Search player..." maxlength="12" />
+      <button id="fetchBtn" class="btn-primary" onclick="fetchPlayer()">Sync</button>
+    </div>
+    <div class="nav-actions">
+      <button id="authBtn" class="btn-secondary" type="button" onclick="toggleAuthPanel()" style="display:none">Sign in</button>
+      <div class="status-msg" id="statusMsg"></div>
+    </div>
+  </div>
+</header>
+
+<div id="authPanel" class="auth-panel hidden">
+  <div id="authSignedOut">
+    <p style="font-size:12px;color:var(--text-dim);margin-bottom:10px">Sign in to link your character and manage privacy.</p>
+    <div class="auth-oauth-row">
+      <button class="btn-secondary" type="button" onclick="signInWithOAuth('google')">Google</button>
+      <button class="btn-secondary" type="button" onclick="signInWithOAuth('discord')">Discord</button>
+    </div>
+    <div class="auth-divider">or email</div>
+    <label for="authEmail">Email</label>
+    <input id="authEmail" type="email" placeholder="you@example.com" autocomplete="email" />
+    <label for="authPassword">Password</label>
+    <input id="authPassword" type="password" placeholder="••••••••" autocomplete="current-password" />
+    <button class="btn-primary" type="button" onclick="signInWithEmail()" style="width:100%;margin-top:4px">Sign in</button>
+    <button class="btn-secondary" type="button" onclick="signUpWithEmail()" style="width:100%;margin-top:6px">Create account</button>
+    <button class="btn-secondary" type="button" onclick="sendMagicLink()" style="width:100%;margin-top:6px">Email me a sign-in link</button>
+    <p class="status-msg" id="authMsg" style="margin-top:8px"></p>
+    <hr style="border:none;border-top:1px solid var(--border-subtle);margin:12px 0" />
+    <label for="pairCodeInput">Pairing code (from RuneLite plugin)</label>
+    <input id="pairCodeInput" type="text" placeholder="XXXX-XXXX" maxlength="9" />
+    <button class="btn-secondary" type="button" onclick="claimPairCode()" style="width:100%;margin-top:4px">Link character</button>
+  </div>
+  <div id="authSignedIn" style="display:none">
+    <p style="font-size:13px;color:var(--text-dim);margin-bottom:8px">Signed in as <span id="authUserEmail"></span></p>
+    <div id="linkedChars" style="font-size:12px;color:var(--text-muted);margin-bottom:8px"></div>
+    <div class="privacy-row" id="privacyRow" style="display:none">
+      <span>Public profile <span style="color:var(--text-muted)">(skills &amp; quests)</span></span>
+      <input id="privacyToggle" type="checkbox" checked onchange="updateProfilePrivacy()" title="When off, only you can see your stats" />
+    </div>
+    <button class="btn-secondary" type="button" onclick="signOut()" style="width:100%">Sign out</button>
+  </div>
+</div>
+
+<main class="main">
+
+<div id="syncBanner" class="sync-banner hidden"></div>
+
+<section class="profile-section" id="dashboard">
+  <div class="profile-card">
+    <div class="profile-top">
+      <div class="profile-identity">
+        <div class="profile-avatar" id="profileAvatar">?</div>
+        <div>
+          <h1 class="profile-name" id="dashRsn">—</h1>
+          <div class="profile-meta" id="dashSync">Not synced</div>
+        </div>
+      </div>
+      <div class="cb-badge" id="cbBadge" style="display:none">Combat <strong id="cbLevel">--</strong></div>
+    </div>
+    <div class="profile-stats">
+      <div class="stat-box">
+        <div class="stat-label">Combat Level</div>
+        <div class="stat-value" id="dashCb">—</div>
+        <div class="stat-sub" id="dashStyle">—</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Total Level</div>
+        <div class="stat-value" id="dashTotal">—</div>
+        <div class="stat-sub" id="dashTotalXp">—</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Quest Points</div>
+        <div class="stat-value" id="dashQp">—</div>
+        <div class="stat-sub" id="dashQuests">—</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Bank Gold</div>
+        <input type="text" class="gold-input stat-value gold" id="goldInput" placeholder="—" title="Auto from bank sync, or enter manually" onchange="saveGoldOverride()" />
+        <div class="stat-sub" id="dashGoldNote">Open bank in-game to sync</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="page-shell">
+  <nav class="page-tabs">
+    <button class="tab active" onclick="switchTab('plan')">Export</button>
+    <button class="tab" onclick="switchTab('stats')">Skills</button>
+    <button class="tab" onclick="switchTab('equipment')">Equipment</button>
+    <button class="tab" onclick="switchTab('quests')">Quests</button>
+    <button class="tab" onclick="switchTab('bosses')">Bosses</button>
+  </nav>
+  <div class="page-content">
+
+<!-- ===== STATS ===== -->
+<div class="panel" id="panel-stats">
+  <div class="skills-section">
+    <div class="section-title">Combat Skills</div>
+    <div class="skills-grid" id="grid-combat"></div>
+  </div>
+  <div class="skills-section">
+    <div class="section-title">Gathering Skills</div>
+    <div class="skills-grid" id="grid-gathering"></div>
+  </div>
+  <div class="skills-section">
+    <div class="section-title">Artisan Skills</div>
+    <div class="skills-grid" id="grid-artisan"></div>
+  </div>
+  <div class="skills-section">
+    <div class="section-title">Support Skills</div>
+    <div class="skills-grid" id="grid-support"></div>
+  </div>
+  <div class="hint" id="statsHint">Log in with the RuneLite plugin running, or enter your RSN and click Sync.</div>
+</div>
+
+<!-- ===== EQUIPMENT ===== -->
+<div class="panel" id="panel-equipment">
+  <div class="equip-sync-section" id="equipSyncSection">
+    <div class="section-title">Worn Gear <span class="equip-sync-badge" id="equipSyncBadge" style="display:none">Live sync</span></div>
+    <div class="equip-sync-grid" id="equipSyncGrid"></div>
+    <p class="equip-sync-hint" id="equipSyncHint">Log in with the RuneLite plugin to sync worn items.</p>
+  </div>
+  <div class="equip-sync-section" id="bankGearSection">
+    <div class="section-title">Bank Equipment <span class="equip-sync-badge" id="bankGearBadge" style="display:none">Live sync</span></div>
+    <div class="bank-gear-list" id="bankGearList"></div>
+    <p class="equip-sync-hint" id="bankGearHint">Open your bank in-game with the RuneLite plugin to sync equipment items.</p>
+  </div>
+  <div class="equip-simulator-title">Gear Simulator (what-if planning)</div>
+  <div class="equip-layout">
+    <div class="equip-paper">
+      <div class="section-title">Simulated Loadout</div>
+      <div class="equip-style-tabs">
+        <button class="style-btn active" onclick="setStyle('melee',this)">Melee</button>
+        <button class="style-btn" onclick="setStyle('ranged',this)">Ranged</button>
+        <button class="style-btn" onclick="setStyle('magic',this)">Magic</button>
+      </div>
+      <div class="equip-doll" id="equipDoll"></div>
+    </div>
+    <div class="equip-paper">
+      <div class="section-title">Bonuses</div>
+      <p class="equip-sync-hint" style="margin-top:0;margin-bottom:14px">Estimated from selected gear</p>
+      <div class="equip-stats" id="equipStats">
+        <div class="equip-stat-row"><span class="equip-stat-label">Stab Attack</span><span class="equip-stat-val" id="stat-stab">+0</span></div>
+        <div class="equip-stat-row"><span class="equip-stat-label">Slash Attack</span><span class="equip-stat-val" id="stat-slash">+0</span></div>
+        <div class="equip-stat-row"><span class="equip-stat-label">Crush Attack</span><span class="equip-stat-val" id="stat-crush">+0</span></div>
+        <div class="equip-stat-row"><span class="equip-stat-label">Magic Attack</span><span class="equip-stat-val" id="stat-magic">+0</span></div>
+        <div class="equip-stat-row"><span class="equip-stat-label">Range Attack</span><span class="equip-stat-val" id="stat-range">+0</span></div>
+        <div class="equip-stat-row" style="border-top:1px solid var(--border);margin-top:4px;padding-top:6px"><span class="equip-stat-label">Melee Strength</span><span class="equip-stat-val" id="stat-mstr">+0</span></div>
+        <div class="equip-stat-row"><span class="equip-stat-label">Range Strength</span><span class="equip-stat-val" id="stat-rstr">+0</span></div>
+        <div class="equip-stat-row"><span class="equip-stat-label">Magic Damage</span><span class="equip-stat-val" id="stat-mdmg">0%</span></div>
+        <div class="equip-stat-row" style="border-top:1px solid var(--border);margin-top:4px;padding-top:6px"><span class="equip-stat-label">Stab Defence</span><span class="equip-stat-val" id="stat-dstab">+0</span></div>
+        <div class="equip-stat-row"><span class="equip-stat-label">Slash Defence</span><span class="equip-stat-val" id="stat-dslash">+0</span></div>
+        <div class="equip-stat-row"><span class="equip-stat-label">Crush Defence</span><span class="equip-stat-val" id="stat-dcrush">+0</span></div>
+        <div class="equip-stat-row"><span class="equip-stat-label">Prayer Bonus</span><span class="equip-stat-val" id="stat-prayer">+0</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== QUESTS ===== -->
+<div class="panel" id="panel-quests">
+  <div class="quest-banner">
+    <div class="qp-stat"><div class="num" id="qpDone">0</div><div class="lbl">Quest Points</div></div>
+    <div class="qp-stat"><div class="num" id="questsDone">0</div><div class="lbl">Quests Done</div></div>
+    <div class="qp-stat"><div class="num" id="questsLeft">0</div><div class="lbl">Remaining</div></div>
+    <div class="qp-stat"><div class="num" id="questsBlocked">0</div><div class="lbl">Blocked</div></div>
+    <div class="quest-banner-footer"><span class="quest-sync-note">Auto-synced from RuneLite</span></div>
+  </div>
+  <div class="quest-toolbar">
+    <div class="quest-filter">
+      <input type="text" class="quest-search" id="questSearch" placeholder="Search quests..." oninput="renderQuests()">
+      <button class="filter-btn active" onclick="setQuestFilter('all',this)">All</button>
+      <button class="filter-btn" onclick="setQuestFilter('incomplete',this)">Incomplete</button>
+      <button class="filter-btn" onclick="setQuestFilter('complete',this)">Complete</button>
+      <button class="filter-btn" onclick="setQuestFilter('can_do',this)">Can Do Now</button>
+      <button class="filter-btn" onclick="setQuestFilter('blocked',this)">Blocked</button>
+      <button class="filter-btn" onclick="setQuestFilter('in_progress',this)">In Progress</button>
+    </div>
+    <div class="quest-sort">
+      <span class="quest-sort-label">Sort by</span>
+      <button class="sort-btn active" onclick="setQuestSort('name',this)">Name</button>
+      <button class="sort-btn" onclick="setQuestSort('qp',this)">Quest Points</button>
+      <button class="sort-btn" onclick="setQuestSort('diff',this)">Difficulty</button>
+    </div>
+  </div>
+  <div class="quest-grid" id="questGrid"></div>
+</div>
+
+<!-- ===== EXPORT ===== -->
+<div class="panel active" id="panel-plan">
+  <div class="export-hero">
+    <h2>Export Player Data</h2>
+    <p>Copy or download your synced OSRS profile and paste it into ChatGPT, Claude, Gemini, or any AI you prefer. Includes worn gear, bank equipment, skills, quests, gold, and boss access. Open your bank in-game before syncing for accurate gear data.</p>
+    <div class="export-meta" id="exportMeta"></div>
+  </div>
+  <div class="export-toolbar">
+    <span class="export-toolbar-label">Format</span>
+    <button class="export-format-btn active" onclick="setExportFormat('markdown',this)">Markdown</button>
+    <button class="export-format-btn" onclick="setExportFormat('json',this)">JSON</button>
+    <button onclick="copyExport()">Copy</button>
+    <button onclick="downloadExport()">Download</button>
+    <button onclick="refreshExport()">Refresh</button>
+  </div>
+  <textarea class="export-preview" id="exportPreview" readonly placeholder="Sync your character to generate an export..."></textarea>
+  <div class="export-status" id="exportStatus"></div>
+</div>
+
+<!-- ===== BOSS TRACKER ===== -->
+<div class="panel" id="panel-bosses">
+  <div id="bossContent"><div class="hint">Fetch your stats to see which bosses you can access.</div></div>
+</div>
+
+  </div><!-- /page-content -->
+</div><!-- /page-shell -->
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
+<script>
+// ─── SUPABASE CONFIG ──────────────────────────────────────────────────────────
+// Loaded from supabase-config.json (standalone) or served by the RuneLite plugin.
+let SUPABASE_URL = '';
+let SUPABASE_KEY = '';
+let API_BASE_URL = '';
+let WEB_APP_URL = 'https://journal.osrsjournal.com';
+let HOSTED_MODE = false;
+let SB_HEADERS = {};
+let supabaseClient = null;
+let authSession = null;
+let viewingOwnCharacter = false;
+let linkedCharacterMeta = [];
+
+function normalizeApiBase(url) {
+  let trimmed = (url || '').trim().replace(/\/$/, '');
+  if (trimmed.endsWith('/rest/v1')) {
+    trimmed = trimmed.slice(0, -'/rest/v1'.length) + '/functions/v1';
+  }
+  return trimmed;
+}
+
+function applySupabaseConfig(cfg) {
+  SUPABASE_URL = (cfg.url || '').trim();
+  SUPABASE_KEY = (cfg.anonKey || '').trim();
+  API_BASE_URL = normalizeApiBase(cfg.apiBaseUrl || '');
+  WEB_APP_URL = (cfg.webAppUrl || 'https://journal.osrsjournal.com').trim().replace(/\/$/, '');
+  HOSTED_MODE = Boolean(cfg.hostedMode);
+  SB_HEADERS = SUPABASE_KEY
+    ? { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY }
+    : {};
+  if (SUPABASE_URL && SUPABASE_KEY && window.supabase) {
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  }
+}
+
+function isSupabaseConfigured() {
+  return Boolean(SUPABASE_URL && SUPABASE_KEY);
+}
+
+/** Load credentials from supabase-config.json or localStorage (standalone dev). */
+async function loadSupabaseConfig() {
+  try {
+    const res = await fetch('supabase-config.json');
+    if (res.ok) {
+      const cfg = await res.json();
+      if (cfg.url && cfg.anonKey) {
+        applySupabaseConfig(cfg);
+        return true;
+      }
+    }
+  } catch (_) {}
+
+  const savedUrl = localStorage.getItem('osrs_supabase_url');
+  const savedKey = localStorage.getItem('osrs_supabase_key');
+  if (savedUrl && savedKey) {
+    applySupabaseConfig({ url: savedUrl, anonKey: savedKey, hostedMode: false });
+    return true;
+  }
+  return false;
+}
+
+async function getAuthHeaders() {
+  if (authSession?.access_token) {
+    return {
+      apikey: SUPABASE_KEY,
+      Authorization: 'Bearer ' + authSession.access_token,
+    };
+  }
+  return SB_HEADERS;
+}
+
+function toggleAuthPanel() {
+  document.getElementById('authPanel').classList.toggle('hidden');
+}
+
+async function refreshAuthUi() {
+  const authBtn = document.getElementById('authBtn');
+  if (!HOSTED_MODE || !supabaseClient) {
+    authBtn.style.display = 'none';
+    return;
+  }
+  authBtn.style.display = '';
+
+  const { data } = await supabaseClient.auth.getSession();
+  authSession = data.session;
+  const signedOut = document.getElementById('authSignedOut');
+  const signedIn = document.getElementById('authSignedIn');
+
+  if (authSession) {
+    signedOut.style.display = 'none';
+    signedIn.style.display = '';
+    document.getElementById('authUserEmail').textContent =
+      authSession.user?.email || authSession.user?.user_metadata?.full_name || 'Account';
+    authBtn.textContent = 'Account';
+    linkedCharacterMeta = await getLinkedCharacterMeta();
+    const names = linkedCharacterMeta.map(c => c.rsn);
+    document.getElementById('linkedChars').textContent = names.length
+      ? 'Linked: ' + names.join(', ')
+      : 'No characters linked yet — enter a pairing code from the plugin.';
+    const privacyRow = document.getElementById('privacyRow');
+    const activeRsn = document.getElementById('rsnInput').value.trim();
+    const activeChar = linkedCharacterMeta.find(c => c.rsn.toLowerCase() === activeRsn.toLowerCase());
+    if (activeChar) {
+      privacyRow.style.display = '';
+      document.getElementById('privacyToggle').checked = activeChar.is_public;
+    } else {
+      privacyRow.style.display = names.length ? '' : 'none';
+      if (linkedCharacterMeta[0]) {
+        document.getElementById('privacyToggle').checked = linkedCharacterMeta[0].is_public;
+      }
+    }
+  } else {
+    signedOut.style.display = '';
+    signedIn.style.display = 'none';
+    authBtn.textContent = 'Sign in';
+  }
+}
+
+function authRedirectUrl() {
+  return WEB_APP_URL || window.location.origin + window.location.pathname;
+}
+
+async function signInWithOAuth(provider) {
+  const msg = document.getElementById('authMsg');
+  if (!supabaseClient) return;
+  msg.textContent = 'Redirecting...';
+  const { error } = await supabaseClient.auth.signInWithOAuth({
+    provider,
+    options: { redirectTo: authRedirectUrl() },
+  });
+  if (error) {
+    msg.textContent = error.message;
+    msg.className = 'status-msg error';
+  }
+}
+
+async function signInWithEmail() {
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  const msg = document.getElementById('authMsg');
+  if (!email || !password || !supabaseClient) return;
+  msg.textContent = 'Signing in...';
+  const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+  if (error) {
+    msg.textContent = error.message;
+    msg.className = 'status-msg error';
+    return;
+  }
+  msg.textContent = 'Signed in!';
+  msg.className = 'status-msg ok';
+  await refreshAuthUi();
+}
+
+async function signUpWithEmail() {
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  const msg = document.getElementById('authMsg');
+  if (!email || !password || !supabaseClient) return;
+  if (password.length < 8) {
+    msg.textContent = 'Password must be at least 8 characters.';
+    msg.className = 'status-msg error';
+    return;
+  }
+  msg.textContent = 'Creating account...';
+  const { error } = await supabaseClient.auth.signUp({
+    email,
+    password,
+    options: { emailRedirectTo: authRedirectUrl() },
+  });
+  msg.textContent = error ? error.message : 'Account created — check email if confirmation is required.';
+  msg.className = error ? 'status-msg error' : 'status-msg ok';
+}
+
+async function sendMagicLink() {
+  const email = document.getElementById('authEmail').value.trim();
+  const msg = document.getElementById('authMsg');
+  if (!email || !supabaseClient) return;
+  msg.textContent = 'Sending...';
+  const { error } = await supabaseClient.auth.signInWithOtp({
+    email,
+    options: { emailRedirectTo: authRedirectUrl() },
+  });
+  msg.textContent = error ? error.message : 'Check your email for the sign-in link.';
+  msg.className = error ? 'status-msg error' : 'status-msg ok';
+}
+
+async function updateProfilePrivacy() {
+  const rsn = document.getElementById('rsnInput').value.trim();
+  const isPublic = document.getElementById('privacyToggle').checked;
+  if (!rsn || !authSession) return;
+  const headers = await getAuthHeaders();
+  headers['Content-Type'] = 'application/json';
+  headers['Prefer'] = 'return=minimal';
+  const q = encodeURIComponent(rsn);
+  await fetch(`${SUPABASE_URL}/rest/v1/user_characters?rsn=eq.${q}`, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify({ is_public: isPublic }),
+  });
+  linkedCharacterMeta = await getLinkedCharacterMeta();
+}
+
+async function signOut() {
+  if (supabaseClient) await supabaseClient.auth.signOut();
+  authSession = null;
+  await refreshAuthUi();
+}
+
+async function claimPairCode() {
+  const code = document.getElementById('pairCodeInput').value.trim().toUpperCase();
+  const msg = document.getElementById('authMsg');
+  if (!code || !API_BASE_URL) return;
+  if (!authSession?.access_token) {
+    msg.textContent = 'Sign in first, then enter the pairing code from the plugin.';
+    msg.className = 'status-msg error';
+    return;
+  }
+  msg.textContent = 'Linking...';
+  try {
+    const res = await fetch(`${API_BASE_URL}/pair-claim`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + authSession.access_token,
+      },
+      body: JSON.stringify({ code }),
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.error || 'Link failed');
+    msg.textContent = `Linked ${body.rsn}!`;
+    msg.className = 'status-msg ok';
+    await refreshAuthUi();
+    document.getElementById('rsnInput').value = body.rsn;
+    await fetchPlayer(body.rsn);
+  } catch (e) {
+    msg.textContent = e.message;
+    msg.className = 'status-msg error';
+  }
+}
+
+async function getLinkedCharacterMeta() {
+  if (!HOSTED_MODE || !authSession) return [];
+  const headers = await getAuthHeaders();
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/user_characters?select=rsn,is_public`, { headers });
+  if (!res.ok) return [];
+  return await res.json();
+}
+
+async function getLinkedCharacters() {
+  return (await getLinkedCharacterMeta()).map(r => r.rsn);
+}
+
+async function isOwnCharacter(rsn) {
+  if (!HOSTED_MODE || !authSession) return false;
+  const linked = await getLinkedCharacters();
+  return linked.some(r => r.toLowerCase() === rsn.toLowerCase());
+}
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let playerSkills = {};
+// Map legacy journal quest names → RuneLite API names (what the plugin writes to Supabase)
+const QUEST_ALIASES = {
+  "Cooks' Assistant": "Cook's Assistant",
+  "Restless Ghost": "The Restless Ghost",
+  "Fremennik Trials": "The Fremennik Trials",
+  "Fremennik Isles": "The Fremennik Isles",
+  "Fremennik Exiles": "The Fremennik Exiles",
+  "Tourist Trap": "The Tourist Trap",
+  "Hero's Quest": "Heroes' Quest",
+  "Legends Quest": "Legends' Quest",
+  "Merlins Crystal": "Merlin's Crystal",
+  "Rune Mysteries (done)": "Rune Mysteries",
+  "Alfred Grimhand's Barcrawl (miniquest)": "Alfred Grimhand's Barcrawl",
+  "Bear your Soul (miniquest)": "Bear Your Soul",
+};
+
+function normalizeQuestName(name) {
+  return QUEST_ALIASES[name] || name;
+}
+
+const WIKI_BASE = 'https://oldschool.runescape.wiki/w/';
+/** Quest names that differ from their OSRS Wiki page title. */
+const QUEST_WIKI_OVERRIDES = {
+  'Dragon Slayer': 'Dragon Slayer I',
+  'Desert Treasure II': 'Desert Treasure II - The Fallen Empire',
+};
+
+function questWikiPageTitle(name) {
+  const normalized = normalizeQuestName(name);
+  const stripped = normalized.replace(/\s*\(.*\)$/, '').trim();
+  return QUEST_WIKI_OVERRIDES[normalized] || QUEST_WIKI_OVERRIDES[stripped] || stripped;
+}
+
+function canLinkQuestWiki(name) {
+  const title = questWikiPageTitle(name);
+  return Boolean(title) && !VAGUE_QUEST_REQS.has(title);
+}
+
+function questWikiUrl(name) {
+  return WIKI_BASE + encodeURI(questWikiPageTitle(name).replace(/ /g, '_'));
+}
+
+function questWikiLink(name) {
+  if (!canLinkQuestWiki(name)) return name;
+  const url = questWikiUrl(name);
+  return `<a href="${url}" target="_blank" rel="noopener noreferrer">${name}</a>`;
+}
+
+/** OSRS quest journal total (per wiki). */
+const JOURNAL_QUEST_TOTAL = 180;
+
+/** QP rewards for all RuneLite quest names (generated via scripts/gen-quest-qp.js). */
+const QUEST_QP = {
+  "A Kingdom Divided":2,"A Night at the Theatre":2,"A Porcine of Interest":1,"A Soul's Bane":1,
+  "A Tail of Two Cats":2,"A Taste of Hope":1,"Alfred Grimhand's Barcrawl":0,"Animal Magnetism":1,
+  "Another Slice of H.A.M.":1,"At First Light":1,"Barbarian Training":0,"Bear Your Soul":0,
+  "Below Ice Mountain":1,"Beneath Cursed Sands":2,"Between a Rock...":2,"Big Chompy Bird Hunting":2,
+  "Biohazard":3,"Black Knight's Fortress":3,"Black Knights' Fortress":3,"Bone Voyage":1,
+  "Cabin Fever":2,"Children of the Sun":1,"Client of Kourend":1,"Clock Tower":1,"Cold War":1,
+  "Contact!":1,"Cook's Assistant":1,"Creature of Fenkenstrain":2,"Current Affairs":1,
+  "Curse of the Empty Lord":0,"Daddy's Home":1,"Darkness of Hallowvale":2,"Death on the Isle":2,
+  "Death Plateau":1,"Death to the Dorgeshuun":1,"Defender of Varrock":2,"Demon Slayer":3,
+  "Desert Treasure":3,"Desert Treasure I":3,"Desert Treasure II - The Fallen Empire":5,
+  "Devious Minds":1,"Doric's Quest":1,"Dragon Slayer":2,"Dragon Slayer I":2,"Dragon Slayer II":5,
+  "Dream Mentor":2,"Druidic Ritual":4,"Dwarf Cannon":1,"Eadgar's Ruse":1,"Eagles' Peak":2,
+  "Elemental Workshop I":1,"Elemental Workshop II":1,"Enakhra's Lament":2,"Enlightened Journey":1,
+  "Enter the Abyss":1,"Ernest the Chicken":4,"Ethically Acquired Antiquities":1,
+  "Fairytale I - Growing Pains":2,"Fairytale II - Cure a Queen":2,"Family Crest":1,"Family Pest":0,
+  "Fight Arena":2,"Fishing Contest":1,"Forgettable Tale of a Drunken Dwarf":2,"Forgettable Tale...":2,
+  "Garden of Tranquillity":2,"Gertrude's Cat":1,"Getting Ahead":1,"Ghosts Ahoy":2,
+  "Goblin Diplomacy":5,"Grim Tales":1,"Gunnar's Ground":5,"Haunted Mine":2,"Hazeel Cult":1,
+  "Heroes' Quest":1,"His Faithful Servants":0,"Holy Grail":2,"Hopespear's Will":0,
+  "Horror from the Deep":2,"Icthlarin's Little Helper":2,"Imp Catcher":1,"In Aid of the Myreque":2,
+  "In Search of Knowledge":0,"In Search of the Myreque":2,"Into the Tombs":1,"Jungle Potion":1,
+  "King's Ransom":1,"Lair of Tarn Razorlor":0,"Land of the Goblins":1,"Learning the Ropes":0,
+  "Legends' Quest":4,"Lost City":3,"Lunar Diplomacy":2,"Mage Arena I":0,"Mage Arena II":0,
+  "Making Friends with My Arm":2,"Making Friends With My Arm":2,"Making History":3,"Meat and Greet":1,
+  "Merlin's Crystal":6,"Misthalin Mystery":1,"Monk's Friend":1,"Monkey Madness I":3,"Monkey Madness II":4,
+  "Mountain Daughter":2,"Mourning's End Part I":2,"Mourning's End Part II":2,
+  "Mourning's Ends Part I":2,"Mourning's Ends Part II":2,"Murder Mystery":3,"My Arm's Big Adventure":1,
+  "Nature Spirit":2,"Observatory Quest":2,"Olaf's Quest":1,"One Small Favour":2,"Pandemonium":1,
+  "Perilous Moons":2,"Pirate's Treasure":2,"Plague City":1,"Priest in Peril":1,"Prince Ali Rescue":3,
+  "Prying Times":1,"Rag and Bone Man":1,"Rag and Bone Man I":1,"Rag and Bone Man II":1,"Ratcatchers":2,
+  "Recipe for Disaster":10,"Recipe for Disaster - Another Cook's Quest":1,"Recipe for Disaster - Culinaromancer":1,
+  "Recipe for Disaster - Evil Dave":1,"Recipe for Disaster - King Awowogei":1,
+  "Recipe for Disaster - Lumbridge Guide":1,"Recipe for Disaster - Mountain Dwarf":1,
+  "Recipe for Disaster - Pirate Pete":1,"Recipe for Disaster - Sir Amik Varze":1,
+  "Recipe for Disaster - Skrach Uglogwee":1,"Recipe for Disaster - Wartface & Bentnoze":1,
+  "Recruitment Drive":1,"Regicide":3,"Romeo & Juliet":5,"Roving Elves":1,"Royal Trouble":1,"Rum Deal":2,
+  "Rune Mysteries":1,"Scorpion Catcher":1,"Scrambled!":1,"Sea Slug":1,"Secrets of the North":2,
+  "Shades of Mort'ton":3,"Shadow of the Storm":1,"Shadows of Custodia":2,"Sheep Herder":4,"Sheep Shearer":1,
+  "Shield of Arrav":1,"Shilo Village":2,"Sins of the Father":2,"Skippy and the Mogres":0,"Sleeping Giants":1,
+  "Song of the Elves":4,"Spirits of the Elid":2,"Swan Song":2,"Tai Bwo Wannai Trio":2,"Tale of the Righteous":1,
+  "Temple of Ikov":1,"Temple of the Eye":1,"The Ascent of Arceuus":1,"The Corsair Curse":2,
+  "The Curse of Arrav":2,"The Depths of Despair":1,"The Dig Site":2,"The Digsite":2,"The Enchanted Key":0,
+  "The Eyes of Glouphrie":2,"The Feud":1,"The Final Dawn":2,"The Forsaken Tower":1,"The Fremennik Exiles":3,
+  "The Fremennik Isles":1,"The Fremennik Trials":3,"The Frozen Door":1,"The Garden of Death":1,
+  "The General's Shadow":0,"The Giant Dwarf":2,"The Golem":1,"The Grand Tree":5,"The Great Brain Robbery":2,
+  "The Hand in the Sand":1,"The Heart of Darkness":2,"The Ides of Milk":1,"The Knight's Sword":1,
+  "The Lost Tribe":1,"The Path of Glouphrie":2,"The Queen of Thieves":1,"The Red Reef":1,
+  "The Restless Ghost":1,"The Ribbiting Tale of a Lily Pad Labour Dispute":1,"The Slug Menace":1,
+  "The Tourist Trap":2,"Throne of Miscellania":1,"Tower of Life":2,"Tree Gnome Village":2,"Tribal Totem":1,
+  "Troll Romance":2,"Troll Stronghold":1,"Troubled Tortugans":1,"Twilight's Promise":1,"Underground Pass":5,
+  "Vale Totems":1,"Vampire Slayer":3,"Vampyre Slayer":3,"Wanted!":1,"Watchtower":4,"Waterfall Quest":1,
+  "What Lies Below":1,"While Guthix Sleeps":5,"Witch's House":4,"Witch's Potion":1,"X Marks the Spot":1,
+  "Zogre Flesh Eaters":1
+};
+
+/** Miniquests / RFD parts — finished but not counted in the 180 quest journal. */
+const MINIQUESTS = new Set([
+  "Alfred Grimhand's Barcrawl","Bear Your Soul","Curse of the Empty Lord","Family Pest",
+  "The Enchanted Key","The General's Shadow","Hopespear's Will","In Search of Knowledge",
+  "Lair of Tarn Razorlor","Mage Arena I","Mage Arena II","Skippy and the Mogres",
+  "Barbarian Training","Learning the Ropes","His Faithful Servants","Tears of Guthix","Enter the Abyss",
+  "Recipe for Disaster - Another Cook's Quest","Recipe for Disaster - Mountain Dwarf",
+  "Recipe for Disaster - Wartface & Bentnoze","Recipe for Disaster - Pirate Pete",
+  "Recipe for Disaster - Lumbridge Guide","Recipe for Disaster - Evil Dave",
+  "Recipe for Disaster - Skrach Uglogwee","Recipe for Disaster - Sir Amik Varze",
+  "Recipe for Disaster - King Awowogei","Recipe for Disaster - Culinaromancer"
+]);
+
+let syncedQuestPoints = null;
+
+function getQuestQp(name) {
+  const key = resolveQuestKey(normalizeQuestName(name));
+  if (QUEST_QP[key] != null) return QUEST_QP[key];
+  const legacy = QUEST_DETAILS[key];
+  if (legacy?.qp != null) return legacy.qp;
+  return 0;
+}
+
+function isJournalQuest(name) {
+  name = normalizeQuestName(name);
+  if (name.startsWith('Recipe for Disaster -')) return false;
+  return !MINIQUESTS.has(name);
+}
+
+function computeQuestStats() {
+  let qp = 0;
+  let journalDone = 0;
+  for (const name of questsDone) {
+    qp += getQuestQp(name);
+    if (isJournalQuest(name)) journalDone++;
+  }
+  if (syncedQuestPoints != null) qp = syncedQuestPoints;
+  return { qp, journalDone, journalTotal: JOURNAL_QUEST_TOTAL };
+}
+
+/** Apply quest rows from Supabase — RuneLite names are canonical. */
+function applyQuestsFromSync(rows) {
+  const done = new Set();
+  const inProgress = new Set();
+  for (const row of rows) {
+    const name = normalizeQuestName(row.quest_name);
+    if (row.state === 'FINISHED') {
+      done.add(name);
+      if (name === 'Recipe for Disaster - Culinaromancer') done.add('Recipe for Disaster');
+    } else if (row.state === 'IN_PROGRESS' && isJournalQuest(name)) {
+      inProgress.add(name);
+    }
+  }
+  questsDone = done;
+  questsInProgress = inProgress;
+  localStorage.setItem('osrs_quests', JSON.stringify([...questsDone]));
+}
+
+/** Populated only by RuneLite sync (localStorage is a read-only cache). */
+let questsDone = new Set(
+  JSON.parse(localStorage.getItem('osrs_quests') || '[]').map(normalizeQuestName)
+);
+let questsInProgress = new Set();
+let equipStyle = 'melee';
+let equipment = JSON.parse(localStorage.getItem('osrs_equip') || '{}');
+let playerRSN = localStorage.getItem('osrs_rsn') || '';
+let dataSource = 'none'; // 'supabase' | 'wom' | 'none'
+let playerGold = parseInt(localStorage.getItem('osrs_gold') || '0', 10) || 0;
+let bankSynced = false;
+let playerBank = [];
+let equipSynced = false;
+let wornGear = {};
+let lastSynced = null;
+let exportFormat = 'markdown';
+
+function qd(name) {
+  name = normalizeQuestName(name);
+  if (name === 'Recipe for Disaster') {
+    return questsDone.has('Recipe for Disaster') || questsDone.has('Recipe for Disaster - Culinaromancer');
+  }
+  if (name === 'Desert Treasure I' || name === 'Desert Treasure') {
+    return questsDone.has('Desert Treasure I') || questsDone.has('Desert Treasure');
+  }
+  if (name === 'Desert Treasure II' || name === 'Desert Treasure II - The Fallen Empire') {
+    return questsDone.has('Desert Treasure II - The Fallen Empire') || questsDone.has('Desert Treasure II');
+  }
+  if (name === 'Making Friends With My Arm') {
+    return questsDone.has('Making Friends with My Arm') || questsDone.has('Making Friends With My Arm');
+  }
+  return questsDone.has(name);
+}
+
+function qi(name) {
+  name = normalizeQuestName(name);
+  return questsInProgress.has(name) && !qd(name);
+}
+
+// ─── SKILL DATA ───────────────────────────────────────────────────────────────
+const SKILL_DEFS = {
+  overall:      { icon:'🏆', group:'combat' },
+  attack:       { icon:'⚔️',  group:'combat' },
+  strength:     { icon:'💪',  group:'combat' },
+  defence:      { icon:'🛡️', group:'combat' },
+  hitpoints:    { icon:'❤️',  group:'combat' },
+  prayer:       { icon:'🙏',  group:'combat' },
+  magic:        { icon:'🔮',  group:'combat' },
+  ranged:       { icon:'🏹',  group:'combat' },
+  slayer:       { icon:'💀',  group:'combat' },
+  mining:       { icon:'⛏️',  group:'gathering' },
+  fishing:      { icon:'🎣',  group:'gathering' },
+  woodcutting:  { icon:'🪓',  group:'gathering' },
+  hunter:       { icon:'🦊',  group:'gathering' },
+  farming:      { icon:'🌾',  group:'gathering' },
+  herblore:     { icon:'🧪',  group:'artisan' },
+  cooking:      { icon:'🍖',  group:'artisan' },
+  smithing:     { icon:'🔨',  group:'artisan' },
+  crafting:     { icon:'💎',  group:'artisan' },
+  fletching:    { icon:'🪶',  group:'artisan' },
+  firemaking:   { icon:'🔥',  group:'artisan' },
+  runecraft:    { icon:'🌀',  group:'artisan' },
+  agility:      { icon:'🏃',  group:'support' },
+  thieving:     { icon:'🪤',  group:'support' },
+  construction: { icon:'🏠',  group:'support' }
+};
+const XP_TABLE = [0,0,83,174,276,388,512,650,801,969,1154,1358,1584,1833,2107,2411,2746,3115,3523,3973,4470,5018,5624,6291,7028,7842,8740,9730,10824,12031,13363,14833,16456,18247,20224,22406,24815,27473,30408,33648,37224,41171,45529,50339,55649,61512,68000,75127,83014,91721,101333,112058,123526,136078,150872,167355,185428,205390,227332,251427,277808,307047,335510,368599,404093,441745,481402,527645,577502,630252,684986,741600,800400,860000,920000,984500,1049500,1115000,1180000,1244500,1309000,1373000,1437500,1502000,1570000,1639000,1707500,1776000,1847500,1919500,1991000,2063500,2136500,2209000,2281000,2353500,2420000,2480000,2535000];
+
+function xpToLevel(xp) {
+  for (let i = 98; i >= 0; i--) if (xp >= XP_TABLE[i+1]) return i + 1;
+  return 1;
+}
+function xpToNextLevel(xp, level) {
+  if (level >= 99) return 0;
+  const needed = XP_TABLE[level] - xp;
+  return Math.max(0, needed);
+}
+function levelProgress(xp, level) {
+  if (level >= 99) return 100;
+  const curr = XP_TABLE[level - 1] || 0;
+  const next = XP_TABLE[level] || XP_TABLE[99];
+  return Math.round(((xp - curr) / (next - curr)) * 100);
+}
+
+// ─── EQUIPMENT DATA ───────────────────────────────────────────────────────────
+// Format: [name, stab, slash, crush, magic, range, mStr, rStr, mDmg, dStab, dSlash, dCrush, prayer, defReq, atkReq, rngReq, magReq, questReq, slayerReq]
+// Slots by style
+const GEAR = {
+  melee: {
+    head: [
+      ['None',0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Bronze full helm',0,0,0,0,0,0,0,0,3,4,1,0,1,1,1,1,'',0],
+      ['Iron full helm',0,0,0,0,0,0,0,0,5,6,2,0,1,1,1,1,'',0],
+      ['Steel full helm',0,0,0,0,0,0,0,0,9,10,3,0,5,1,1,1,'',0],
+      ['Mithril full helm',0,0,0,0,0,0,0,0,14,15,6,0,20,1,1,1,'',0],
+      ['Adamant full helm',0,0,0,0,0,0,0,0,19,21,8,0,30,1,1,1,'',0],
+      ['Rune full helm',0,0,0,0,0,0,0,0,30,32,13,0,40,1,1,1,'',0],
+      ['Berserker helm',0,0,0,-10,-10,3,0,0,48,46,48,0,45,1,1,1,'The Fremennik Trials',0],
+      ['Helm of Neitiznot',6,6,6,-3,-1,3,0,0,35,38,35,3,55,1,1,1,'The Fremennik Isles',0],
+      ['Slayer helmet (i)',0,0,0,-5,-5,3,0,0,30,32,27,0,10,1,1,1,'Priest in Peril',0],
+      ['Proselyte sallet',0,0,0,0,0,0,0,0,26,24,23,8,30,1,1,1,'Recruitment Drive',0],
+      ['Dragon med helm',0,0,0,0,0,0,0,0,40,38,38,0,60,1,1,1,'',0],
+      ['Serpentine helm',6,3,0,0,0,5,0,0,50,52,50,0,75,1,1,1,'',0],
+      ['Neitiznot faceguard',5,5,4,-3,-1,5,0,0,38,40,38,3,75,1,1,1,'Fremennik Exiles',0],
+      ['Torva full helm',6,8,6,-1,-1,6,0,0,100,100,100,4,75,75,1,1,'',0],
+    ],
+    neck: [
+      ['None',0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Amulet of strength',0,0,0,0,0,10,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Amulet of defence',0,0,0,0,0,0,0,0,7,7,7,0,1,1,1,1,'',0],
+      ['Amulet of power',6,6,6,6,6,6,0,0,1,1,1,1,1,1,1,1,'',0],
+      ['Amulet of glory',10,10,10,10,10,3,0,0,3,3,3,0,1,1,1,1,'',0],
+      ['Amulet of fury',10,10,10,10,10,8,0,0,15,15,15,5,1,1,1,1,'',0],
+      ['Amulet of torture',17,17,17,0,0,19,0,0,0,0,0,4,75,75,1,1,'',0],
+    ],
+    cape: [
+      ['None',0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Team cape',0,0,0,0,1,0,0,0,1,1,1,0,1,1,1,1,'',0],
+      ['Obsidian cape',0,0,0,0,0,0,0,0,9,9,9,0,1,1,1,1,'',0],
+      ['Fire cape',0,0,0,1,1,4,0,0,11,11,11,2,1,1,1,1,'',0],
+      ['Infernal cape',0,0,0,1,1,8,0,0,12,12,12,4,1,1,1,1,'',0],
+      ["Ardougne cloak 1",0,0,0,0,0,0,0,0,4,4,4,1,1,1,1,1,'Ardougne Easy Diary',0],
+      ["Cape of accomplishment",0,0,0,0,0,0,0,0,9,9,9,4,1,1,1,1,'99 in a skill',0],
+    ],
+    weapon: [
+      ['Unarmed',0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Bronze scimitar',4,7,0,0,0,5,0,0,0,1,0,0,1,1,1,1,'',0],
+      ['Iron scimitar',6,10,0,0,0,8,0,0,0,2,0,0,1,1,1,1,'',0],
+      ['Steel scimitar',10,16,0,0,0,13,0,0,0,3,0,0,5,1,1,1,'',0],
+      ['Mithril scimitar',16,24,0,0,0,18,0,0,0,5,0,0,20,1,1,1,'',0],
+      ['Adamant scimitar',22,32,0,0,0,24,0,0,0,7,0,0,30,1,1,1,'',0],
+      ['Rune scimitar',30,45,0,0,0,31,0,0,0,10,0,0,40,1,1,1,'',0],
+      ['Dragon scimitar',35,55,0,0,0,36,0,0,0,10,0,0,60,60,1,1,'Monkey Madness I',0],
+      ['Abyssal whip',0,82,0,0,0,28,0,0,0,0,0,0,70,70,1,1,'',85],
+      ['Saradomin sword',17,25,33,0,0,30,0,0,3,5,3,0,70,70,1,1,'',0],
+      ['Toxic blowpipe',0,0,0,0,0,0,0,0,0,0,0,0,75,1,1,1,'',0], // ranged
+      ['Abyssal tentacle',0,90,0,0,0,30,0,0,0,0,0,0,75,75,1,1,'',85],
+      ['Ghrazi rapier',55,0,0,0,0,30,0,0,0,0,0,0,75,75,1,1,'',0],
+      ['Blade of Saeldor',55,0,0,0,0,36,0,0,0,0,0,0,75,75,1,1,'Song of the Elves',0],
+      ['Scythe of Vitur',0,110,0,0,0,75,0,0,0,7,7,0,75,75,1,1,'',0],
+      ['Osmumten\'s fang',55,0,0,0,0,40,0,0,0,0,0,0,75,75,1,1,'',0],
+    ],
+    body: [
+      ['None',0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Bronze platebody',0,0,0,0,0,0,0,0,24,23,27,0,1,1,1,1,'',0],
+      ['Iron platebody',0,0,0,0,0,0,0,0,33,31,37,0,1,1,1,1,'',0],
+      ['Steel platebody',0,0,0,0,0,0,0,0,47,45,53,0,5,1,1,1,'',0],
+      ['Mithril platebody',0,0,0,0,0,0,0,0,62,60,68,0,20,1,1,1,'',0],
+      ['Adamant platebody',0,0,0,0,0,0,0,0,82,80,90,0,30,1,1,1,'',0],
+      ['Rune platebody',0,0,0,0,0,0,0,0,108,106,116,0,40,1,1,1,'Dragon Slayer I',0],
+      ['Granite body',0,0,0,0,0,0,0,0,70,72,75,0,50,1,1,1,'',0],
+      ['Fighter torso',0,4,6,0,0,4,0,0,72,75,73,0,40,1,1,1,'',0],
+      ['Dharok\'s platebody',0,0,0,0,0,0,0,0,99,97,104,0,70,1,1,1,'',0],
+      ['Bandos chestplate',0,0,0,0,0,4,0,0,122,120,130,0,65,70,1,1,'',0],
+      ['Justiciar chestguard',0,0,0,0,0,0,0,0,130,128,135,3,75,1,1,1,'',0],
+      ['Torva platebody',0,0,0,0,0,6,0,0,198,200,215,4,75,75,1,1,'',0],
+    ],
+    shield: [
+      ['None',0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Bronze kiteshield',0,0,0,0,0,0,0,0,7,8,5,0,1,1,1,1,'',0],
+      ['Iron kiteshield',0,0,0,0,0,0,0,0,10,11,8,0,1,1,1,1,'',0],
+      ['Steel kiteshield',0,0,0,0,0,0,0,0,15,16,13,0,5,1,1,1,'',0],
+      ['Mithril kiteshield',0,0,0,0,0,0,0,0,23,24,20,0,20,1,1,1,'',0],
+      ['Adamant kiteshield',0,0,0,0,0,0,0,0,31,33,28,0,30,1,1,1,'',0],
+      ['Rune kiteshield',0,0,0,0,0,0,0,0,50,52,45,0,40,1,1,1,'',0],
+      ['Dragon sq shield',0,0,0,0,0,0,0,0,75,73,72,0,60,1,1,1,'',0],
+      ['Dragon defender',35,40,20,0,0,6,0,0,26,24,23,0,60,60,1,1,'',0],
+      ['Avernic defender',45,50,30,0,0,8,0,0,28,26,25,0,70,70,1,1,'',0],
+      ['Elysian spirit shield',0,0,0,-10,-10,0,0,0,68,72,75,3,75,1,1,1,'',0],
+      ['Spectral spirit shield',0,0,0,3,0,0,0,0,53,55,55,3,75,1,1,1,'',0],
+      ['Arcane spirit shield',0,0,0,20,-10,0,0,5,53,55,55,3,75,1,1,1,'',0],
+    ],
+    legs: [
+      ['None',0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Bronze platelegs',0,0,0,0,0,0,0,0,16,15,19,0,1,1,1,1,'',0],
+      ['Iron platelegs',0,0,0,0,0,0,0,0,22,20,26,0,1,1,1,1,'',0],
+      ['Steel platelegs',0,0,0,0,0,0,0,0,30,29,35,0,5,1,1,1,'',0],
+      ['Mithril platelegs',0,0,0,0,0,0,0,0,40,38,47,0,20,1,1,1,'',0],
+      ['Adamant platelegs',0,0,0,0,0,0,0,0,54,51,63,0,30,1,1,1,'',0],
+      ['Rune platelegs',0,0,0,0,0,0,0,0,72,70,80,0,40,1,1,1,'',0],
+      ['Fighter torso (skirt)',0,0,0,0,0,0,0,0,55,53,63,0,40,1,1,1,'',0],
+      ['Bandos tassets',0,0,0,0,0,2,0,0,94,92,98,1,65,70,1,1,'',0],
+      ['Dharok\'s platelegs',0,0,0,0,0,0,0,0,73,71,80,0,70,1,1,1,'',0],
+      ['Justiciar legguards',0,0,0,0,0,0,0,0,100,98,105,2,75,1,1,1,'',0],
+      ['Torva platelegs',0,0,0,0,0,3,0,0,140,142,150,3,75,75,1,1,'',0],
+    ],
+    gloves: [
+      ['None',0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Leather gloves',0,0,0,0,0,0,0,0,1,1,1,0,1,1,1,1,'',0],
+      ['Hardleather gloves',0,0,0,0,0,0,0,0,2,2,2,0,1,1,1,1,'',0],
+      ['Ferocious gloves',16,16,16,-16,-16,14,0,0,0,0,0,0,80,80,1,1,'',0],
+      ['Barrows gloves',12,12,12,6,6,12,0,0,12,12,12,0,1,1,1,1,'Recipe for Disaster (all subquests)',0],
+      ['Dragon gloves',9,9,9,3,3,9,0,0,9,9,9,0,1,1,1,1,'Recipe for Disaster (Glough)',0],
+      ['Rune gloves',8,8,8,3,3,8,0,0,8,8,8,0,1,1,1,1,'Recipe for Disaster (Pirate Pete)',0],
+      ['Mithril gloves',6,6,6,3,3,6,0,0,6,6,6,0,1,1,1,1,'Recipe for Disaster (Mountain Dwarf)',0],
+    ],
+    boots: [
+      ['None',0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Bronze boots',0,0,0,0,0,0,0,0,1,1,1,0,1,1,1,1,'',0],
+      ['Iron boots',0,0,0,0,0,0,0,0,2,2,2,0,1,1,1,1,'',0],
+      ['Steel boots',0,0,0,0,0,0,0,0,3,3,3,0,5,1,1,1,'',0],
+      ['Mithril boots',0,0,0,0,0,0,0,0,5,5,5,0,20,1,1,1,'',0],
+      ['Adamant boots',0,0,0,0,0,0,0,0,7,7,7,0,30,1,1,1,'',0],
+      ['Rune boots',0,0,0,0,0,0,0,0,15,15,15,0,40,1,1,1,'',0],
+      ['Dragon boots',0,0,0,0,0,4,0,0,33,35,33,0,60,60,1,1,'',0],
+      ['Pegasian boots',0,0,0,-4,0,0,12,0,52,55,53,0,75,1,75,1,'',0],
+      ['Primordial boots',5,5,5,0,0,5,0,0,42,40,42,0,75,75,1,1,'',0],
+      ['Eternal boots',0,0,0,8,0,0,0,0,35,30,35,0,75,1,1,75,'',0],
+    ],
+    ring: [
+      ['None',0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Ring of recoil',0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Ring of life',0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Ring of wealth',0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Berserker ring',4,4,4,0,0,0,0,0,4,4,4,0,1,1,1,1,'',0],
+      ['Berserker ring (i)',8,8,8,0,0,0,0,0,8,8,8,0,1,1,1,1,'',0],
+      ['Archers ring (i)',0,0,0,0,8,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Seers ring (i)',0,0,0,12,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Bellator ring',0,12,0,0,0,6,0,0,0,0,0,0,60,60,1,1,'',0],
+      ['Ultor ring',6,4,4,0,0,8,0,0,0,0,0,0,60,60,1,1,'',0],
+    ],
+    ammo: [
+      ['None',0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Holy blessing',0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,'',0],
+    ]
+  },
+  ranged: {
+    head: [
+      ['None',0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Leather cowl',0,0,0,0,2,0,0,0,1,2,3,0,1,1,1,1,'',0],
+      ['Coif',0,0,0,-1,6,0,0,0,4,6,7,0,1,1,20,1,'',0],
+      ['Studded coif',0,0,0,-1,9,0,0,0,4,7,8,0,1,1,20,1,'',0],
+      ['Snakeskin bandana',0,0,0,-3,15,0,0,0,0,5,6,0,1,1,30,1,'',0],
+      ['Green dhide coif',0,0,0,-3,16,0,0,0,6,8,9,0,1,1,40,1,'',0],
+      ['Blue dhide coif',0,0,0,-3,20,0,0,0,7,10,12,0,1,1,50,1,'',0],
+      ['Red dhide coif',0,0,0,-3,24,0,0,0,8,12,14,0,1,1,60,1,'',0],
+      ['Black dhide coif',0,0,0,-3,28,0,0,0,9,14,16,0,1,1,70,1,'',0],
+      ['Karil\'s coif',0,0,0,-3,35,0,0,0,17,26,22,0,1,1,70,1,'',0],
+      ['Void ranger helm',0,0,0,0,0,0,0,0,0,0,0,0,42,1,42,42,'Pest Control',0],
+      ['Armadyl helmet',0,0,0,-3,50,0,0,0,19,30,28,1,70,1,70,1,'',0],
+      ['Crystal helm',0,0,0,-3,56,0,0,0,19,30,28,0,70,1,70,1,'',0],
+    ],
+    neck: [
+      ['None',0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Amulet of power',6,6,6,6,6,6,0,0,1,1,1,1,1,1,1,1,'',0],
+      ['Amulet of glory',10,10,10,10,10,3,0,0,3,3,3,0,1,1,1,1,'',0],
+      ['Amulet of fury',10,10,10,10,10,8,0,0,15,15,15,5,1,1,1,1,'',0],
+      ['Necklace of anguish',5,5,5,-5,15,0,5,0,0,0,0,0,75,1,75,1,'',0],
+    ],
+    cape: [
+      ['None',0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Ava\'s attractor',0,0,0,0,2,0,1,0,0,0,0,0,1,1,1,1,'Animal Magnetism',0],
+      ['Ava\'s accumulator',0,0,0,0,4,0,2,0,0,0,0,0,1,1,30,1,'Animal Magnetism',0],
+      ['Ava\'s assembler',0,0,0,0,8,0,2,0,0,0,0,0,1,1,70,1,'Dragon Slayer II',0],
+    ],
+    weapon: [
+      ['None',0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Shortbow',0,0,0,0,8,0,7,0,0,0,0,0,1,1,1,1,'',0],
+      ['Oak shortbow',0,0,0,0,14,0,14,0,0,0,0,0,1,1,5,1,'',0],
+      ['Maple shortbow',0,0,0,0,29,0,29,0,0,0,0,0,1,1,30,1,'',0],
+      ['Magic shortbow',0,0,0,0,55,0,55,0,0,0,0,0,1,1,50,1,'',0],
+      ['Magic shortbow (i)',0,0,0,0,55,0,55,0,0,0,0,0,1,1,50,1,'',0],
+      ['Rune crossbow',0,0,0,0,90,0,0,0,0,0,0,0,1,1,61,1,'',0],
+      ['Dragon crossbow',0,0,0,0,107,0,0,0,0,0,0,0,1,1,64,1,'',0],
+      ['Armadyl crossbow',0,0,0,0,100,0,0,0,0,0,0,0,1,1,70,1,'',0],
+      ['Toxic blowpipe',0,0,0,0,30,0,0,0,0,0,0,0,1,1,75,1,'',0],
+      ['Bow of Faerdhinen',0,0,0,0,128,0,106,0,0,0,0,0,1,1,75,1,'Song of the Elves',0],
+      ['Twisted bow',0,0,0,0,70,0,0,0,0,0,0,0,1,1,85,1,'',0],
+      ['Zaryte crossbow',0,0,0,0,110,0,0,0,0,0,0,0,1,1,80,1,'',0],
+    ],
+    body: [
+      ['None',0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Leather body',0,0,0,0,5,0,0,0,13,15,12,0,1,1,1,1,'',0],
+      ['Studded body',0,0,0,-5,15,0,0,0,20,22,18,0,1,1,20,1,'',0],
+      ['Green d\'hide body',0,0,0,-15,40,0,0,0,30,35,25,0,1,1,40,1,'Dragon Slayer I',0],
+      ['Blue d\'hide body',0,0,0,-15,50,0,0,0,35,40,30,0,1,1,50,1,'',0],
+      ['Red d\'hide body',0,0,0,-15,60,0,0,0,40,45,35,0,1,1,60,1,'',0],
+      ['Black d\'hide body',0,0,0,-15,70,0,0,0,45,50,40,0,1,1,70,1,'',0],
+      ['Karil\'s leathertop',0,0,0,-15,80,0,0,0,70,80,65,0,1,1,70,1,'',0],
+      ['Void knight top',0,0,0,0,0,0,0,0,45,45,45,0,42,1,42,42,'Pest Control',0],
+      ['Armadyl chestplate',0,0,0,-15,120,0,0,0,65,75,60,1,70,1,70,1,'',0],
+      ['Crystal body',0,0,0,-15,140,0,0,0,65,75,60,0,70,1,70,1,'',0],
+    ],
+    shield: [
+      ['None',0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Unholy book',0,0,0,0,8,0,0,0,0,0,0,0,1,1,1,1,'Horror from the Deep',0],
+      ['Book of law',0,0,0,0,12,0,0,0,0,0,0,0,1,1,1,1,'Horror from the Deep',0],
+      ['Twisted buckler',0,0,0,0,18,0,10,0,58,65,60,1,75,1,75,1,'',0],
+      ['Dragonfire ward',0,0,0,0,30,0,15,0,70,80,75,1,70,1,70,1,'Dragon Slayer II',0],
+      ['Zaryte vambraces',0,0,0,0,0,0,9,0,0,0,0,0,1,1,80,1,'',0],
+    ],
+    legs: [
+      ['None',0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Leather chaps',0,0,0,0,4,0,0,0,7,8,6,0,1,1,1,1,'',0],
+      ['Studded chaps',0,0,0,-5,12,0,0,0,10,12,10,0,1,1,20,1,'',0],
+      ['Green d\'hide chaps',0,0,0,-10,30,0,0,0,20,24,18,0,1,1,40,1,'',0],
+      ['Blue d\'hide chaps',0,0,0,-10,38,0,0,0,24,29,23,0,1,1,50,1,'',0],
+      ['Red d\'hide chaps',0,0,0,-10,46,0,0,0,28,34,26,0,1,1,60,1,'',0],
+      ['Black d\'hide chaps',0,0,0,-10,54,0,0,0,33,39,30,0,1,1,70,1,'',0],
+      ['Karil\'s leatherskirt',0,0,0,-10,65,0,0,0,48,60,48,0,1,1,70,1,'',0],
+      ['Void knight robe',0,0,0,0,0,0,0,0,30,30,30,0,42,1,42,42,'Pest Control',0],
+      ['Armadyl chainskirt',0,0,0,-10,90,0,0,0,50,60,50,1,70,1,70,1,'',0],
+      ['Crystal legs',0,0,0,-10,90,0,0,0,50,60,50,0,70,1,70,1,'',0],
+    ],
+    gloves: [
+      ['None',0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Leather gloves',0,0,0,0,0,0,0,0,1,1,1,0,1,1,1,1,'',0],
+      ['Vambraces',0,0,0,-10,11,0,0,0,3,5,4,0,1,1,40,1,'',0],
+      ['Barrows gloves',12,12,12,6,6,12,0,0,12,12,12,0,1,1,1,1,'Recipe for Disaster (all subquests)',0],
+      ['Zaryte vambraces',0,0,0,-10,15,0,9,0,0,0,0,0,1,1,80,1,'',0],
+    ],
+    boots: [
+      ['None',0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Leather boots',0,0,0,0,0,0,0,0,1,1,1,0,1,1,1,1,'',0],
+      ['Snakeskin boots',0,0,0,-3,12,0,0,0,5,8,6,0,1,1,30,1,'',0],
+      ['Green d\'hide boots',0,0,0,-3,16,0,0,0,5,9,7,0,1,1,40,1,'',0],
+      ['Pegasian boots',0,0,0,-4,12,0,12,0,52,55,53,0,75,1,75,1,'',0],
+    ],
+    ring: [
+      ['None',0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Archers ring',0,0,0,0,4,0,0,0,4,4,4,0,1,1,1,1,'',0],
+      ['Archers ring (i)',0,0,0,0,8,0,0,0,8,8,8,0,1,1,1,1,'',0],
+      ['Venator ring',0,0,0,0,10,0,3,0,5,5,5,0,75,1,75,1,'',0],
+    ],
+    ammo: [
+      ['None',0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Mithril arrow',0,0,0,0,25,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Adamant arrow',0,0,0,0,31,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Rune arrow',0,0,0,0,49,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Amethyst arrow',0,0,0,0,55,0,0,0,0,0,0,0,1,1,82,1,'',0],
+      ['Dragon arrow',0,0,0,0,60,0,0,0,0,0,0,0,1,1,60,1,'',0],
+      ['Ruby dragon bolts (e)',0,0,0,0,122,0,0,0,0,0,0,0,1,1,61,1,'',0],
+      ['Diamond dragon bolts (e)',0,0,0,0,122,0,0,0,0,0,0,0,1,1,61,1,'',0],
+      ['Emerald bolts (e)',0,0,0,0,85,0,0,0,0,0,0,0,1,1,46,1,'',0],
+      ['Holy blessing',0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,'',0],
+    ]
+  },
+  magic: {
+    head: [
+      ['None',0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Wizard hat',0,0,0,2,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Blue wizard hat',0,0,0,4,0,0,0,0,0,0,0,0,1,1,1,20,'',0],
+      ['Mystic hat',0,0,0,14,0,0,0,0,0,0,0,0,1,1,1,40,'',0],
+      ['Splitbark helm',0,0,0,20,-5,0,0,0,12,14,10,0,1,1,1,40,'',0],
+      ['Void mage helm',0,0,0,0,0,0,0,0,0,0,0,0,42,1,42,42,'Pest Control',0],
+      ['Ahrim\'s hood',0,0,0,20,0,0,0,0,30,30,30,0,1,1,1,70,'',0],
+      ['Ancestral hat',0,0,0,35,-5,0,0,2,0,0,0,0,1,1,1,75,'',0],
+      ['Tormented bracelet',0,0,0,10,0,0,0,5,0,0,0,0,75,1,1,75,'',0],
+    ],
+    neck: [
+      ['None',0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Amulet of magic',0,0,0,10,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Amulet of glory',10,10,10,10,10,3,0,0,3,3,3,0,1,1,1,1,'',0],
+      ['Occult necklace',0,0,0,12,0,0,0,10,0,0,0,0,1,1,1,70,'',0],
+    ],
+    cape: [
+      ['None',0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Team cape',0,0,0,0,1,0,0,0,1,1,1,0,1,1,1,1,'',0],
+      ['Fire cape',0,0,0,1,1,4,0,0,11,11,11,2,1,1,1,1,'',0],
+      ['Imbued god cape',0,0,0,15,0,0,0,2,0,0,0,0,1,1,1,75,'Mage Arena II',0],
+    ],
+    weapon: [
+      ['None',0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Staff of air',3,3,3,17,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Fire staff',3,3,3,15,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Air battlestaff',3,3,3,30,0,0,0,0,0,0,0,0,1,1,1,30,'',0],
+      ['Mystic air staff',3,3,3,40,0,0,0,0,0,0,0,0,1,1,1,40,'',0],
+      ['Slayer staff (e)',15,3,3,12,3,0,0,0,3,3,3,0,50,1,1,50,'',0],
+      ['Trident of the swamp',0,0,0,25,0,0,0,15,0,0,0,0,1,1,1,75,'',85],
+      ['Sanguinesti staff',0,0,0,25,0,0,0,17,0,0,0,4,1,1,1,75,'',0],
+      ['Tumeken\'s shadow',0,0,0,35,0,0,0,0,0,0,0,0,1,1,1,85,'',0],
+    ],
+    body: [
+      ['None',0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Wizard robe top',0,0,0,5,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Blue wizard robe',0,0,0,9,0,0,0,0,0,0,0,0,1,1,1,20,'',0],
+      ['Mystic robe top',0,0,0,30,0,0,0,0,0,0,0,0,1,1,1,40,'',0],
+      ['Ahrim\'s robetop',0,0,0,35,0,0,0,0,50,55,50,0,1,1,1,70,'',0],
+      ['Void knight top',0,0,0,0,0,0,0,0,45,45,45,0,42,1,42,42,'Pest Control',0],
+      ['Ancestral robe top',0,0,0,35,-10,0,0,2,30,20,25,0,1,1,1,75,'',0],
+    ],
+    shield: [
+      ['None',0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Unholy book',0,0,0,8,0,0,0,0,0,0,0,0,1,1,1,1,'Horror from the Deep',0],
+      ['Mage\'s book',0,0,0,15,0,0,0,0,5,5,5,0,1,1,1,60,'',0],
+      ['Arcane spirit shield',0,0,0,20,-10,0,0,5,53,55,55,3,75,1,1,1,'',0],
+      ['Elidinis\' ward (f)',0,0,0,25,0,0,0,5,58,62,60,8,80,1,1,80,'',0],
+    ],
+    legs: [
+      ['None',0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Wizard robe',0,0,0,2,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Blue wizard robe (legs)',0,0,0,4,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Mystic robe bottom',0,0,0,20,0,0,0,0,0,0,0,0,1,1,1,40,'',0],
+      ['Ahrim\'s robeskirt',0,0,0,25,0,0,0,0,40,42,40,0,1,1,1,70,'',0],
+      ['Void knight robe',0,0,0,0,0,0,0,0,30,30,30,0,42,1,42,42,'Pest Control',0],
+      ['Ancestral robe bottom',0,0,0,25,-5,0,0,2,20,15,18,0,1,1,1,75,'',0],
+    ],
+    gloves: [
+      ['None',0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Mystic gloves',0,0,0,5,0,0,0,0,0,0,0,0,1,1,1,40,'',0],
+      ['Barrows gloves',12,12,12,6,6,12,0,0,12,12,12,0,1,1,1,1,'Recipe for Disaster (all subquests)',0],
+      ['Tormented bracelet',0,0,0,10,0,0,0,5,0,0,0,0,75,1,1,75,'',0],
+    ],
+    boots: [
+      ['None',0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Mystic boots',0,0,0,5,0,0,0,0,0,0,0,0,1,1,1,40,'',0],
+      ['Eternal boots',0,0,0,8,0,0,0,0,35,30,35,0,75,1,1,75,'',0],
+    ],
+    ring: [
+      ['None',0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Seers ring',0,0,0,6,0,0,0,0,6,6,6,0,1,1,1,1,'',0],
+      ['Seers ring (i)',0,0,0,12,0,0,0,0,12,12,12,0,1,1,1,1,'',0],
+      ['Magus ring',0,0,0,15,0,0,0,2,0,0,0,0,75,1,1,75,'',0],
+    ],
+    ammo: [
+      ['None',0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,'',0],
+      ['Holy blessing',0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,'',0],
+    ]
+  }
+};
+
+const SLOT_ORDER = ['head','cape','neck','weapon','body','shield','legs','gloves','boots','ring','ammo'];
+const SLOT_LABELS = {head:'Head',cape:'Cape',neck:'Neck',weapon:'Weapon',body:'Body',shield:'Shield/Off-hand',legs:'Legs',gloves:'Gloves',boots:'Boots',ring:'Ring',ammo:'Ammo/2H'};
+
+/** Gear names from the simulator + common endgame items for bank/worn matching. */
+const EXTRA_GEAR_NAMES = [
+  "Blessed d'hide coif", "Blessed d'hide body", "Blessed d'hide chaps", "Blessed d'hide vambraces",
+  'Slayer helmet (i)', 'Slayer helmet', 'Black mask (i)', 'Black mask',
+  'Crystal body', 'Crystal helm', 'Crystal legs', 'Bow of Faerdhinen (c)',
+  'Toxic blowpipe', 'Ranger boots',
+  'Imbued heart', 'Saturated heart', 'Soulreaper axe', 'Osmumten\'s fang',
+  'Masori body (f)', 'Masori chaps (f)', 'Masori mask (f)',
+  'Ancestral hat', 'Ancestral robe top', 'Ancestral robe bottom',
+  'Inquisitor\'s hauberk', 'Inquisitor\'s plateskirt', 'Inquisitor\'s great helm',
+  'Venator bow', 'Webweaver bow', 'Accursed sceptre', 'Ursine chainmace',
+];
+const GEAR_KEYWORDS = [
+  'abyssal whip', 'abyssal tentacle', 'dragon boots', 'primordial boots', 'pegasian boots', 'eternal boots',
+  'dragonstone boots', 'bandos chestplate', 'bandos tassets', 'armadyl helmet', 'armadyl chestplate',
+  'armadyl chainskirt', 'berserker ring', 'archers ring', 'seers ring', 'tyrannical ring', 'treasonous ring',
+  'ring of suffering', 'ultor ring', 'bellator ring', 'amulet of torture', 'necklace of anguish', 'occult necklace',
+  'amulet of fury', 'amulet of glory', 'amulet of strength', 'dragon defender', 'avernic defender',
+  'fire cape', 'infernal cape', 'assembler', 'accumulator', 'barrows gloves', 'ferocious gloves',
+  'helm of neitiznot', 'neitiznot faceguard', 'slayer helm', 'dragon scimitar', 'dragon claws',
+  'dragon warhammer', 'blade of saeldor', 'ghrazi rapier', 'scythe of vitur', 'twisted bow',
+  'toxic blowpipe', 'trident of the', 'sanguinesti', 'tumeken', 'masori', 'ancestral', 'torva', 'virtus',
+  'pernix', 'zaryte', 'crystal', 'blessed d\'hide', 'd\'hide body', 'd\'hide chaps', 'd\'hide coif',
+  'kodai wand', 'eldritch', 'harmonised', 'volatile', 'osmumten', 'tassets', 'chestplate', 'faceguard',
+  'salve amulet', 'blowpipe', 'crossbow', 'blowpipe', 'whip', 'defender', 'tyrannical', 'suffering',
+];
+const BANK_JUNK_RE = /^(coins|pure essence|air rune|water rune|earth rune|mind rune|body rune|cosmic rune|chaos rune|nature rune|law rune|death rune|blood rune|soul rune|astral rune|mist rune|dust rune|mud rune|smoke rune|steam rune|lava rune|wrath rune|sunfire rune|bronze arrow|iron arrow|steel arrow|mithril arrow|adamant arrow|runite arrow|dragon arrow|iron ore|coal|gold ore|mithril ore|adamantite ore|runite ore|logs|oak logs|willow logs|maple logs|yew logs|magic logs|redwood logs)$/i;
+
+let _gearCatalogCache = null;
+function getGearCatalog() {
+  if (_gearCatalogCache) return _gearCatalogCache;
+  const names = new Set();
+  for (const style of Object.values(GEAR)) {
+    for (const items of Object.values(style)) {
+      for (const item of items) {
+        const n = item[0];
+        if (n && n !== 'None' && n !== 'Unarmed') names.add(n.toLowerCase());
+      }
+    }
+  }
+  for (const n of EXTRA_GEAR_NAMES) names.add(n.toLowerCase());
+  _gearCatalogCache = names;
+  return names;
+}
+
+function isBankJunkItem(name) {
+  const base = name.replace(/\s*\(.*\)$/, '').trim();
+  return BANK_JUNK_RE.test(base) || BANK_JUNK_RE.test(name);
+}
+
+function isGearItemName(name) {
+  if (!name || isBankJunkItem(name)) return false;
+  const lower = name.toLowerCase();
+  const stripped = lower.replace(/\s*\([^)]*\)/g, '').trim();
+  const catalog = getGearCatalog();
+  for (const gear of catalog) {
+    if (lower === gear || stripped === gear) return true;
+    if (lower.includes(gear) || gear.includes(stripped)) return true;
+  }
+  return GEAR_KEYWORDS.some(kw => lower.includes(kw));
+}
+
+/** Merge worn + bank into owned gear list for export. */
+function buildOwnedGearReport() {
+  const byName = new Map();
+
+  for (const [slot, item] of Object.entries(wornGear)) {
+    if (!item) continue;
+    const key = item.toLowerCase();
+    byName.set(key, {
+      name: item,
+      worn: true,
+      in_bank: false,
+      quantity: 1,
+      worn_slots: [slot],
+    });
+  }
+
+  for (const row of playerBank) {
+    if (!isGearItemName(row.item_name)) continue;
+    const key = row.item_name.toLowerCase();
+    const existing = byName.get(key);
+    if (existing) {
+      existing.in_bank = true;
+      existing.quantity += row.quantity || 1;
+    } else {
+      byName.set(key, {
+        name: row.item_name,
+        worn: false,
+        in_bank: true,
+        quantity: row.quantity || 1,
+        worn_slots: [],
+      });
+    }
+  }
+
+  return [...byName.values()].sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function formatGearLocation(item) {
+  const parts = [];
+  if (item.worn) parts.push('worn' + (item.worn_slots.length ? ' (' + item.worn_slots.join(', ') + ')' : ''));
+  if (item.in_bank) parts.push('bank' + (item.quantity > 1 ? ' x' + item.quantity : ''));
+  return parts.join(' + ') || 'owned';
+}
+
+// ─── QUEST DATA ───────────────────────────────────────────────────────────────
+// [name, qp, difficulty, key_unlocks, {skill reqs}, {quest reqs}]
+const QUESTS = [
+  // Novice
+  {name:"Cook's Assistant",qp:1,diff:'novice',reward:'Can buy cooking guild items'},
+  {name:'Sheep Shearer',qp:1,diff:'novice',reward:'Crafting XP'},
+  {name:'Romeo & Juliet',qp:5,diff:'novice',reward:'Nothing significant'},
+  {name:'Rune Mysteries',qp:1,diff:'novice',reward:'Runecrafting access',skillReqs:{}},
+  {name:'The Restless Ghost',qp:1,diff:'novice',reward:'Prayer XP',skillReqs:{}},
+  {name:"Witch's Potion",qp:1,diff:'novice',reward:'Witchwood icon'},
+  {name:"Imp Catcher",qp:1,diff:'novice',reward:'Magic XP'},
+  {name:"Ernest the Chicken",qp:4,diff:'novice',reward:'Nothing major'},
+  {name:"Gunnar's Ground",qp:5,diff:'novice',reward:'Fast QP'},
+  {name:"X Marks the Spot",qp:1,diff:'novice',reward:'Pirate\'s treasure start'},
+  {name:"Misthalin Mystery",qp:1,diff:'novice',reward:'Quest XP'},
+  {name:"The Corsair Curse",qp:2,diff:'novice',reward:'Nothing major'},
+  {name:"Doric's Quest",qp:1,diff:'novice',reward:'Mining XP'},
+  {name:"Goblin Diplomacy",qp:5,diff:'novice',reward:'Crafting XP'},
+  {name:"Pirate's Treasure",qp:2,diff:'novice',reward:'Access to Karamja'},
+  {name:"Vampire Slayer",qp:3,diff:'novice',reward:'Attack XP'},
+  {name:"Witch's House",qp:4,diff:'novice',reward:'HP XP'},
+  {name:"Tree Gnome Village",qp:2,diff:'novice',reward:'Gnome glider access'},
+  {name:"The Grand Tree",qp:5,diff:'intermediate',reward:'Gnome gliders, Monkey Madness I requirement',skillReqs:{agility:25}},
+  {name:"Prince Ali Rescue",qp:3,diff:'novice',reward:'Al Kharid shortcut access'},
+  // Intermediate
+  {name:"Dragon Slayer I",qp:2,diff:'intermediate',reward:'Rune platebody, green dhide body',skillReqs:{},questReqs:["Melzar's Maze (no reqs)"]},
+  {name:"Animal Magnetism",qp:1,diff:'intermediate',reward:"Ava's devices",skillReqs:{slayer:18,crafting:19,ranged:30,woodcutting:35},questReqs:["The Restless Ghost","Ernest the Chicken","Priest in Peril"]},
+  {name:"Priest in Peril",qp:1,diff:'intermediate',reward:'Morytania access, Slayer helmet requirement'},
+  {name:"Recruitment Drive",qp:1,diff:'novice',reward:'Proselyte armour',questReqs:["Black Knights' Fortress","Druidic Ritual"]},
+  {name:"Druidic Ritual",qp:4,diff:'novice',reward:'Herblore skill access'},
+  {name:"Black Knights' Fortress",qp:3,diff:'novice',reward:'QP for Recipe for Disaster',skillReqs:{attack:12}},
+  {name:"Horror from the Deep",qp:4,diff:'intermediate',reward:'God books, Ranged offhand options',skillReqs:{agility:35},questReqs:["Alfred Grimhand's Barcrawl"]},
+  {name:"Alfred Grimhand's Barcrawl",qp:0,diff:'novice',reward:'Horror from the Deep access (miniquest)'},
+  {name:"Tai Bwo Wannai Trio",qp:2,diff:'intermediate',reward:'Dragon spear, Jogre bones',skillReqs:{cooking:30,fishing:5,agility:15}},
+  {name:"Lost City",qp:3,diff:'intermediate',reward:'Zanaris, Dragon longsword & dagger',skillReqs:{crafting:31,woodcutting:36}},
+  {name:"Merlin's Crystal",qp:6,diff:'intermediate',reward:'Excalibur, Knight Wave requirement'},
+  {name:"Scorpion Catcher",qp:1,diff:'intermediate',reward:'Kharid scorpion',skillReqs:{prayer:31}},
+  {name:"Jungle Potion",qp:1,diff:'novice',reward:'Tai Bwo requirement',skillReqs:{herblore:3}},
+  {name:"Waterfall Quest",qp:1,diff:'intermediate',reward:'Big Attack+Strength XP dump',skillReqs:{}},
+  {name:"Fight Arena",qp:2,diff:'intermediate',reward:'Decent combat XP'},
+  {name:"Hazeel Cult",qp:1,diff:'novice',reward:'Herblore XP/book'},
+  {name:"Holy Grail",qp:2,diff:'intermediate',reward:'Nothing major',skillReqs:{attack:20},questReqs:["Merlin's Crystal"]},
+  {name:"Plague City",qp:1,diff:'novice',reward:'Ardougne teleport access'},
+  {name:"Biohazard",qp:3,diff:'novice',reward:'More Ardougne access',questReqs:["Plague City"]},
+  {name:"Underground Pass",qp:5,diff:'experienced',reward:'Iban staff (100 magic)',skillReqs:{ranged:25},questReqs:["Biohazard"]},
+  {name:"Regicide",qp:3,diff:'experienced',reward:'Elf lands access, Dragon halberd',skillReqs:{agility:56},questReqs:["Underground Pass"]},
+  {name:"Roving Elves",qp:1,diff:'experienced',reward:'Crystal weapon seed, Crystal bow',skillReqs:{agility:56},questReqs:["Regicide","Waterfall Quest"]},
+  {name:"Mourning's End Part I",qp:2,diff:'experienced',reward:'Mourning ends II access',skillReqs:{thieving:50,ranged:60},questReqs:["Roving Elves","Big Chompy Bird Hunting"]},
+  {name:"Mourning's End Part II",qp:2,diff:'master',reward:'Death altar, Mourner gear',skillReqs:{agility:60,thieving:60},questReqs:["Mourning's End Part I"]},
+  {name:"Song of the Elves",qp:4,diff:'grandmaster',reward:'Crystal armour, Gauntlet access, Prifddinas',skillReqs:{agility:70,construction:70,farming:70,herblore:70,hunter:70,mining:70,smithing:70,woodcutting:70},questReqs:["Mourning's End Part II"]},
+  // Desert & magic
+  {name:"Shilo Village",qp:2,diff:'intermediate',reward:'Gem mine, Shilo fishing',skillReqs:{crafting:20},questReqs:["Jungle Potion"]},
+  {name:"Wanted!",qp:1,diff:'intermediate',reward:'Proselyte armour upgrade',skillReqs:{slayer:32},questReqs:["Recruitment Drive","Black Knights' Fortress","Plague City","The Lost Tribe","Rune Mysteries"]},
+  {name:"The Lost Tribe",qp:1,diff:'intermediate',reward:'Goblin mail, Ores from Mistag',skillReqs:{agility:13,thieving:13,mining:17}},
+  {name:"Making History",qp:3,diff:'novice',reward:'Outpost teleport',questReqs:["Priest in Peril","The Restless Ghost"]},
+  {name:"Desert Treasure I",qp:3,diff:'master',reward:'Ancient Magicks, Barrows gloves step',skillReqs:{magic:50,thieving:53,firemaking:50,slayer:10},questReqs:["Priest in Peril","Waterfall Quest","Biohazard","Temple of Ikov","The Dig Site","The Tourist Trap","Troll Stronghold","Monkey Madness I"]},
+  {name:"Desert Treasure II - The Fallen Empire",qp:5,diff:'grandmaster',reward:'Awakened bosses, Virtus, Tumeken access',skillReqs:{magic:75,firemaking:75,thieving:70,herblore:62,runecraft:60,construction:60},questReqs:["Desert Treasure I","Secrets of the North","Enakhra's Lament","Temple of the Eye","The Garden of Death","Below Ice Mountain","His Faithful Servants"]},
+  {name:"Secrets of the North",qp:2,diff:'master',reward:'Mahjarrat storyline, Weiss prison',questReqs:["Making Friends with My Arm"]},
+  {name:"Making Friends with My Arm",qp:2,diff:'master',reward:'Weiss access, goutweed farming',skillReqs:{firemaking:66,agility:68,mining:72,construction:35},questReqs:["My Arm's Big Adventure"]},
+  {name:"Enakhra's Lament",qp:2,diff:'experienced',reward:'Camulet',skillReqs:{magic:39,prayer:43,firemaking:45,crafting:50}},
+  {name:"Temple of the Eye",qp:1,diff:'intermediate',reward:'Guardians of the Rift',skillReqs:{runecraft:10},questReqs:["Rune Mysteries","Enter the Abyss"]},
+  {name:"The Garden of Death",qp:1,diff:'intermediate',reward:'Twisted Tales — ancient language',skillReqs:{farming:20}},
+  {name:"Below Ice Mountain",qp:1,diff:'novice',reward:'Ruins of Camdozaal'},
+  {name:"His Faithful Servants",qp:0,diff:'experienced',reward:'Barrows crypt map, Prayer XP lamp'},
+  {name:"Enter the Abyss",qp:1,diff:'novice',reward:'Access to the Abyss',questReqs:["Rune Mysteries"]},
+  {name:"Monkey Madness I",qp:3,diff:'experienced',reward:'Dragon scimitar (best slash weapon pre-70 atk)',skillReqs:{},questReqs:["The Grand Tree","Tree Gnome Village"]},
+  {name:"Monkey Madness II",qp:4,diff:'grandmaster',reward:'Zenyte jewellery access (BIS amulet/ring/bracelet/earring)',skillReqs:{crafting:70,firemaking:60,hunter:60,agility:55,thieving:55,slayer:69},questReqs:["Monkey Madness I","Enlightened Journey","Eagle's Peak","Watchtower","Bear Your Soul"]},
+  {name:"The Tourist Trap",qp:2,diff:'intermediate',reward:'Dart tips, Desert Treasure req',skillReqs:{smithing:20}},
+  {name:"Troll Stronghold",qp:1,diff:'intermediate',reward:'Desert Treasure req, Troll area',skillReqs:{agility:15},questReqs:["Death Plateau"]},
+  {name:"Death Plateau",qp:1,diff:'novice',reward:'Climbing boots'},
+  {name:"Temple of Ikov",qp:1,diff:'intermediate',reward:'Desert Treasure req',skillReqs:{thieving:42,ranged:40}},
+  {name:"The Dig Site",qp:2,diff:'intermediate',reward:'Dig Site area',skillReqs:{agility:10,herblore:10,thieving:25}},
+  // Lunar, GWD
+  {name:"Lunar Diplomacy",qp:2,diff:'experienced',reward:'Lunar Magic spellbook',skillReqs:{magic:65,crafting:61,mining:60,firemaking:49,woodcutting:55,defence:40},questReqs:["The Fremennik Trials"]},
+  {name:"Dream Mentor",qp:2,diff:'experienced',reward:'Full Lunar spellbook',skillReqs:{combat:85,herblore:15},questReqs:["Lunar Diplomacy","Eadgar's Ruse"]},
+  {name:"The Fremennik Trials",qp:3,diff:'intermediate',reward:'Fremennik gear, Lunar Diplomacy req'},
+  {name:"The Fremennik Isles",qp:1,diff:'experienced',reward:'Helm of Neitiznot (BIS melee helm pre-75)',skillReqs:{construction:20,agility:40},questReqs:["The Fremennik Trials"]},
+  {name:"The Fremennik Exiles",qp:3,diff:'master',reward:'Neitiznot faceguard (best melee helm)',skillReqs:{crafting:65,smithing:60,slayer:60,runecraft:55},questReqs:["The Fremennik Isles","Heroes' Quest","Lunar Diplomacy","Mountain Daughter"]},
+  {name:"Heroes' Quest",qp:1,diff:'experienced',reward:'Fire cape step, Crystal key access',skillReqs:{cooking:53,fishing:53,herblore:25,mining:50,agility:55},questReqs:["Shield of Arrav","Lost City","Merlin's Crystal","Dragon Slayer I","Druidic Ritual"]},
+  {name:"Legends' Quest",qp:4,diff:'master',reward:'Legend\'s Guild, Cape of Legends',skillReqs:{agility:50,crafting:50,herblore:45,magic:56,mining:52,prayer:42,smithing:52,strength:50,thieving:50,woodcutting:50},questReqs:["Family Crest"]},
+  {name:"Family Crest",qp:1,diff:'experienced',reward:'Gauntlets (cooking/goldsmith/chaos)',skillReqs:{magic:59,mining:40,smithing:40,crafting:40}},
+  // God Wars
+  {name:"Troll Romance",qp:2,diff:'intermediate',reward:'Nothing major',skillReqs:{agility:28},questReqs:["Troll Stronghold"]},
+  {name:"Eadgar's Ruse",qp:1,diff:'intermediate',reward:'Trollheim teleport, Dream Mentor req',skillReqs:{herblore:31},questReqs:["Troll Stronghold","Druidic Ritual"]},
+  {name:"My Arm's Big Adventure",qp:1,diff:'intermediate',reward:'Farming XP',skillReqs:{farming:29,woodcutting:10},questReqs:["Eadgar's Ruse","Jungle Potion"]},
+  {name:"Swan Song",qp:2,diff:'master',reward:'Piscatoris fishing colony',skillReqs:{magic:66,cooking:62,fishing:62,smithing:45,firemaking:42,crafting:40},questReqs:["One Small Favour","Heroes' Quest"]},
+  {name:"Recipe for Disaster",qp:10,diff:'master',reward:'Barrows gloves (BIS gloves), Culinaromancer chest',skillReqs:{cooking:70},questReqs:["Cook's Assistant","many subquests"]},
+  {name:"Dragon Slayer II",qp:5,diff:'grandmaster',reward:'Ava\'s assembler, Dragonfire ward, Dragon platebody',skillReqs:{agility:60,magic:75,smithing:70,mining:68,crafting:62,prayer:60,woodcutting:60,runecraft:50,firemaking:50},questReqs:["Legends' Quest","Dream Mentor","Animal Magnetism","Ghosts Ahoy","Bone Voyage","Client of Kourend"]},
+  {name:"Sins of the Father",qp:2,diff:'master',reward:'Blisterwood flail, Darkmeyer access, Vyrewatch',skillReqs:{woodcutting:62,fletching:60,crafting:56,agility:52,attack:50,slayer:50,magic:49},questReqs:["Vampyre Slayer storyline"]},
+  {name:"Client of Kourend",qp:1,diff:'novice',reward:'Hosidius / Kourend favor access'},
+  {name:"Bone Voyage",qp:1,diff:'intermediate',reward:'Fossil Island access, Hunter/Farming training',questReqs:["Client of Kourend"]},
+  {name:"Ghosts Ahoy",qp:2,diff:'intermediate',reward:'Ectofuntus, Morytania teleport',skillReqs:{agility:25,cooking:20},questReqs:["Priest in Peril","The Restless Ghost"]},
+  {name:"A Tail of Two Cats",qp:2,diff:'novice',reward:'Nothing major',questReqs:["Icthlarin's Little Helper"]},
+  {name:"Icthlarin's Little Helper",qp:2,diff:'intermediate',reward:'Sophanem access'},
+  {name:"Contact!",qp:1,diff:'experienced',reward:'Tier 3 Kourend favour',skillReqs:{},questReqs:["Icthlarin's Little Helper"]},
+  {name:"Mourner Gear",qp:0,diff:'novice',reward:'(part of Mourning\'s Ends)'},
+  {name:"Big Chompy Bird Hunting",qp:2,diff:'novice',reward:'Ogre bow',skillReqs:{ranged:30,cooking:30,crafting:5,fletching:5}},
+  {name:"Watchtower",qp:4,diff:'intermediate',reward:'Ogre city access',skillReqs:{magic:15,thieving:15,agility:25,herblore:14,mining:40}},
+  {name:"Enlightened Journey",qp:1,diff:'intermediate',reward:'Gnome glider extended route',skillReqs:{farming:30,firemaking:20,crafting:36}},
+  {name:"Eagle's Peak",qp:2,diff:'novice',reward:'Hunter skill access',skillReqs:{hunter:1}},
+  {name:"Mountain Daughter",qp:2,diff:'intermediate',reward:'Bear head slot item',skillReqs:{agility:20}},
+  {name:"Shield of Arrav",qp:1,diff:'novice',reward:'Phoenix crossbow or Black arm gang'},
+].filter((q,i,a) => a.findIndex(x=>x.name===q.name)===i); // dedup
+
+/** Legacy/wiki alias names — skip when building the 180-quest journal list. */
+const QUEST_DISPLAY_SKIP = new Set([
+  'Dragon Slayer', 'Desert Treasure', 'The Digsite',
+  "Mourning's Ends Part I", "Mourning's Ends Part II",
+  'Rag and Bone Man', 'Vampire Slayer', "Black Knight's Fortress",
+  'Making Friends With My Arm', 'Forgettable Tale of a Drunken Dwarf',
+]);
+
+/** Map journal / shorthand names → canonical quest key in quest-reqs-data.json */
+const QUEST_DETAILS_ALIASES = {
+  'Desert Treasure II': 'Desert Treasure II - The Fallen Empire',
+  'Making Friends With My Arm': 'Making Friends with My Arm',
+  'The Digsite': 'The Dig Site',
+  'Dragon Slayer': 'Dragon Slayer I',
+  'Desert Treasure': 'Desert Treasure I',
+};
+
+/** Manual fixes where wiki parser misses reqs (merged on top of wiki data). */
+const QUEST_REQ_OVERRIDES = {
+  'Biohazard': { questReqs: ['Plague City'] },
+  'Plague City': { questReqs: [] },
+  'Monkey Madness I': { questReqs: ['The Grand Tree', 'Tree Gnome Village'] },
+  'Below Ice Mountain': { questReqs: [] },
+};
+
+const QUEST_DETAILS = Object.fromEntries(QUESTS.map(q => [q.name, q]));
+/** Populated from quest-reqs-data.json (generated by scripts/gen-quest-reqs.js). */
+let QUEST_REQS = {};
+let questReqsLoaded = false;
+let _journalQuestCache = null;
+
+function resolveQuestKey(name) {
+  const n = normalizeQuestName(name);
+  return QUEST_DETAILS_ALIASES[n] || n;
+}
+
+async function loadQuestReqs() {
+  try {
+    const res = await fetch('quest-reqs-data.json');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    QUEST_REQS = data.quests || {};
+    questReqsLoaded = true;
+    _journalQuestCache = null;
+  } catch (e) {
+    console.warn('quest-reqs-data.json not loaded — run: node scripts/gen-quest-reqs.js', e);
+  }
+}
+
+function getQuestDetails(name) {
+  const key = resolveQuestKey(name);
+  const wiki = QUEST_REQS[key];
+  const override = QUEST_REQ_OVERRIDES[key];
+  const legacy = QUEST_DETAILS[key] || QUEST_DETAILS[QUEST_DETAILS_ALIASES[normalizeQuestName(name)]];
+
+  if (wiki || override) {
+    return {
+      name: key,
+      qp: getQuestQp(name),
+      diff: wiki?.diff || legacy?.diff || 'intermediate',
+      reward: legacy?.reward || '',
+      skillReqs: { ...(wiki?.skillReqs || legacy?.skillReqs || {}), ...(override?.skillReqs || {}) },
+      questReqs: override?.questReqs || wiki?.questReqs || legacy?.questReqs || [],
+    };
+  }
+  return legacy || null;
+}
+
+/** All ~180 journal quests merged with hand-maintained metadata where available. */
+function getJournalQuestList() {
+  if (_journalQuestCache) return _journalQuestCache;
+  const names = new Set();
+  for (const name of Object.keys(QUEST_QP)) {
+    const canonical = normalizeQuestName(name);
+    if (!isJournalQuest(canonical) || QUEST_DISPLAY_SKIP.has(canonical)) continue;
+    names.add(canonical);
+  }
+  _journalQuestCache = [...names].sort((a, b) => a.localeCompare(b)).map(name => {
+    const d = getQuestDetails(name);
+    return {
+      name,
+      qp: getQuestQp(name),
+      diff: d?.diff || 'intermediate',
+      reward: d?.reward || '',
+      skillReqs: d?.skillReqs || {},
+      questReqs: d?.questReqs || [],
+    };
+  });
+  return _journalQuestCache;
+}
+
+// ─── BOSS DATA ────────────────────────────────────────────────────────────────
+const BOSSES = [
+  {name:'Giant Mole',tier:'early',reqs:{},questReqs:[],drops:'Baby mole, mole skin'},
+  {name:'King Black Dragon',tier:'early',reqs:{},questReqs:[],drops:'KBD heads, Draconic visage'},
+  {name:'Dagannoth Kings',tier:'mid',reqs:{combat:80},questReqs:[],drops:'Berserker/Archers/Seers/Warrior ring'},
+  {name:'Kalphite Queen',tier:'mid',reqs:{},questReqs:[],drops:'Dragon chainbody, Jar of sand'},
+  {name:'Chaos Elemental',tier:'mid',reqs:{},questReqs:[],drops:'Dragon 2h sword, Dragon pickaxe'},
+  {name:'TzTok-Jad (Fire Cape)',tier:'mid',reqs:{ranged:60},questReqs:[],drops:'Fire cape (BIS melee cape)'},
+  {name:'Barrows Brothers',tier:'mid',reqs:{magic:50},questReqs:["Priest in Peril"],drops:'Barrows armour sets'},
+  {name:'Corporeal Beast',tier:'mid',reqs:{},questReqs:[],drops:'Spectral/Arcane/Elysian spirit shield'},
+  {name:'Saradomin (GWD)',tier:'gwd',reqs:{agility:70},questReqs:[],drops:'Saradomin sword, Armadyl crossbow'},
+  {name:'Armadyl (GWD)',tier:'gwd',reqs:{ranged:70,agility:70},questReqs:[],drops:'Armadyl armour (BIS ranged)'},
+  {name:'Bandos (GWD)',tier:'gwd',reqs:{strength:70,defence:65,agility:70},questReqs:[],drops:'Bandos armour (strong melee)'},
+  {name:'Zamorak (GWD)',tier:'gwd',reqs:{agility:70},questReqs:[],drops:'Staff of the dead, Zuriels'},
+  {name:'Nex',tier:'gwd',reqs:{agility:70,ranged:80},questReqs:[],drops:'Zaryte bow, Torva, Virtus, Pernix'},
+  {name:'Cerberus',tier:'slayer',reqs:{slayer:91},questReqs:[],drops:'Primordial/Pegasian/Eternal crystals'},
+  {name:'Thermonuclear Smoke Devil',tier:'slayer',reqs:{slayer:93},questReqs:[],drops:'Occult necklace'},
+  {name:'Abyssal Sire',tier:'slayer',reqs:{slayer:85},questReqs:[],drops:'Abyssal dagger, Abyssal bludgeon'},
+  {name:'Kraken',tier:'slayer',reqs:{slayer:87},questReqs:[],drops:'Trident of the seas, Jar of dirt'},
+  {name:'Grotesque Guardians',tier:'slayer',reqs:{slayer:75},questReqs:[],drops:'Granite gloves/hammer/ring, Black tourmaline core'},
+  {name:'Alchemical Hydra',tier:'slayer',reqs:{slayer:95},questReqs:["Dragon Slayer II"],drops:'Ferocious gloves, Hydra tail, Brimstone ring'},
+  {name:'Zulrah',tier:'advanced',reqs:{},questReqs:["Regicide"],drops:'Tanzanite fang, Magic fang, Serpentine visage'},
+  {name:'Vorkath',tier:'advanced',reqs:{},questReqs:["Dragon Slayer II"],drops:'Dragonbone necklace, Superior dragon bones, Draconic visage'},
+  {name:'Corrupted Gauntlet',tier:'advanced',reqs:{agility:70},questReqs:["Song of the Elves"],drops:'Youngllef, Crystal weapon seeds, Blade of Saeldor'},
+  {name:'Theatre of Blood',tier:'raids',reqs:{combat:100},questReqs:[],drops:'Scythe of Vitur, Ghrazi rapier, Justiciar, Avernic defender'},
+  {name:'Chambers of Xeric',tier:'raids',reqs:{combat:100},questReqs:[],drops:'Twisted bow, Kodai wand, Dragon claws, Elder maul'},
+  {name:'Tombs of Amascut',tier:'raids',reqs:{combat:100},questReqs:["Desert Treasure II"],drops:"Tumeken's shadow, Osmumten's fang, Masori armour"},
+  {name:'Phosani\'s Nightmare',tier:'advanced',reqs:{combat:110},questReqs:[],drops:'Nightmare staff, Inquisitor\'s armour'},
+  {name:'TzKal-Zuk (Infernal Cape)',tier:'endgame',reqs:{combat:100},questReqs:[],drops:'Infernal cape (BIS melee cape)'},
+  {name:'Phantom Muspah',tier:'advanced',reqs:{},questReqs:["Secrets of the North"],drops:'Saturated heart, Chromium ingots'},
+  {name:'Whisperer',tier:'dt2-bosses',reqs:{},questReqs:["Desert Treasure II"],drops:'Virtus mask/top/bottom, Ancient sceptre'},
+  {name:'Leviathan',tier:'dt2-bosses',reqs:{},questReqs:["Desert Treasure II"],drops:'Ancient shard, Bellator ring'},
+  {name:'Duke Sucellus',tier:'dt2-bosses',reqs:{},questReqs:["Desert Treasure II"],drops:'Magus ring, Osmumten\'s fang (shard)'},
+  {name:'Vardorvis',tier:'dt2-bosses',reqs:{},questReqs:["Desert Treasure II"],drops:'Ultor ring, Virtus pieces'},
+];
+
+const TIER_LABELS = {
+  early:'Early Game',
+  mid:'Mid Game',
+  gwd:'God Wars Dungeon',
+  slayer:'Slayer Bosses',
+  advanced:'Advanced Content',
+  raids:'Raids',
+  'dt2-bosses':'Desert Treasure II Bosses',
+  endgame:'End Game'
+};
+
+// ─── API ──────────────────────────────────────────────────────────────────────
+
+/** Return RSN to load — hosted mode uses linked characters only. */
+async function getActiveRSN(preferredRsn) {
+  if (!isSupabaseConfigured()) return null;
+
+  if (HOSTED_MODE) {
+    const linked = await getLinkedCharacters();
+    if (!linked.length) return null;
+    if (preferredRsn && linked.some(r => r.toLowerCase() === preferredRsn.toLowerCase())) {
+      return linked.find(r => r.toLowerCase() === preferredRsn.toLowerCase());
+    }
+    return linked[0];
+  }
+
+  if (preferredRsn) {
+    const q = encodeURIComponent(preferredRsn);
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/players?rsn=eq.${q}&select=rsn,last_synced&limit=1`,
+      { headers: SB_HEADERS }
+    );
+    if (res.ok) {
+      const rows = await res.json();
+      if (rows[0]?.rsn) return rows[0].rsn;
+    }
+  }
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/players?select=rsn,last_synced&order=last_synced.desc&limit=1`,
+    { headers: SB_HEADERS }
+  );
+  if (!res.ok) return null;
+  const rows = await res.json();
+  return rows[0]?.rsn || null;
+}
+
+function applyPlayerPayload(rsn, skills, quests, equip, bank, playerRow) {
+  playerSkills = {};
+  for (const row of skills) {
+    playerSkills[row.skill] = { level: row.level, xp: row.xp };
+  }
+  if (quests?.length) applyQuestsFromSync(quests);
+
+  syncedQuestPoints = null;
+  lastSynced = null;
+  if (playerRow) {
+    const qp = playerRow.quest_points;
+    if (qp != null && !Number.isNaN(Number(qp))) syncedQuestPoints = Number(qp);
+    if (playerRow.last_synced) lastSynced = playerRow.last_synced;
+  }
+
+  wornGear = {};
+  equipSynced = equip.length > 0;
+  if (equip.length) {
+    for (const row of equip) wornGear[row.slot_name] = row.item_name;
+    populateEquipmentFromDB(equip);
+  }
+
+  playerBank = bank.filter(r => r.item_id !== 995 && r.item_name !== 'Coins');
+  bankSynced = bank.length > 0;
+  const coins = bank.find(r => r.item_id === 995 || r.item_name === 'Coins');
+  if (coins) {
+    playerGold = coins.quantity;
+    localStorage.setItem('osrs_gold', String(playerGold));
+  }
+
+  playerRSN = rsn;
+  return skills.length;
+}
+
+async function fetchFromLocalhostSession(sessionToken) {
+  if (!API_BASE_URL) throw new Error('API not configured');
+  const res = await fetch(`${API_BASE_URL}/localhost-read?session=${encodeURIComponent(sessionToken)}`);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || `Session read failed (${res.status})`);
+  }
+  const data = await res.json();
+  const count = applyPlayerPayload(
+    data.rsn,
+    data.skills || [],
+    data.quests || [],
+    data.equipment || [],
+    data.bank || [],
+    data.player
+  );
+  if (!count) throw new Error('No synced data yet — play with the plugin running.');
+  return count;
+}
+
+/** Public profile — skills & quests only (Wise Old Man style). */
+async function fetchPublicProfile(rsn) {
+  if (!isSupabaseConfigured()) throw new Error('Journal not configured.');
+  const q = encodeURIComponent(rsn);
+  const headers = SB_HEADERS;
+  const [sRes, qRes, pRes] = await Promise.all([
+    fetch(`${SUPABASE_URL}/rest/v1/player_skills?rsn=eq.${q}&select=skill,level,xp`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/player_quests?rsn=eq.${q}&select=quest_name,state`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/players?rsn=eq.${q}&select=quest_points,last_synced`, { headers }),
+  ]);
+  if (!sRes.ok) throw new Error(`Could not load profile (${sRes.status})`);
+  const skills = await sRes.json();
+  if (!skills.length) throw new Error('No public profile for this player. They may be private or not synced yet.');
+  const quests = qRes.ok ? await qRes.json() : [];
+  const players = pRes.ok ? await pRes.json() : [];
+  viewingOwnCharacter = false;
+  return applyPlayerPayload(rsn, skills, quests, [], [], players[0]);
+}
+
+/** Full sync data — own characters only (includes bank & gear). */
+async function fetchFromSupabase(rsn) {
+  if (!isSupabaseConfigured()) {
+    throw new Error('Journal not configured. Open from the RuneLite plugin or check your setup.');
+  }
+  if (HOSTED_MODE && !(await isOwnCharacter(rsn))) {
+    return fetchPublicProfile(rsn);
+  }
+
+  const headers = HOSTED_MODE ? await getAuthHeaders() : SB_HEADERS;
+  const q = encodeURIComponent(rsn);
+  const [sRes, qRes, eRes, bRes, pRes] = await Promise.all([
+    fetch(`${SUPABASE_URL}/rest/v1/player_skills?rsn=eq.${q}&select=skill,level,xp`, {headers}),
+    fetch(`${SUPABASE_URL}/rest/v1/player_quests?rsn=eq.${q}&select=quest_name,state`, {headers}),
+    fetch(`${SUPABASE_URL}/rest/v1/player_equipment?rsn=eq.${q}&select=slot_id,slot_name,item_id,item_name`, {headers}),
+    fetch(`${SUPABASE_URL}/rest/v1/player_bank?rsn=eq.${q}&select=item_id,item_name,quantity`, {headers}),
+    fetch(`${SUPABASE_URL}/rest/v1/players?rsn=eq.${q}&select=quest_points,last_synced`, {headers}),
+  ]);
+  if (!sRes.ok) throw new Error(`Could not load character (${sRes.status})`);
+  const skills = await sRes.json();
+  if (!skills.length) throw new Error('No data yet — log in with the OSRS Journal plugin running.');
+  const quests = await qRes.json();
+  const equip = await eRes.json();
+  const bank = bRes.ok ? await bRes.json() : [];
+  const players = pRes.ok ? await pRes.json() : [];
+  viewingOwnCharacter = true;
+
+  return applyPlayerPayload(rsn, skills, quests, equip, bank, players[0]);
+}
+
+/** Try to match synced equipment item names against gear dropdowns. */
+function populateEquipmentFromDB(equipRows) {
+  for (const row of equipRows) {
+    const slot = row.slot_name;
+    for (const style of ['melee','ranged','magic']) {
+      const key = style + '_' + slot;
+      const gearList = GEAR[style]?.[slot];
+      if (!gearList) continue;
+      const idx = gearList.findIndex(item => item[0].toLowerCase() === row.item_name.toLowerCase());
+      if (idx >= 0) {
+        equipment[key] = idx;
+        break;
+      }
+    }
+  }
+  localStorage.setItem('osrs_equip', JSON.stringify(equipment));
+}
+
+/** Fetch from WOM as fallback. */
+async function fetchFromWOM(rsn) {
+  const url = `https://api.wiseoldman.net/v2/players/${encodeURIComponent(rsn)}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('Not found on Wise Old Man — try updating at wiseoldman.net first');
+  const data = await res.json();
+  const snap = data.latestSnapshot?.data?.skills;
+  if (!snap) throw new Error('No snapshot data available on WOM');
+  playerSkills = {};
+  for (const [k,v] of Object.entries(snap)) {
+    playerSkills[k] = { level: v.level || 1, xp: v.experience || 0 };
+  }
+}
+
+/** Main fetch button handler — tries Supabase first, falls back to WOM. */
+async function fetchPlayer(rsnOverride, options = {}) {
+  const rsn = (rsnOverride || document.getElementById('rsnInput').value).trim();
+  if (!rsn) return;
+  document.getElementById('rsnInput').value = rsn;
+  const btn = document.getElementById('fetchBtn');
+  const msg = document.getElementById('statusMsg');
+  btn.disabled = true;
+  if (!options.silent) {
+    msg.textContent = 'Fetching...';
+    msg.className = 'status-msg';
+  }
+
+  try {
+    let source = '';
+    try {
+      const count = await fetchFromSupabase(rsn);
+      if (viewingOwnCharacter) {
+        source = `⚡ Live sync (${count} skills)`;
+        dataSource = 'supabase';
+      } else {
+        source = `📊 Public profile (${count} skills) — bank & gear hidden`;
+        dataSource = 'public';
+      }
+    } catch(sbErr) {
+      // Not in our DB yet — fall back to WOM (skills only)
+      msg.textContent = 'Not in database, trying Wise Old Man...';
+      await fetchFromWOM(rsn);
+      syncedQuestPoints = null;
+      lastSynced = null;
+      equipSynced = false;
+      wornGear = {};
+      playerBank = [];
+      bankSynced = false;
+      questsInProgress = new Set();
+      source = '📊 Skills only from Wise Old Man';
+      dataSource = 'wom';
+    }
+    localStorage.setItem('osrs_rsn', rsn);
+    localStorage.setItem('osrs_skills', JSON.stringify(playerSkills));
+    playerRSN = rsn;
+    renderStats();
+    renderQuests();
+    renderSyncedEquipment();
+    renderEquipDoll();
+    renderBosses();
+    renderDashboard();
+    updateSyncBanner();
+    updateCombatLevel();
+    refreshExport();
+    document.getElementById('statsHint').style.display = 'none';
+    if (!options.silent) {
+      msg.textContent = `✓ ${source}`;
+      msg.className = 'status-msg ok';
+    }
+  } catch(e) {
+    if (!options.silent) {
+      msg.textContent = e.message;
+      msg.className = 'status-msg error';
+    }
+  }
+  btn.disabled = false;
+}
+
+function getCombatLevel() {
+  const s = playerSkills;
+  if (!s.attack) return 3;
+  const a=s.attack.level||1, str=s.strength.level||1, def=s.defence.level||1;
+  const hp=s.hitpoints.level||10, pray=s.prayer.level||1;
+  const rang=s.ranged.level||1, mag=s.magic.level||1;
+  const base = 0.25*(def+hp+Math.floor(pray/2));
+  const melee = 0.325*(a+str);
+  const rangeB = 0.325*(Math.floor(rang*3/2));
+  const magB = 0.325*(Math.floor(mag*3/2));
+  return Math.floor(base + Math.max(melee, rangeB, magB));
+}
+
+function updateCombatLevel() {
+  const cb = getCombatLevel();
+  document.getElementById('cbLevel').textContent = cb;
+  document.getElementById('cbBadge').style.display = playerSkills.attack ? '' : 'none';
+}
+
+function formatGold(n) {
+  if (n >= 1e9) return (n/1e9).toFixed(2) + 'B';
+  if (n >= 1e6) return (n/1e6).toFixed(2) + 'M';
+  if (n >= 1e3) return (n/1e3).toFixed(0) + 'K';
+  return String(n);
+}
+
+function parseGoldInput(str) {
+  if (!str) return 0;
+  const s = str.trim().toUpperCase().replace(/,/g,'');
+  const m = s.match(/^([\d.]+)\s*([KMB])?$/);
+  if (!m) return parseInt(s,10) || 0;
+  const n = parseFloat(m[1]);
+  const mult = {K:1e3,M:1e6,B:1e9}[m[2]] || 1;
+  return Math.round(n * mult);
+}
+
+function saveGoldOverride() {
+  if (bankSynced) return;
+  playerGold = parseGoldInput(document.getElementById('goldInput').value);
+  localStorage.setItem('osrs_gold', String(playerGold));
+  renderDashboard();
+  refreshExport();
+}
+
+function formatSyncAge(iso) {
+  if (!iso) return '';
+  const ms = Date.now() - new Date(iso).getTime();
+  if (ms < 60000) return 'just now';
+  if (ms < 3600000) return Math.floor(ms / 60000) + 'm ago';
+  if (ms < 86400000) return Math.floor(ms / 3600000) + 'h ago';
+  return Math.floor(ms / 86400000) + 'd ago';
+}
+
+function updateSyncBanner() {
+  const el = document.getElementById('syncBanner');
+  if (dataSource === 'wom') {
+    el.className = 'sync-banner warn';
+    el.textContent = '⚠ Wise Old Man fallback — skills only. Quests, gear, gold, and exports need the RuneLite OSRS Journal plugin.';
+    return;
+  }
+  if (dataSource === 'supabase') {
+    const age = formatSyncAge(lastSynced);
+    el.className = 'sync-banner ok';
+    el.textContent = age
+      ? `✓ Live RuneLite sync for ${playerRSN} — last updated ${age}`
+      : `✓ Live RuneLite sync for ${playerRSN}`;
+    return;
+  }
+  el.className = 'sync-banner hidden';
+  el.textContent = '';
+}
+
+function getDominantStyle() {
+  const melee = (playerSkills.attack?.level||1) + (playerSkills.strength?.level||1);
+  const ranged = (playerSkills.ranged?.level||1) * 1.5;
+  const magic = (playerSkills.magic?.level||1) * 1.5;
+  if (ranged >= melee && ranged >= magic) return 'ranged';
+  if (magic >= melee && magic >= ranged) return 'magic';
+  return 'melee';
+}
+
+function renderDashboard() {
+  const dash = document.getElementById('dashboard');
+  if (!playerSkills.attack) { dash.classList.remove('visible'); return; }
+  dash.classList.add('visible');
+
+  const cb = getCombatLevel();
+  const style = getDominantStyle();
+  const totalLvl = playerSkills.overall?.level || Object.entries(playerSkills).filter(([k])=>k!=='overall').reduce((a,[,v])=>a+(v.level||1),0);
+  const totalXp = Object.values(playerSkills).reduce((a,v)=>a+(v.xp||0),0);
+  const { qp, journalDone, journalTotal } = computeQuestStats();
+
+  document.getElementById('dashRsn').textContent = playerRSN || '—';
+  const avatar = document.getElementById('profileAvatar');
+  if (avatar) avatar.textContent = playerRSN ? playerRSN.charAt(0).toUpperCase() : '?';
+  const syncAge = formatSyncAge(lastSynced);
+  document.getElementById('dashSync').innerHTML = dataSource === 'supabase'
+    ? `<span class="live-dot"></span>Live sync${syncAge ? ' · ' + syncAge : ''}`
+    : (dataSource === 'wom' ? 'Skills only (WOM)' : 'Not synced');
+  document.getElementById('dashCb').textContent = cb;
+  document.getElementById('dashStyle').textContent = 'Main: ' + style.charAt(0).toUpperCase() + style.slice(1);
+  document.getElementById('dashTotal').textContent = totalLvl;
+  document.getElementById('dashTotalXp').textContent = formatGold(totalXp) + ' total XP';
+  document.getElementById('dashQp').textContent = qp;
+  document.getElementById('dashQuests').textContent = journalDone + ' / ' + journalTotal + ' quests';
+  const goldInput = document.getElementById('goldInput');
+  goldInput.value = formatGold(playerGold);
+  goldInput.readOnly = bankSynced;
+  goldInput.title = bankSynced ? 'Synced from bank — open bank in-game to update' : 'Enter GP manually or open bank in-game to sync';
+  document.getElementById('dashGoldNote').textContent = bankSynced
+    ? 'Synced from bank' : (playerGold ? 'Manual entry' : 'Open bank in-game to sync');
+}
+
+// ─── STATS RENDER ─────────────────────────────────────────────────────────────
+const SKILL_GROUPS = {
+  combat: ['overall','attack','strength','defence','hitpoints','prayer','magic','ranged','slayer'],
+  gathering: ['mining','fishing','woodcutting','hunter','farming'],
+  artisan: ['herblore','cooking','smithing','crafting','fletching','firemaking','runecraft'],
+  support: ['agility','thieving','construction']
+};
+
+function renderStats() {
+  for (const [group, skills] of Object.entries(SKILL_GROUPS)) {
+    const grid = document.getElementById('grid-'+group);
+    grid.innerHTML = skills.map(sk => {
+      const def = SKILL_DEFS[sk] || {icon:'📊'};
+      const d = playerSkills[sk] || {level:1, xp:0};
+      const lvl = sk === 'overall' ? (d.level || 1) : (d.level || 1);
+      const xp = d.xp || 0;
+      const prog = sk === 'overall' ? Math.round(lvl/2277*100) : levelProgress(xp, lvl);
+      const xpStr = xp > 1000000 ? (xp/1000000).toFixed(2)+'m xp' : xp > 1000 ? (xp/1000).toFixed(1)+'k xp' : xp+' xp';
+      return `<div class="skill-card${sk === 'overall' ? ' skill-overall' : ''}">
+        <div class="skill-icon">${def.icon}</div>
+        <div class="skill-info">
+          <div class="skill-name">${sk}</div>
+          <div class="skill-level">${lvl}</div>
+          <div class="skill-xp">${xpStr}</div>
+          <div class="skill-bar"><div class="skill-bar-fill" style="width:${prog}%"></div></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+}
+
+// ─── EQUIPMENT ────────────────────────────────────────────────────────────────
+function renderSyncedEquipment() {
+  const grid = document.getElementById('equipSyncGrid');
+  const hint = document.getElementById('equipSyncHint');
+  const badge = document.getElementById('equipSyncBadge');
+  if (!equipSynced || !Object.keys(wornGear).length) {
+    grid.innerHTML = '';
+    hint.style.display = '';
+    badge.style.display = 'none';
+  } else {
+    hint.style.display = 'none';
+    badge.style.display = '';
+    grid.innerHTML = SLOT_ORDER.map(slot => {
+      const item = wornGear[slot];
+      const empty = !item;
+      return `<div class="equip-sync-slot ${empty ? 'empty' : ''}">
+        <div class="slot-label">${SLOT_LABELS[slot] || slot}</div>
+        <div class="item-name">${empty ? 'Empty' : item}</div>
+      </div>`;
+    }).join('');
+  }
+  renderBankGear();
+}
+
+function renderBankGear() {
+  const list = document.getElementById('bankGearList');
+  const hint = document.getElementById('bankGearHint');
+  const badge = document.getElementById('bankGearBadge');
+  if (!bankSynced) {
+    list.innerHTML = '';
+    hint.style.display = '';
+    badge.style.display = 'none';
+    return;
+  }
+  const gear = buildOwnedGearReport().filter(g => g.in_bank);
+  if (!gear.length) {
+    list.innerHTML = '';
+    hint.textContent = 'Bank synced, but no recognized equipment items found.';
+    hint.style.display = '';
+    badge.style.display = 'none';
+    return;
+  }
+  hint.style.display = 'none';
+  badge.style.display = '';
+  list.innerHTML = gear.map(g =>
+    `<span class="bank-gear-chip">${g.name}${g.quantity > 1 ? `<span class="qty">x${g.quantity}</span>` : ''}${g.worn ? '<span class="qty">· worn</span>' : ''}</span>`
+  ).join('');
+}
+
+function setStyle(style, btn) {
+  equipStyle = style;
+  document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderEquipDoll();
+}
+
+function renderEquipDoll() {
+  const doll = document.getElementById('equipDoll');
+  const gearSet = GEAR[equipStyle];
+  const rows = [
+    ['head'],
+    ['cape','neck','ammo'],
+    ['weapon','body','shield'],
+    ['legs'],
+    ['gloves','boots','ring']
+  ];
+  doll.innerHTML = rows.map(row => `
+    <div class="equip-row">
+      ${row.map(slot => {
+        if (!gearSet[slot]) return `<div class="equip-slot spacer"></div>`;
+        const key = equipStyle+'_'+slot;
+        const cur = equipment[key] || '0';
+        const items = gearSet[slot];
+        return `<div class="equip-slot">
+          <div class="slot-label">${SLOT_LABELS[slot]||slot}</div>
+          <select class="slot-select" onchange="saveEquip('${key}',this.value)">
+            ${items.map((it,i)=>`<option value="${i}" ${i==cur?'selected':''}>${it[0]}</option>`).join('')}
+          </select>
+        </div>`;
+      }).join('')}
+    </div>
+  `).join('');
+  updateEquipStats();
+}
+
+function saveEquip(key, val) {
+  equipment[key] = val;
+  localStorage.setItem('osrs_equip', JSON.stringify(equipment));
+  updateEquipStats();
+}
+
+function updateEquipStats() {
+  const keys = ['stab','slash','crush','magic','range','mstr','rstr','mdmg','dstab','dslash','dcrush','prayer'];
+  const totals = new Array(12).fill(0);
+  for (const slot of SLOT_ORDER) {
+    const key = equipStyle+'_'+slot;
+    const idx = parseInt(equipment[key]||0);
+    const gearSet = GEAR[equipStyle];
+    if (!gearSet[slot]) continue;
+    const item = gearSet[slot][idx];
+    if (!item) continue;
+    for (let i=0;i<12;i++) totals[i] += item[i+1];
+  }
+  keys.forEach((k,i) => {
+    const el = document.getElementById('stat-'+k);
+    if (el) el.textContent = k==='mdmg' ? totals[i]+'%' : (totals[i]>=0?'+':'')+totals[i];
+  });
+}
+
+// ─── QUESTS ───────────────────────────────────────────────────────────────────
+const VAGUE_QUEST_REQS = new Set(['many subquests', 'Vampyre Slayer storyline']);
+
+const QUEST_DIFF_ORDER = {
+  novice: 0,
+  intermediate: 1,
+  experienced: 2,
+  master: 3,
+  grandmaster: 4,
+  special: 5,
+};
+
+let questFilter = 'all';
+let questSort = 'name';
+
+function setQuestFilter(f, btn) {
+  questFilter = f;
+  document.querySelectorAll('.quest-filter .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderQuests();
+}
+
+function setQuestSort(sort, btn) {
+  questSort = sort;
+  document.querySelectorAll('.quest-sort .sort-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderQuests();
+}
+
+function sortQuestList(list) {
+  const items = [...list];
+  if (questSort === 'qp') {
+    return items.sort((a, b) => b.qp - a.qp || a.name.localeCompare(b.name));
+  }
+  if (questSort === 'diff') {
+    return items.sort((a, b) => {
+      const da = QUEST_DIFF_ORDER[a.diff] ?? 99;
+      const db = QUEST_DIFF_ORDER[b.diff] ?? 99;
+      return da - db || a.name.localeCompare(b.name);
+    });
+  }
+  return items.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function questSkillLevel(sk) {
+  if (sk === 'combat') return getCombatLevel();
+  return playerSkills[sk]?.level || 1;
+}
+
+function formatSkillName(sk) {
+  return sk.charAt(0).toUpperCase() + sk.slice(1);
+}
+
+/** Unmet skill and quest requirements for a journal quest. */
+function getQuestMissingReqs(q) {
+  const missing = [];
+  for (const [sk, need] of Object.entries(q.skillReqs || {})) {
+    const have = questSkillLevel(sk);
+    if (have < need) {
+      missing.push({
+        type: 'skill',
+        label: `${formatSkillName(sk)} ${have}/${need}`,
+        skill: sk,
+        need,
+        have,
+      });
+    }
+  }
+  for (const req of q.questReqs || []) {
+    const reqName = req.replace(/\s*\(.*\)$/, '').trim();
+    if (!reqName || VAGUE_QUEST_REQS.has(reqName)) continue;
+    if (!qd(reqName)) {
+      missing.push({ type: 'quest', label: reqName, name: reqName });
+    }
+  }
+  return missing;
+}
+
+function isQuestBlocked(q) {
+  if (qd(q.name) || qi(q.name)) return false;
+  return getQuestMissingReqs(q).length > 0;
+}
+
+function renderQuestMissingHtml(missing) {
+  if (!missing.length) return '';
+  const tags = missing.map(m => {
+    const cls = m.type === 'skill' ? 'skill' : 'quest';
+    if (m.type === 'quest') {
+      return `<span class="quest-req-tag ${cls}">Quest: ${questWikiLink(m.label)}</span>`;
+    }
+    return `<span class="quest-req-tag ${cls}">Stat: ${m.label}</span>`;
+  }).join('');
+  return `<div class="quest-missing">
+    <div class="quest-missing-label">Missing requirements</div>
+    <div class="quest-missing-tags">${tags}</div>
+  </div>`;
+}
+
+function renderQuestCard(q) {
+  const done = qd(q.name);
+  const inProg = qi(q.name);
+  const missing = done ? [] : getQuestMissingReqs(q);
+  const blocked = missing.length > 0;
+  const showMissing = blocked && (questFilter === 'blocked' || questFilter === 'incomplete');
+  const cls = [
+    done ? 'done' : '',
+    inProg ? 'in-progress' : '',
+    blocked && questFilter === 'blocked' ? 'blocked' : '',
+    showMissing ? 'has-blockers' : '',
+  ].filter(Boolean).join(' ');
+  const mark = done ? '✓' : (inProg ? '…' : '');
+  return `<div class="quest-item ${cls}">
+    <div class="quest-item-main">
+      <div class="quest-cb" aria-hidden="true">${mark}</div>
+      <div class="quest-name">${questWikiLink(q.name)}</div>
+      <div class="quest-meta">
+        ${q.qp > 0 ? `<span class="quest-qp">${q.qp}qp</span>` : ''}
+        ${q.diff ? `<span class="quest-diff diff-${q.diff}">${q.diff}</span>` : ''}
+      </div>
+    </div>
+    ${showMissing ? renderQuestMissingHtml(missing) : ''}
+  </div>`;
+}
+
+function renderQuests() {
+  const grid = document.getElementById('questGrid');
+  if (dataSource === 'wom') {
+    grid.innerHTML = '<div class="hint">Quest data requires the RuneLite OSRS Journal plugin — WOM only provides skills.</div>';
+    grid.classList.remove('blocked-view');
+    return;
+  }
+  const search = document.getElementById('questSearch').value.toLowerCase();
+  let list = getJournalQuestList();
+  if (search) list = list.filter(q => q.name.toLowerCase().includes(search));
+  if (questFilter === 'complete') list = list.filter(q => qd(q.name));
+  if (questFilter === 'incomplete') list = list.filter(q => !qd(q.name) && !qi(q.name));
+  if (questFilter === 'in_progress') list = list.filter(q => qi(q.name));
+  if (questFilter === 'can_do') list = list.filter(q => canDoQuest(q));
+  if (questFilter === 'blocked') list = list.filter(q => isQuestBlocked(q));
+  grid.classList.toggle('blocked-view', questFilter === 'blocked' || questFilter === 'incomplete');
+  if (!list.length) {
+    const emptyMsg = questFilter === 'blocked'
+      ? 'No blocked quests with tracked requirements — you may be able to start more quests than listed here.'
+      : 'No quests match this filter.';
+    grid.innerHTML = `<div class="hint">${emptyMsg}</div>`;
+    updateQuestBanner();
+    return;
+  }
+  list = sortQuestList(list);
+  grid.innerHTML = list.map(renderQuestCard).join('');
+  updateQuestBanner();
+}
+
+function updateQuestBanner() {
+  const { qp, journalDone, journalTotal } = computeQuestStats();
+  document.getElementById('qpDone').textContent = qp;
+  document.getElementById('questsDone').textContent = journalDone;
+  const blockedCount = getJournalQuestList().filter(isQuestBlocked).length;
+  document.getElementById('questsLeft').textContent = journalTotal - journalDone;
+  document.getElementById('questsBlocked').textContent = blockedCount;
+  const note = document.querySelector('.quest-sync-note');
+  if (note) {
+    const withReqs = getJournalQuestList().filter(q => Object.keys(q.skillReqs).length || q.questReqs.length).length;
+    note.textContent = questReqsLoaded
+      ? `Auto-synced · ${withReqs} quests with tracked requirements`
+      : 'Partial requirements — serve over HTTP to load quest-reqs-data.json';
+  }
+}
+
+function canDoQuest(q) {
+  if (qd(q.name) || qi(q.name)) return false;
+  return getQuestMissingReqs(q).length === 0;
+}
+
+// ─── EXPORT FOR AI ────────────────────────────────────────────────────────────
+function getBossExportEntries() {
+  return BOSSES.map(b => {
+    const unmetSkills = Object.entries(b.reqs)
+      .filter(([sk, lv]) => (playerSkills[sk]?.level || 1) < lv)
+      .map(([sk, lv]) => ({ skill: sk, need: lv, have: playerSkills[sk]?.level || 1 }));
+    const unmetQuests = b.questReqs.filter(q => !qd(q));
+    const accessible = unmetSkills.length === 0 && unmetQuests.length === 0;
+    const close = !accessible && unmetSkills.some(({ have, need }) => have >= need - 10);
+    return {
+      name: b.name,
+      tier: b.tier,
+      status: accessible ? 'accessible' : (close ? 'close' : 'locked'),
+      drops: b.drops,
+      unmet_skills: unmetSkills,
+      unmet_quests: unmetQuests,
+    };
+  });
+}
+
+function buildExportData() {
+  const { qp, journalDone, journalTotal } = computeQuestStats();
+  const journal = getJournalQuestList();
+  const totalLevel = playerSkills.overall?.level
+    || Object.entries(playerSkills).filter(([k]) => k !== 'overall').reduce((a, [, v]) => a + (v.level || 1), 0);
+  const totalXp = Object.values(playerSkills).reduce((a, v) => a + (v.xp || 0), 0);
+
+  const skills = {};
+  for (const [k, v] of Object.entries(playerSkills)) {
+    skills[k] = { level: v.level || 1, xp: v.xp || 0 };
+  }
+
+  const completed = journal.filter(q => qd(q.name)).map(q => q.name).sort();
+  const inProgress = journal.filter(q => qi(q.name)).map(q => q.name).sort();
+  const canDoNow = journal.filter(q => canDoQuest(q)).map(q => ({ name: q.name, qp: q.qp })).sort((a, b) => a.name.localeCompare(b.name));
+  const blocked = journal.filter(isQuestBlocked).map(q => ({
+    name: q.name,
+    qp: q.qp,
+    missing: getQuestMissingReqs(q).map(m => m.type === 'skill'
+      ? { type: 'skill', skill: m.skill, have: m.have, need: m.need }
+      : { type: 'quest', quest: m.name }),
+  })).sort((a, b) => a.missing.length - b.missing.length);
+
+  const bosses = getBossExportEntries();
+  const ownedGear = buildOwnedGearReport();
+  const bankGear = playerBank
+    .filter(r => isGearItemName(r.item_name))
+    .map(r => ({ item_id: r.item_id, name: r.item_name, quantity: r.quantity }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  return {
+    meta: {
+      app: 'OSRS Journal',
+      export_version: '1.1',
+      game: 'Old School RuneScape',
+      exported_at: new Date().toISOString(),
+      data_source: dataSource,
+      last_synced: lastSynced,
+      note: dataSource === 'wom'
+        ? 'Partial export — skills only. Install the RuneLite OSRS Journal plugin for quests, gear, and gold.'
+        : null,
+    },
+    player: {
+      rsn: playerRSN,
+      combat_level: getCombatLevel(),
+      dominant_style: getDominantStyle(),
+      total_level: totalLevel,
+      total_xp: totalXp,
+      quest_points: qp,
+      quests_completed: journalDone,
+      quests_total: journalTotal,
+    },
+    economy: {
+      gold: playerGold,
+      gold_formatted: formatGold(playerGold),
+      bank_synced: bankSynced,
+      bank_item_count: playerBank.length,
+    },
+    skills,
+    equipment: {
+      worn_synced: equipSynced,
+      worn: { ...wornGear },
+      bank_synced: bankSynced,
+      owned_gear: ownedGear.map(g => ({
+        name: g.name,
+        location: formatGearLocation(g),
+        worn: g.worn,
+        in_bank: g.in_bank,
+        quantity: g.quantity,
+        worn_slots: g.worn_slots,
+      })),
+      bank_gear: bankGear,
+    },
+    quests: {
+      completed,
+      in_progress: inProgress,
+      can_do_now: canDoNow,
+      blocked,
+    },
+    bosses: {
+      accessible: bosses.filter(b => b.status === 'accessible').map(b => b.name),
+      close: bosses.filter(b => b.status === 'close').map(b => ({ name: b.name, unmet_skills: b.unmet_skills, unmet_quests: b.unmet_quests })),
+      locked: bosses.filter(b => b.status === 'locked').map(b => ({ name: b.name, tier: b.tier, unmet_skills: b.unmet_skills, unmet_quests: b.unmet_quests, drops: b.drops })),
+    },
+  };
+}
+
+function buildExportMarkdown(data) {
+  const p = data.player;
+  const lines = [
+    '# OSRS Journal — Player Profile Export',
+    '',
+    `> Paste this into your AI assistant and ask for a personalized progression plan.`,
+    '',
+    '## Suggested prompt',
+    '```',
+    `I'm playing Old School RuneScape as ${p.rsn || 'my character'} (combat ${p.combat_level}, ${data.economy.gold_formatted} GP, ${p.quest_points} QP, ${p.quests_completed}/${p.quests_total} quests done).`,
+    'Based on the data below, give me a prioritized plan for: quest order, gear upgrades, skill training, and boss unlocks.',
+    'IMPORTANT: Check the "Owned equipment" section — do NOT recommend buying items I already have in my bank or worn gear.',
+    '```',
+    '',
+    '## Summary',
+    `- **RSN:** ${p.rsn || '—'}`,
+    `- **Combat level:** ${p.combat_level}`,
+    `- **Dominant style:** ${p.dominant_style}`,
+    `- **Total level:** ${p.total_level}`,
+    `- **Quest points:** ${p.quest_points} (${p.quests_completed}/${p.quests_total} journal quests)`,
+    `- **Bank gold:** ${data.economy.gold_formatted}${data.economy.bank_synced ? ' (synced)' : ''}`,
+    `- **Bank synced:** ${data.economy.bank_synced ? `yes (${data.economy.bank_item_count} items)` : 'no — open bank in-game and re-sync'}`,
+    `- **Data source:** ${data.meta.data_source}${data.meta.last_synced ? ' · synced ' + formatSyncAge(data.meta.last_synced) : ''}`,
+    '',
+  ];
+
+  if (data.equipment.owned_gear.length) {
+    lines.push(`## Owned equipment — DO NOT recommend rebuying (${data.equipment.owned_gear.length} items)`);
+    lines.push('> Gear already in bank and/or worn. Skip these in shopping lists.');
+    for (const g of data.equipment.owned_gear) {
+      lines.push(`- **${g.name}** — ${g.location}`);
+    }
+    lines.push('');
+  } else if (!data.equipment.bank_synced) {
+    lines.push('## Owned equipment');
+    lines.push('- Bank not synced — open bank in-game with RuneLite plugin, then re-export for accurate gear data.');
+    lines.push('');
+  }
+
+  lines.push(
+    '## Skills',
+    ...Object.entries(data.skills)
+      .filter(([k]) => k !== 'overall')
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([k, v]) => `- ${k}: ${v.level} (${v.xp.toLocaleString()} xp)`),
+    '',
+    '## Currently worn',
+    ...(Object.keys(data.equipment.worn).length
+      ? Object.entries(data.equipment.worn).map(([slot, item]) => `- ${slot}: ${item}`)
+      : ['- (not synced)']),
+    '',
+  );
+
+  if (data.equipment.bank_gear.length) {
+    lines.push(`## Bank equipment (${data.equipment.bank_gear.length} items)`);
+    for (const g of data.equipment.bank_gear) {
+      lines.push(`- ${g.name}${g.quantity > 1 ? ' x' + g.quantity : ''}`);
+    }
+    lines.push('');
+  }
+
+  lines.push(
+    `## Quests completed (${data.quests.completed.length})`,
+    ...data.quests.completed.map(q => `- ${q}`),
+    '',
+  );
+
+  if (data.quests.in_progress.length) {
+    lines.push(`## Quests in progress (${data.quests.in_progress.length})`);
+    lines.push(...data.quests.in_progress.map(q => `- ${q}`), '');
+  }
+
+  if (data.quests.can_do_now.length) {
+    lines.push(`## Quests ready now (${data.quests.can_do_now.length})`);
+    lines.push(...data.quests.can_do_now.map(q => `- ${q.name} (${q.qp} QP)`), '');
+  }
+
+  if (data.quests.blocked.length) {
+    lines.push(`## Blocked quests (${data.quests.blocked.length}) — missing requirements`);
+    for (const q of data.quests.blocked) {
+      const missing = q.missing.map(m => m.type === 'skill'
+        ? `${m.skill} ${m.have}/${m.need}`
+        : `quest: ${m.quest}`).join(', ');
+      lines.push(`- **${q.name}** (${q.qp} QP) — needs: ${missing}`);
+    }
+    lines.push('');
+  }
+
+  if (data.bosses.accessible.length) {
+    lines.push(`## Bosses accessible (${data.bosses.accessible.length})`);
+    lines.push(...data.bosses.accessible.map(b => `- ${b}`), '');
+  }
+
+  if (data.bosses.close.length) {
+    lines.push('## Bosses almost unlocked');
+    for (const b of data.bosses.close) {
+      const reqs = [
+        ...b.unmet_skills.map(s => `${s.skill} ${s.have}/${s.need}`),
+        ...b.unmet_quests.map(q => `quest: ${q}`),
+      ].join(', ');
+      lines.push(`- ${b.name}${reqs ? ` — needs: ${reqs}` : ''}`);
+    }
+    lines.push('');
+  }
+
+  lines.push('## Full data (JSON)', '```json', JSON.stringify(data, null, 2), '```');
+  return lines.join('\n');
+}
+
+function getExportText() {
+  const data = buildExportData();
+  return exportFormat === 'json'
+    ? JSON.stringify(data, null, 2)
+    : buildExportMarkdown(data);
+}
+
+function setExportFormat(fmt, btn) {
+  exportFormat = fmt;
+  document.querySelectorAll('.export-format-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  refreshExport();
+}
+
+function refreshExport() {
+  const preview = document.getElementById('exportPreview');
+  const meta = document.getElementById('exportMeta');
+  const status = document.getElementById('exportStatus');
+  status.textContent = '';
+
+  if (!playerSkills.attack) {
+    preview.value = '';
+    meta.innerHTML = '';
+    return;
+  }
+
+  const data = buildExportData();
+  preview.value = exportFormat === 'json' ? JSON.stringify(data, null, 2) : buildExportMarkdown(data);
+  meta.innerHTML = [
+    `<span class="export-chip">RSN <strong>${data.player.rsn || '—'}</strong></span>`,
+    `<span class="export-chip">CB <strong>${data.player.combat_level}</strong></span>`,
+    `<span class="export-chip">QP <strong>${data.player.quest_points}</strong></span>`,
+    `<span class="export-chip">Gold <strong>${data.economy.gold_formatted}</strong></span>`,
+    `<span class="export-chip">${data.quests.completed.length} quests done</span>`,
+    data.equipment.owned_gear.length ? `<span class="export-chip">${data.equipment.owned_gear.length} gear owned</span>` : '',
+    data.equipment.bank_synced ? `<span class="export-chip">${data.economy.bank_item_count} bank items</span>` : '<span class="export-chip">⚠ bank not synced</span>',
+    data.meta.data_source === 'wom' ? '<span class="export-chip">⚠ partial data</span>' : '',
+  ].join('');
+}
+
+async function copyExport() {
+  const status = document.getElementById('exportStatus');
+  const text = getExportText();
+  if (!text) {
+    status.style.color = 'var(--red)';
+    status.textContent = 'Sync your character first.';
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+    status.style.color = 'var(--green)';
+    status.textContent = 'Copied to clipboard — paste into your AI chat.';
+  } catch {
+    const preview = document.getElementById('exportPreview');
+    preview.select();
+    document.execCommand('copy');
+    status.style.color = 'var(--green)';
+    status.textContent = 'Copied to clipboard.';
+  }
+}
+
+function downloadExport() {
+  const status = document.getElementById('exportStatus');
+  const text = getExportText();
+  if (!text) {
+    status.style.color = 'var(--red)';
+    status.textContent = 'Sync your character first.';
+    return;
+  }
+  const ext = exportFormat === 'json' ? 'json' : 'md';
+  const slug = (playerRSN || 'player').replace(/[^a-zA-Z0-9_-]/g, '_');
+  const blob = new Blob([text], { type: exportFormat === 'json' ? 'application/json' : 'text/markdown' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `osrs-journal-${slug}-${new Date().toISOString().slice(0, 10)}.${ext}`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  status.style.color = 'var(--green)';
+  status.textContent = `Downloaded osrs-journal-${slug}.${ext}`;
+}
+
+// ─── BOSS TRACKER ─────────────────────────────────────────────────────────────
+function renderBosses() {
+  const tiers = {};
+  for (const b of BOSSES) {
+    if (!tiers[b.tier]) tiers[b.tier] = [];
+    tiers[b.tier].push(b);
+  }
+  const TIER_ORDER = ['early','mid','gwd','slayer','advanced','raids','dt2-bosses','endgame'];
+  let html = '';
+  for (const tier of TIER_ORDER) {
+    if (!tiers[tier]) continue;
+    const cards = tiers[tier].map(b => {
+      const reqsMet = Object.entries(b.reqs).every(([sk,lv]) => (playerSkills[sk]?.level||1) >= lv);
+      const questsMet = b.questReqs.every(q => qd(q));
+      const allMet = reqsMet && questsMet;
+      const close = !allMet && Object.entries(b.reqs).some(([sk,lv]) => (playerSkills[sk]?.level||1) >= lv-10);
+      const cls = allMet ? 'unlocked' : close ? 'close' : 'locked';
+      const reqLines = [
+        ...Object.entries(b.reqs).map(([sk,lv])=>`${sk.charAt(0).toUpperCase()+sk.slice(1)} ${lv}${(playerSkills[sk]?.level||1)>=lv?' ✓':' ✗'}`),
+        ...b.questReqs.map(q=>`Quest: ${questWikiLink(q)}${qd(q)?' ✓':' ✗'}`)
+      ];
+      return `<div class="boss-card ${cls}">
+        <div class="boss-name">${b.name}</div>
+        <div class="boss-reqs">${reqLines.length ? reqLines.join('<br>') : 'No combat/quest reqs'}</div>
+        <div class="boss-drops">Drops: ${b.drops}</div>
+        <div class="boss-status ${allMet?'yes':close?'close':'no'}">${allMet?'✓ Accessible':close?'⚠ Almost there':'✗ Locked'}</div>
+      </div>`;
+    }).join('');
+    html += `<div class="upgrade-category">
+      <div class="upgrade-cat-title">${TIER_LABELS[tier]||tier}</div>
+      <div class="boss-grid">${cards}</div>
+    </div>`;
+  }
+  document.getElementById('bossContent').innerHTML = html;
+}
+
+// ─── TABS ─────────────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  const tabs = ['plan','stats','equipment','quests','bosses'];
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', tabs[i]===tab));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-'+tab).classList.add('active');
+  if (tab==='plan') refreshExport();
+  if (tab==='bosses') renderBosses();
+  if (tab==='equipment') renderSyncedEquipment();
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+(async function init() {
+  await loadQuestReqs();
+  renderEquipDoll();
+  renderSyncedEquipment();
+  renderQuests();
+
+  const msg = document.getElementById('statusMsg');
+  const configured = await loadSupabaseConfig();
+  if (!configured) {
+    msg.textContent = 'Journal not configured — use Open full journal from the RuneLite plugin.';
+    msg.className = 'status-msg';
+    return;
+  }
+
+  if (supabaseClient) {
+    supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+      authSession = session;
+      await refreshAuthUi();
+    });
+    const { data } = await supabaseClient.auth.getSession();
+    authSession = data.session;
+    await refreshAuthUi();
+  }
+
+  const localSession = new URLSearchParams(window.location.search).get('local_session');
+  if (localSession && API_BASE_URL) {
+    msg.textContent = 'Loading from RuneLite...';
+    try {
+      await fetchFromLocalhostSession(localSession);
+      dataSource = 'supabase';
+      document.getElementById('rsnInput').value = playerRSN;
+      renderStats();
+      renderQuests();
+      renderSyncedEquipment();
+      renderEquipDoll();
+      renderBosses();
+      renderDashboard();
+      updateSyncBanner();
+      updateCombatLevel();
+      refreshExport();
+      msg.textContent = `✓ Live from RuneLite plugin`;
+      msg.className = 'status-msg ok';
+      startLiveRefresh(localSession);
+      return;
+    } catch (e) {
+      msg.textContent = e.message;
+      msg.className = 'status-msg error';
+    }
+  }
+
+  if (HOSTED_MODE) {
+    msg.textContent = authSession
+      ? 'Loading your characters...'
+      : 'Search any public player, or sign in to link yours via the plugin.';
+    msg.className = 'status-msg';
+  } else {
+    msg.textContent = 'Looking for active RuneLite character...';
+    msg.className = 'status-msg';
+  }
+
+  const savedRsn = localStorage.getItem('osrs_rsn') || '';
+  if (savedRsn) document.getElementById('rsnInput').value = savedRsn;
+  const activeRsn = await getActiveRSN(savedRsn || null);
+  if (activeRsn) {
+    document.getElementById('rsnInput').value = activeRsn;
+    await fetchPlayer(activeRsn);
+    startLiveRefresh();
+    return;
+  }
+
+  if (savedRsn && !HOSTED_MODE) {
+    await fetchPlayer(savedRsn);
+    return;
+  }
+
+  const saved = localStorage.getItem('osrs_skills');
+  if (saved) {
+    playerSkills = JSON.parse(saved);
+    playerGold = parseInt(localStorage.getItem('osrs_gold') || '0', 10) || 0;
+    renderStats();
+    renderDashboard();
+    document.getElementById('statsHint').style.display = 'none';
+    updateCombatLevel();
+    updateSyncBanner();
+    refreshExport();
+  }
+  msg.textContent = 'Log in with the RuneLite plugin running to auto-load your character.';
+})();
+
+/** Keep the page in sync with the character currently logged into RuneLite. */
+function startLiveRefresh(localSessionToken) {
+  setInterval(async () => {
+    if (dataSource !== 'supabase') return;
+    if (localSessionToken && API_BASE_URL) {
+      try {
+        await fetchFromLocalhostSession(localSessionToken);
+        renderStats();
+        renderQuests();
+        renderSyncedEquipment();
+        renderDashboard();
+        updateSyncBanner();
+        refreshExport();
+      } catch (_) {}
+      return;
+    }
+    const activeRsn = await getActiveRSN();
+    const currentRsn = document.getElementById('rsnInput').value.trim();
+    if (!activeRsn || activeRsn.toLowerCase() !== currentRsn.toLowerCase()) return;
+    await fetchPlayer(activeRsn, { silent: true });
+  }, 60000);
+}
+</script>
+</body>
+</html>

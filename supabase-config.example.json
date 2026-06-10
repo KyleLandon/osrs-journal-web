@@ -1,0 +1,7 @@
+{
+  "url": "https://your-project-id.supabase.co",
+  "anonKey": "your-anon-key",
+  "apiBaseUrl": "https://your-project-id.supabase.co/functions/v1",
+  "webAppUrl": "https://journal.osrsjournal.com",
+  "hostedMode": true
+}

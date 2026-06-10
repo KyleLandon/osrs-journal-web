@@ -1,0 +1,10 @@
+{
+  "name": "osrs-journal-web",
+  "version": "1.0.0",
+  "private": true,
+  "description": "OSRS Journal web app — journal.osrsjournal.com",
+  "scripts": {
+    "build": "node build.mjs",
+    "sync": "node sync-from-monorepo.mjs"
+  }
+}

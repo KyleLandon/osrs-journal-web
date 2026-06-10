@@ -1,0 +1,1728 @@
+{
+  "generated_at": "2026-06-09T21:15:00.279Z",
+  "source": "https://oldschool.runescape.wiki",
+  "quest_count": 198,
+  "quests": {
+    "Animal Magnetism": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "slayer": 18,
+        "crafting": 19,
+        "ranged": 30,
+        "woodcutting": 35
+      },
+      "questReqs": [
+        "The Restless Ghost",
+        "Ernest the Chicken",
+        "Priest in Peril"
+      ]
+    },
+    "Another Slice of H.A.M.": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "attack": 15,
+        "prayer": 25
+      },
+      "questReqs": [
+        "Death to the Dorgeshuun",
+        "The Giant Dwarf",
+        "The Dig Site"
+      ]
+    },
+    "The Ascent of Arceuus": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "hunter": 12
+      },
+      "questReqs": [
+        "Client of Kourend"
+      ]
+    },
+    "Alfred Grimhand's Barcrawl": {
+      "diff": "intermediate",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Bear Your Soul": {
+      "diff": "intermediate",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Below Ice Mountain": {
+      "diff": "novice",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Between a Rock...": {
+      "diff": "experienced",
+      "skillReqs": {
+        "defence": 30,
+        "mining": 40,
+        "smithing": 50
+      },
+      "questReqs": []
+    },
+    "Big Chompy Bird Hunting": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "fletching": 5,
+        "cooking": 30,
+        "ranged": 30
+      },
+      "questReqs": []
+    },
+    "Biohazard": {
+      "diff": "novice",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Black Knights' Fortress": {
+      "diff": "intermediate",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Bone Voyage": {
+      "diff": "intermediate",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Cabin Fever": {
+      "diff": "experienced",
+      "skillReqs": {
+        "agility": 42,
+        "crafting": 45,
+        "smithing": 50,
+        "ranged": 40
+      },
+      "questReqs": []
+    },
+    "Client of Kourend": {
+      "diff": "novice",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Clock Tower": {
+      "diff": "novice",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Cold War": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "hunter": 10,
+        "agility": 30,
+        "crafting": 30,
+        "construction": 34,
+        "thieving": 15
+      },
+      "questReqs": []
+    },
+    "Contact!": {
+      "diff": "experienced",
+      "skillReqs": {},
+      "questReqs": [
+        "Prince Ali Rescue",
+        "Icthlarin's Little Helper"
+      ]
+    },
+    "Cook's Assistant": {
+      "diff": "novice",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "The Corsair Curse": {
+      "diff": "intermediate",
+      "skillReqs": {},
+      "questReqs": [
+        "Spade",
+        "Tinderbox"
+      ]
+    },
+    "Creature of Fenkenstrain": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "crafting": 20,
+        "thieving": 25
+      },
+      "questReqs": []
+    },
+    "Curse of the Empty Lord": {
+      "diff": "experienced",
+      "skillReqs": {
+        "thieving": 53,
+        "prayer": 31
+      },
+      "questReqs": []
+    },
+    "Daddy's Home": {
+      "diff": "novice",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Darkness of Hallowvale": {
+      "diff": "experienced",
+      "skillReqs": {
+        "construction": 5,
+        "mining": 20,
+        "thieving": 22,
+        "agility": 26,
+        "crafting": 32,
+        "magic": 33,
+        "strength": 40
+      },
+      "questReqs": [
+        "In Aid of the Myreque"
+      ]
+    },
+    "Death Plateau": {
+      "diff": "novice",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Death to the Dorgeshuun": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "agility": 23,
+        "thieving": 23
+      },
+      "questReqs": [
+        "The Lost Tribe"
+      ]
+    },
+    "Demon Slayer": {
+      "diff": "novice",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "The Depths of Despair": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "agility": 18
+      },
+      "questReqs": [
+        "Client of Kourend"
+      ]
+    },
+    "Desert Treasure I": {
+      "diff": "master",
+      "skillReqs": {
+        "thieving": 53,
+        "magic": 50,
+        "firemaking": 50,
+        "slayer": 10
+      },
+      "questReqs": []
+    },
+    "Devious Minds": {
+      "diff": "experienced",
+      "skillReqs": {
+        "smithing": 65,
+        "runecraft": 50,
+        "fletching": 50
+      },
+      "questReqs": [
+        "Wanted!",
+        "Troll Stronghold",
+        "Doric's Quest"
+      ]
+    },
+    "The Dig Site": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "agility": 10,
+        "herblore": 10,
+        "thieving": 25
+      },
+      "questReqs": []
+    },
+    "Doric's Quest": {
+      "diff": "novice",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Dragon Slayer I": {
+      "diff": "experienced",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Dragon Slayer II": {
+      "diff": "grandmaster",
+      "skillReqs": {
+        "magic": 75,
+        "smithing": 70,
+        "mining": 68,
+        "crafting": 62,
+        "agility": 60,
+        "thieving": 60,
+        "construction": 50,
+        "hitpoints": 50
+      },
+      "questReqs": [
+        "Legends' Quest",
+        "Dream Mentor",
+        "A Tail of Two Cats",
+        "Animal Magnetism",
+        "Ghosts Ahoy",
+        "Bone Voyage",
+        "Client of Kourend"
+      ]
+    },
+    "Dream Mentor": {
+      "diff": "master",
+      "skillReqs": {
+        "combat": 85
+      },
+      "questReqs": [
+        "Lunar Diplomacy",
+        "Eadgar's Ruse"
+      ]
+    },
+    "Druidic Ritual": {
+      "diff": "novice",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Dwarf Cannon": {
+      "diff": "novice",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Eadgar's Ruse": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "herblore": 31
+      },
+      "questReqs": []
+    },
+    "Eagles' Peak": {
+      "diff": "novice",
+      "skillReqs": {
+        "hunter": 27
+      },
+      "questReqs": []
+    },
+    "Elemental Workshop I": {
+      "diff": "novice",
+      "skillReqs": {
+        "mining": 20,
+        "smithing": 20,
+        "crafting": 20
+      },
+      "questReqs": []
+    },
+    "Elemental Workshop II": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "magic": 20,
+        "smithing": 30
+      },
+      "questReqs": []
+    },
+    "Enakhra's Lament": {
+      "diff": "experienced",
+      "skillReqs": {
+        "crafting": 50,
+        "firemaking": 45,
+        "prayer": 43,
+        "magic": 39
+      },
+      "questReqs": []
+    },
+    "The Enchanted Key": {
+      "diff": "intermediate",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Enlightened Journey": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "firemaking": 20,
+        "farming": 30,
+        "crafting": 36
+      },
+      "questReqs": []
+    },
+    "Enter the Abyss": {
+      "diff": "intermediate",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Ernest the Chicken": {
+      "diff": "novice",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "The Eyes of Glouphrie": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "construction": 5,
+        "magic": 46
+      },
+      "questReqs": []
+    },
+    "Fairytale I - Growing Pains": {
+      "diff": "intermediate",
+      "skillReqs": {},
+      "questReqs": [
+        "Lost City",
+        "Nature Spirit"
+      ]
+    },
+    "Fairytale II - Cure a Queen": {
+      "diff": "experienced",
+      "skillReqs": {
+        "thieving": 40,
+        "farming": 49,
+        "herblore": 57
+      },
+      "questReqs": [
+        "Fairytale I - Growing Pains"
+      ]
+    },
+    "Family Crest": {
+      "diff": "experienced",
+      "skillReqs": {
+        "mining": 40,
+        "smithing": 40,
+        "magic": 59,
+        "crafting": 40
+      },
+      "questReqs": []
+    },
+    "Family Pest": {
+      "diff": "intermediate",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "The Feud": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "thieving": 30
+      },
+      "questReqs": []
+    },
+    "Fight Arena": {
+      "diff": "intermediate",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Fishing Contest": {
+      "diff": "novice",
+      "skillReqs": {
+        "fishing": 10
+      },
+      "questReqs": []
+    },
+    "Forgettable Tale...": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "cooking": 22,
+        "farming": 17
+      },
+      "questReqs": [
+        "The Giant Dwarf",
+        "Fishing Contest"
+      ]
+    },
+    "The Forsaken Tower": {
+      "diff": "intermediate",
+      "skillReqs": {},
+      "questReqs": [
+        "Client of Kourend"
+      ]
+    },
+    "The Fremennik Exiles": {
+      "diff": "master",
+      "skillReqs": {
+        "crafting": 65,
+        "slayer": 60,
+        "smithing": 60,
+        "fishing": 60,
+        "runecraft": 55,
+        "mining": 60
+      },
+      "questReqs": [
+        "The Fremennik Isles",
+        "Lunar Diplomacy",
+        "Mountain Daughter",
+        "Heroes' Quest"
+      ]
+    },
+    "The Fremennik Isles": {
+      "diff": "experienced",
+      "skillReqs": {
+        "construction": 20
+      },
+      "questReqs": []
+    },
+    "The Fremennik Trials": {
+      "diff": "intermediate",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Garden of Tranquillity": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "farming": 25
+      },
+      "questReqs": [
+        "Creature of Fenkenstrain"
+      ]
+    },
+    "The General's Shadow": {
+      "diff": "experienced",
+      "skillReqs": {},
+      "questReqs": [
+        "Curse of the Empty Lord",
+        "Fight Arena"
+      ]
+    },
+    "Gertrude's Cat": {
+      "diff": "novice",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Getting Ahead": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "crafting": 30,
+        "construction": 26
+      },
+      "questReqs": []
+    },
+    "Ghosts Ahoy": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "agility": 25,
+        "cooking": 20
+      },
+      "questReqs": []
+    },
+    "The Giant Dwarf": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "crafting": 12,
+        "firemaking": 16,
+        "magic": 33,
+        "thieving": 14
+      },
+      "questReqs": []
+    },
+    "Goblin Diplomacy": {
+      "diff": "novice",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "The Golem": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "crafting": 20,
+        "thieving": 25
+      },
+      "questReqs": []
+    },
+    "The Grand Tree": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "agility": 25
+      },
+      "questReqs": []
+    },
+    "The Great Brain Robbery": {
+      "diff": "experienced",
+      "skillReqs": {
+        "crafting": 16,
+        "construction": 30,
+        "prayer": 50
+      },
+      "questReqs": []
+    },
+    "Grim Tales": {
+      "diff": "master",
+      "skillReqs": {
+        "farming": 45,
+        "herblore": 52,
+        "thieving": 58,
+        "agility": 59,
+        "woodcutting": 71
+      },
+      "questReqs": [
+        "Witch's House"
+      ]
+    },
+    "The Hand in the Sand": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "thieving": 17,
+        "crafting": 49
+      },
+      "questReqs": []
+    },
+    "Haunted Mine": {
+      "diff": "experienced",
+      "skillReqs": {
+        "crafting": 35
+      },
+      "questReqs": []
+    },
+    "Hazeel Cult": {
+      "diff": "novice",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Heroes' Quest": {
+      "diff": "experienced",
+      "skillReqs": {
+        "cooking": 53,
+        "fishing": 53,
+        "herblore": 25,
+        "mining": 50
+      },
+      "questReqs": []
+    },
+    "Holy Grail": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "attack": 20
+      },
+      "questReqs": [
+        "Merlin's Crystal"
+      ]
+    },
+    "Horror from the Deep": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "agility": 35
+      },
+      "questReqs": []
+    },
+    "Icthlarin's Little Helper": {
+      "diff": "intermediate",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Imp Catcher": {
+      "diff": "novice",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "In Aid of the Myreque": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "agility": 25,
+        "crafting": 25,
+        "mining": 15,
+        "magic": 7
+      },
+      "questReqs": [
+        "In Search of the Myreque"
+      ]
+    },
+    "In Search of Knowledge": {
+      "diff": "experienced",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "In Search of the Myreque": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "agility": 25
+      },
+      "questReqs": []
+    },
+    "Jungle Potion": {
+      "diff": "novice",
+      "skillReqs": {
+        "herblore": 3
+      },
+      "questReqs": []
+    },
+    "A Kingdom Divided": {
+      "diff": "experienced",
+      "skillReqs": {
+        "agility": 54,
+        "thieving": 52,
+        "woodcutting": 52,
+        "herblore": 50,
+        "mining": 42,
+        "crafting": 38,
+        "magic": 35
+      },
+      "questReqs": [
+        "The Depths of Despair",
+        "The Queen of Thieves",
+        "The Ascent of Arceuus",
+        "The Forsaken Tower",
+        "Tale of the Righteous"
+      ]
+    },
+    "King's Ransom": {
+      "diff": "experienced",
+      "skillReqs": {
+        "magic": 45,
+        "defence": 65
+      },
+      "questReqs": [
+        "Black Knights' Fortress",
+        "Holy Grail",
+        "Murder Mystery",
+        "One Small Favour"
+      ]
+    },
+    "The Knight's Sword": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "mining": 10
+      },
+      "questReqs": []
+    },
+    "Lair of Tarn Razorlor": {
+      "diff": "experienced",
+      "skillReqs": {
+        "slayer": 40
+      },
+      "questReqs": []
+    },
+    "Legends' Quest": {
+      "diff": "master",
+      "skillReqs": {
+        "agility": 50,
+        "crafting": 50,
+        "herblore": 45,
+        "magic": 56,
+        "mining": 52,
+        "prayer": 42,
+        "smithing": 50,
+        "strength": 50,
+        "thieving": 50,
+        "woodcutting": 50
+      },
+      "questReqs": []
+    },
+    "Lost City": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "crafting": 31,
+        "woodcutting": 36
+      },
+      "questReqs": []
+    },
+    "The Lost Tribe": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "agility": 13,
+        "thieving": 13,
+        "mining": 17
+      },
+      "questReqs": []
+    },
+    "Lunar Diplomacy": {
+      "diff": "experienced",
+      "skillReqs": {
+        "herblore": 5,
+        "crafting": 61,
+        "defence": 40,
+        "firemaking": 49,
+        "magic": 65,
+        "mining": 60,
+        "woodcutting": 55
+      },
+      "questReqs": []
+    },
+    "Mage Arena I": {
+      "diff": "experienced",
+      "skillReqs": {
+        "magic": 60
+      },
+      "questReqs": []
+    },
+    "Mage Arena II": {
+      "diff": "master",
+      "skillReqs": {
+        "magic": 75
+      },
+      "questReqs": []
+    },
+    "Making Friends with My Arm": {
+      "diff": "master",
+      "skillReqs": {
+        "firemaking": 66,
+        "mining": 72,
+        "construction": 35,
+        "agility": 68
+      },
+      "questReqs": [
+        "My Arm's Big Adventure",
+        "Swan Song",
+        "Cold War",
+        "Romeo & Juliet"
+      ]
+    },
+    "Making History": {
+      "diff": "intermediate",
+      "skillReqs": {},
+      "questReqs": [
+        "Priest in Peril",
+        "The Restless Ghost"
+      ]
+    },
+    "Merlin's Crystal": {
+      "diff": "intermediate",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Misthalin Mystery": {
+      "diff": "novice",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Monkey Madness I": {
+      "diff": "master",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Monkey Madness II": {
+      "diff": "grandmaster",
+      "skillReqs": {
+        "slayer": 69,
+        "crafting": 70,
+        "hunter": 60,
+        "agility": 55,
+        "thieving": 55,
+        "firemaking": 60
+      },
+      "questReqs": [
+        "Enlightened Journey",
+        "The Eyes of Glouphrie",
+        "Recipe for Disaster/Freeing_King_Awowogei",
+        "Troll Stronghold",
+        "Watchtower"
+      ]
+    },
+    "Monk's Friend": {
+      "diff": "novice",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Mountain Daughter": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "agility": 20
+      },
+      "questReqs": []
+    },
+    "Mourning's End Part I": {
+      "diff": "master",
+      "skillReqs": {
+        "ranged": 60,
+        "thieving": 50
+      },
+      "questReqs": [
+        "Roving Elves",
+        "Big Chompy Bird Hunting",
+        "Sheep Herder"
+      ]
+    },
+    "Mourning's End Part II": {
+      "diff": "master",
+      "skillReqs": {},
+      "questReqs": [
+        "Mourning's End Part I"
+      ]
+    },
+    "Murder Mystery": {
+      "diff": "novice",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "My Arm's Big Adventure": {
+      "diff": "experienced",
+      "skillReqs": {
+        "farming": 29,
+        "woodcutting": 10
+      },
+      "questReqs": [
+        "Eadgar's Ruse",
+        "The Feud",
+        "Jungle Potion"
+      ]
+    },
+    "Nature Spirit": {
+      "diff": "intermediate",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "A Night at the Theatre": {
+      "diff": "master",
+      "skillReqs": {},
+      "questReqs": [
+        "A Taste of Hope"
+      ]
+    },
+    "Observatory Quest": {
+      "diff": "intermediate",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Olaf's Quest": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "firemaking": 40,
+        "woodcutting": 50
+      },
+      "questReqs": []
+    },
+    "One Small Favour": {
+      "diff": "experienced",
+      "skillReqs": {
+        "agility": 36,
+        "crafting": 25,
+        "herblore": 18,
+        "smithing": 30
+      },
+      "questReqs": []
+    },
+    "Pirate's Treasure": {
+      "diff": "novice",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Plague City": {
+      "diff": "novice",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "A Porcine of Interest": {
+      "diff": "novice",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Priest in Peril": {
+      "diff": "novice",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Prince Ali Rescue": {
+      "diff": "novice",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "The Queen of Thieves": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "thieving": 20
+      },
+      "questReqs": [
+        "Client of Kourend"
+      ]
+    },
+    "Rag and Bone Man I": {
+      "diff": "novice",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Rag and Bone Man II": {
+      "diff": "experienced",
+      "skillReqs": {
+        "slayer": 40,
+        "defence": 20
+      },
+      "questReqs": []
+    },
+    "Ratcatchers": {
+      "diff": "intermediate",
+      "skillReqs": {},
+      "questReqs": [
+        "Icthlarin's Little Helper",
+        "The Giant Dwarf"
+      ]
+    },
+    "Recipe for Disaster": {
+      "diff": "special",
+      "skillReqs": {
+        "cooking": 70,
+        "agility": 48,
+        "mining": 50,
+        "fishing": 53,
+        "thieving": 53,
+        "herblore": 25,
+        "magic": 59,
+        "smithing": 40,
+        "firemaking": 50,
+        "ranged": 40,
+        "crafting": 40,
+        "fletching": 10,
+        "woodcutting": 36
+      },
+      "questReqs": []
+    },
+    "Recruitment Drive": {
+      "diff": "novice",
+      "skillReqs": {},
+      "questReqs": [
+        "Black Knights' Fortress",
+        "Druidic Ritual"
+      ]
+    },
+    "Regicide": {
+      "diff": "experienced",
+      "skillReqs": {
+        "crafting": 10,
+        "agility": 56
+      },
+      "questReqs": []
+    },
+    "The Restless Ghost": {
+      "diff": "novice",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Romeo & Juliet": {
+      "diff": "novice",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Roving Elves": {
+      "diff": "experienced",
+      "skillReqs": {
+        "agility": 56
+      },
+      "questReqs": []
+    },
+    "Royal Trouble": {
+      "diff": "experienced",
+      "skillReqs": {
+        "agility": 40,
+        "slayer": 40
+      },
+      "questReqs": []
+    },
+    "Rum Deal": {
+      "diff": "experienced",
+      "skillReqs": {
+        "crafting": 42,
+        "farming": 40,
+        "prayer": 47,
+        "slayer": 42,
+        "fishing": 50
+      },
+      "questReqs": [
+        "Zogre Flesh Eaters",
+        "Priest in Peril"
+      ]
+    },
+    "Rune Mysteries": {
+      "diff": "novice",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Scorpion Catcher": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "prayer": 31
+      },
+      "questReqs": []
+    },
+    "Sea Slug": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "firemaking": 30
+      },
+      "questReqs": []
+    },
+    "Shades of Mort'ton": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "crafting": 20,
+        "herblore": 15,
+        "firemaking": 5
+      },
+      "questReqs": []
+    },
+    "Shadow of the Storm": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "crafting": 30
+      },
+      "questReqs": [
+        "The Golem",
+        "Demon Slayer"
+      ]
+    },
+    "Sheep Herder": {
+      "diff": "novice",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Sheep Shearer": {
+      "diff": "novice",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Shield of Arrav": {
+      "diff": "novice",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Shilo Village": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "crafting": 20,
+        "agility": 32
+      },
+      "questReqs": []
+    },
+    "Sins of the Father": {
+      "diff": "master",
+      "skillReqs": {
+        "woodcutting": 62,
+        "fletching": 60,
+        "crafting": 56,
+        "agility": 52,
+        "attack": 50,
+        "slayer": 50,
+        "magic": 49
+      },
+      "questReqs": [
+        "Vampyre Slayer",
+        "A Taste of Hope"
+      ]
+    },
+    "Skippy and the Mogres": {
+      "diff": "novice",
+      "skillReqs": {
+        "cooking": 20
+      },
+      "questReqs": []
+    },
+    "The Slug Menace": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "crafting": 30,
+        "runecraft": 30,
+        "slayer": 30,
+        "thieving": 30
+      },
+      "questReqs": [
+        "Wanted!",
+        "Sea Slug"
+      ]
+    },
+    "Song of the Elves": {
+      "diff": "grandmaster",
+      "skillReqs": {
+        "agility": 70,
+        "construction": 70,
+        "farming": 70,
+        "herblore": 70,
+        "hunter": 70,
+        "mining": 70,
+        "smithing": 70,
+        "woodcutting": 70
+      },
+      "questReqs": [
+        "Mourning's End Part II",
+        "Making History",
+        "Druidic Ritual"
+      ]
+    },
+    "A Soul's Bane": {
+      "diff": "intermediate",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Spirits of the Elid": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "magic": 33,
+        "ranged": 37,
+        "mining": 37,
+        "thieving": 37
+      },
+      "questReqs": []
+    },
+    "Swan Song": {
+      "diff": "master",
+      "skillReqs": {
+        "magic": 66,
+        "cooking": 62,
+        "fishing": 62,
+        "smithing": 45,
+        "firemaking": 42,
+        "crafting": 40
+      },
+      "questReqs": [
+        "One Small Favour",
+        "Garden of Tranquillity"
+      ]
+    },
+    "Tai Bwo Wannai Trio": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "agility": 15,
+        "cooking": 30,
+        "fishing": 5
+      },
+      "questReqs": []
+    },
+    "A Tail of Two Cats": {
+      "diff": "intermediate",
+      "skillReqs": {},
+      "questReqs": [
+        "Icthlarin's Little Helper"
+      ]
+    },
+    "Tale of the Righteous": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "strength": 16,
+        "mining": 10
+      },
+      "questReqs": [
+        "Client of Kourend"
+      ]
+    },
+    "A Taste of Hope": {
+      "diff": "experienced",
+      "skillReqs": {
+        "crafting": 48,
+        "agility": 45,
+        "attack": 40,
+        "herblore": 40,
+        "slayer": 38
+      },
+      "questReqs": [
+        "Darkness of Hallowvale"
+      ]
+    },
+    "Tears of Guthix": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "firemaking": 49,
+        "crafting": 20,
+        "mining": 20
+      },
+      "questReqs": []
+    },
+    "Temple of Ikov": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "thieving": 42,
+        "ranged": 40
+      },
+      "questReqs": []
+    },
+    "Throne of Miscellania": {
+      "diff": "experienced",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "The Tourist Trap": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "fletching": 10,
+        "smithing": 20
+      },
+      "questReqs": []
+    },
+    "Tower of Life": {
+      "diff": "novice",
+      "skillReqs": {
+        "construction": 10
+      },
+      "questReqs": []
+    },
+    "Tree Gnome Village": {
+      "diff": "intermediate",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Tribal Totem": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "thieving": 21
+      },
+      "questReqs": []
+    },
+    "Troll Romance": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "agility": 28
+      },
+      "questReqs": []
+    },
+    "Troll Stronghold": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "agility": 15
+      },
+      "questReqs": []
+    },
+    "Underground Pass": {
+      "diff": "experienced",
+      "skillReqs": {
+        "ranged": 25
+      },
+      "questReqs": []
+    },
+    "Vampyre Slayer": {
+      "diff": "intermediate",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Wanted!": {
+      "diff": "intermediate",
+      "skillReqs": {},
+      "questReqs": [
+        "Recruitment Drive",
+        "The Lost Tribe",
+        "Priest in Peril",
+        "Enter the Abyss"
+      ]
+    },
+    "Watchtower": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "magic": 14,
+        "thieving": 15,
+        "agility": 25,
+        "herblore": 14,
+        "mining": 40
+      },
+      "questReqs": []
+    },
+    "Waterfall Quest": {
+      "diff": "intermediate",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "What Lies Below": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "runecraft": 35
+      },
+      "questReqs": [
+        "Rune Mysteries"
+      ]
+    },
+    "Witch's House": {
+      "diff": "intermediate",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Witch's Potion": {
+      "diff": "novice",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "X Marks the Spot": {
+      "diff": "novice",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Zogre Flesh Eaters": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "smithing": 4,
+        "herblore": 8,
+        "ranged": 30
+      },
+      "questReqs": []
+    },
+    "The Frozen Door": {
+      "diff": "master",
+      "skillReqs": {
+        "agility": 70,
+        "hitpoints": 70,
+        "ranged": 70,
+        "strength": 70
+      },
+      "questReqs": []
+    },
+    "Land of the Goblins": {
+      "diff": "experienced",
+      "skillReqs": {
+        "agility": 38,
+        "fishing": 40,
+        "thieving": 45,
+        "herblore": 48
+      },
+      "questReqs": [
+        "Another Slice of H.A.M.",
+        "Fishing Contest"
+      ]
+    },
+    "Hopespear's Will": {
+      "diff": "master",
+      "skillReqs": {
+        "prayer": 50
+      },
+      "questReqs": []
+    },
+    "Temple of the Eye": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "runecraft": 10
+      },
+      "questReqs": [
+        "Enter the Abyss"
+      ]
+    },
+    "Beneath Cursed Sands": {
+      "diff": "master",
+      "skillReqs": {
+        "agility": 62,
+        "crafting": 55,
+        "firemaking": 55
+      },
+      "questReqs": [
+        "Contact!"
+      ]
+    },
+    "Sleeping Giants": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "smithing": 15
+      },
+      "questReqs": []
+    },
+    "The Garden of Death": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "farming": 20
+      },
+      "questReqs": []
+    },
+    "Into the Tombs": {
+      "diff": "master",
+      "skillReqs": {},
+      "questReqs": [
+        "Beneath Cursed Sands"
+      ]
+    },
+    "Secrets of the North": {
+      "diff": "master",
+      "skillReqs": {
+        "agility": 69,
+        "thieving": 64,
+        "hunter": 56
+      },
+      "questReqs": [
+        "Making Friends with My Arm",
+        "The General's Shadow",
+        "Devious Minds",
+        "Hazeel Cult"
+      ]
+    },
+    "Desert Treasure II - The Fallen Empire": {
+      "diff": "grandmaster",
+      "skillReqs": {
+        "firemaking": 75,
+        "magic": 75,
+        "thieving": 70,
+        "herblore": 62,
+        "runecraft": 60,
+        "construction": 60
+      },
+      "questReqs": [
+        "Desert Treasure I",
+        "Secrets of the North",
+        "Enakhra's Lament",
+        "Temple of the Eye",
+        "The Garden of Death",
+        "Below Ice Mountain",
+        "His Faithful Servants"
+      ]
+    },
+    "His Faithful Servants": {
+      "diff": "experienced",
+      "skillReqs": {},
+      "questReqs": [
+        "Priest in Peril"
+      ]
+    },
+    "The Path of Glouphrie": {
+      "diff": "experienced",
+      "skillReqs": {
+        "strength": 60,
+        "slayer": 56,
+        "thieving": 56,
+        "ranged": 47,
+        "agility": 45
+      },
+      "questReqs": []
+    },
+    "Children of the Sun": {
+      "diff": "novice",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Barbarian Training": {
+      "diff": "experienced",
+      "skillReqs": {
+        "fishing": 55,
+        "firemaking": 35,
+        "strength": 35,
+        "agility": 15,
+        "farming": 15,
+        "crafting": 11,
+        "smithing": 5,
+        "herblore": 4
+      },
+      "questReqs": []
+    },
+    "Defender of Varrock": {
+      "diff": "experienced",
+      "skillReqs": {
+        "smithing": 55,
+        "hunter": 52
+      },
+      "questReqs": [
+        "Shield of Arrav",
+        "Temple of Ikov",
+        "Below Ice Mountain",
+        "Family Crest",
+        "Garden of Tranquillity",
+        "What Lies Below",
+        "Romeo & Juliet",
+        "Demon Slayer"
+      ]
+    },
+    "While Guthix Sleeps": {
+      "diff": "grandmaster",
+      "skillReqs": {
+        "thieving": 72,
+        "magic": 67,
+        "agility": 66,
+        "farming": 65,
+        "herblore": 65,
+        "hunter": 62,
+        "firemaking": 49,
+        "attack": 99,
+        "strength": 99
+      },
+      "questReqs": [
+        "Defender of Varrock",
+        "The Path of Glouphrie",
+        "Fight Arena",
+        "Dream Mentor",
+        "The Hand in the Sand",
+        "Wanted!",
+        "Temple of the Eye",
+        "Tears of Guthix",
+        "Nature Spirit",
+        "A Tail of Two Cats"
+      ]
+    },
+    "Twilight's Promise": {
+      "diff": "intermediate",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "At First Light": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "hunter": 46,
+        "herblore": 30,
+        "construction": 27
+      },
+      "questReqs": []
+    },
+    "Perilous Moons": {
+      "diff": "master",
+      "skillReqs": {
+        "slayer": 48,
+        "hunter": 20,
+        "fishing": 20,
+        "runecraft": 20,
+        "construction": 10
+      },
+      "questReqs": []
+    },
+    "The Ribbiting Tale of a Lily Pad Labour Dispute": {
+      "diff": "novice",
+      "skillReqs": {
+        "woodcutting": 15
+      },
+      "questReqs": []
+    },
+    "The Heart of Darkness": {
+      "diff": "experienced",
+      "skillReqs": {
+        "mining": 55,
+        "thieving": 48,
+        "slayer": 48,
+        "agility": 46
+      },
+      "questReqs": [
+        "Twilight's Promise"
+      ]
+    },
+    "Death on the Isle": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "thieving": 34,
+        "agility": 32
+      },
+      "questReqs": [
+        "Children of the Sun"
+      ]
+    },
+    "Meat and Greet": {
+      "diff": "experienced",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "Ethically Acquired Antiquities": {
+      "diff": "novice",
+      "skillReqs": {
+        "thieving": 25
+      },
+      "questReqs": [
+        "Children of the Sun",
+        "Shield of Arrav"
+      ]
+    },
+    "The Curse of Arrav": {
+      "diff": "master",
+      "skillReqs": {
+        "mining": 64,
+        "ranged": 62,
+        "thieving": 62,
+        "agility": 61,
+        "strength": 58,
+        "slayer": 37
+      },
+      "questReqs": []
+    },
+    "The Final Dawn": {
+      "diff": "master",
+      "skillReqs": {
+        "thieving": 66,
+        "runecraft": 52,
+        "fletching": 52
+      },
+      "questReqs": []
+    },
+    "Shadows of Custodia": {
+      "diff": "experienced",
+      "skillReqs": {
+        "slayer": 54,
+        "fishing": 45,
+        "construction": 41,
+        "hunter": 36
+      },
+      "questReqs": []
+    },
+    "Scrambled!": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "construction": 38,
+        "cooking": 36,
+        "smithing": 35
+      },
+      "questReqs": []
+    },
+    "Pandemonium": {
+      "diff": "novice",
+      "skillReqs": {},
+      "questReqs": [
+        "Saw"
+      ]
+    },
+    "Prying Times": {
+      "diff": "intermediate",
+      "skillReqs": {
+        "smithing": 30,
+        "sailing": 12
+      },
+      "questReqs": []
+    },
+    "Current Affairs": {
+      "diff": "novice",
+      "skillReqs": {
+        "sailing": 22,
+        "fishing": 10
+      },
+      "questReqs": []
+    },
+    "Troubled Tortugans": {
+      "diff": "experienced",
+      "skillReqs": {
+        "slayer": 51,
+        "construction": 48,
+        "sailing": 45,
+        "hunter": 45,
+        "woodcutting": 40,
+        "crafting": 34
+      },
+      "questReqs": []
+    },
+    "The Red Reef": {
+      "diff": "experienced",
+      "skillReqs": {
+        "sailing": 52,
+        "smithing": 48
+      },
+      "questReqs": [
+        "Troubled Tortugans"
+      ]
+    },
+    "Learning the Ropes": {
+      "diff": "novice",
+      "skillReqs": {},
+      "questReqs": []
+    },
+    "The Ides of Milk": {
+      "diff": "novice",
+      "skillReqs": {},
+      "questReqs": []
+    }
+  },
+  "errors": [
+    {
+      "name": "Recipe for Disaster - Another Cook's Quest",
+      "error": "no Quest details block"
+    },
+    {
+      "name": "Recipe for Disaster - Mountain Dwarf",
+      "error": "no Quest details block"
+    },
+    {
+      "name": "Recipe for Disaster - Wartface & Bentnoze",
+      "error": "no Quest details block"
+    },
+    {
+      "name": "Recipe for Disaster - Pirate Pete",
+      "error": "no Quest details block"
+    },
+    {
+      "name": "Recipe for Disaster - Lumbridge Guide",
+      "error": "no Quest details block"
+    },
+    {
+      "name": "Recipe for Disaster - Evil Dave",
+      "error": "no Quest details block"
+    },
+    {
+      "name": "Recipe for Disaster - Skrach Uglogwee",
+      "error": "no Quest details block"
+    },
+    {
+      "name": "Recipe for Disaster - Sir Amik Varze",
+      "error": "no Quest details block"
+    },
+    {
+      "name": "Recipe for Disaster - King Awowogei",
+      "error": "no Quest details block"
+    },
+    {
+      "name": "Recipe for Disaster - Culinaromancer",
+      "error": "no Quest details block"
+    },
+    {
+      "name": "Vale Totems",
+      "error": "no Quest details block"
+    }
+  ]
+}
