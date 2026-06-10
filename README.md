@@ -51,7 +51,8 @@ git push
 | `API_BASE_URL` | `https://xxxx.supabase.co/functions/v1` |
 | `WEB_APP_URL` | `https://journal.osrsjournal.com` |
 
-The build step writes `supabase-config.json` from these — nothing secret is committed to git.
+`supabase-config.json` is committed (anon key is public; RLS protects data). If Cloudflare
+env vars are set, the build step overwrites it — otherwise the committed file is used.
 
 ### 4. Custom domain
 
