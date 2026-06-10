@@ -691,22 +691,22 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
     <input id="authPassword" type="password" placeholder="••••••••" autocomplete="current-password" />
     <button class="btn-primary" type="button" onclick="signInWithEmail()" style="width:100%;margin-top:4px">Sign in</button>
     <button class="btn-secondary" type="button" onclick="signUpWithEmail()" style="width:100%;margin-top:6px">Create account</button>
-    <button class="btn-secondary" type="button" onclick="sendMagicLink()" style="width:100%;margin-top:6px">Email me a sign-in link</button>
-    <p class="status-msg" id="authMsg" style="margin-top:8px"></p>
-    <hr style="border:none;border-top:1px solid var(--border-subtle);margin:12px 0" />
-    <label for="pairCodeInput">Pairing code (from RuneLite plugin)</label>
-    <input id="pairCodeInput" type="text" placeholder="XXXX-XXXX" maxlength="9" />
-    <button class="btn-secondary" type="button" onclick="claimPairCode()" style="width:100%;margin-top:4px">Link character</button>
+    <p style="font-size:11px;color:var(--text-muted);margin-top:10px">Have a pairing code from the RuneLite plugin? Sign in first, then enter it here.</p>
   </div>
   <div id="authSignedIn" style="display:none">
     <p style="font-size:13px;color:var(--text-dim);margin-bottom:8px">Signed in as <span id="authUserEmail"></span></p>
     <div id="linkedChars" style="font-size:12px;color:var(--text-muted);margin-bottom:8px"></div>
+    <label for="pairCodeInput">Pairing code (from RuneLite plugin)</label>
+    <input id="pairCodeInput" type="text" placeholder="XXXX-XXXX" maxlength="9" />
+    <button class="btn-secondary" type="button" onclick="claimPairCode()" style="width:100%;margin-top:4px">Link character</button>
+    <hr style="border:none;border-top:1px solid var(--border-subtle);margin:12px 0" />
     <div class="privacy-row" id="privacyRow" style="display:none">
       <span>Public profile <span style="color:var(--text-muted)">(skills &amp; quests)</span></span>
       <input id="privacyToggle" type="checkbox" checked onchange="updateProfilePrivacy()" title="When off, only you can see your stats" />
     </div>
     <button class="btn-secondary" type="button" onclick="signOut()" style="width:100%">Sign out</button>
   </div>
+  <p class="status-msg" id="authMsg" style="margin-top:8px"></p>
 </div>
 
 <main class="main">
@@ -3143,6 +3143,15 @@ function switchTab(tab) {
       msg.textContent = e.message;
       msg.className = 'status-msg error';
     }
+  }
+
+  // ?rsn=Name — plugin fallback when a live session couldn't be created
+  const urlRsn = new URLSearchParams(window.location.search).get('rsn');
+  if (urlRsn) {
+    document.getElementById('rsnInput').value = urlRsn;
+    await fetchPlayer(urlRsn);
+    startLiveRefresh();
+    return;
   }
 
   if (HOSTED_MODE) {
