@@ -1,0 +1,6 @@
+# Static site deploy for Cloudflare (used when deploy command is `npx wrangler deploy`)
+name = "osrs-journal-web"
+compatibility_date = "2024-06-10"
+
+[assets]
+directory = "."

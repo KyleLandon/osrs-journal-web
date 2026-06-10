@@ -33,12 +33,26 @@ git push
 2. Select `osrs-journal-web`
 3. Build settings:
 
+**Option A — Cloudflare Pages (recommended)**
+
 | Setting | Value |
 |---------|--------|
 | Framework preset | None |
 | Build command | `npm run build` |
-| Build output directory | `/` (root) |
-| Node.js version | 20 (or default) |
+| Build output directory | `/` |
+| Deploy command | *(leave empty — Pages uploads files automatically)* |
+
+**Option B — Workers deploy command**
+
+If your project uses **Deploy command: `npx wrangler deploy`**, the repo includes
+`wrangler.toml` so static files (including `supabase-config.json`) are uploaded.
+
+| Setting | Value |
+|---------|--------|
+| Build command | `npm run build` |
+| Deploy command | `npx wrangler deploy` |
+
+Do **not** use Option A and B at the same time.
 
 ### 3. Environment variables (Production)
 
