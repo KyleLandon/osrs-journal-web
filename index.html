@@ -751,7 +751,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 
 <header class="top-nav">
   <div class="nav-container">
-    <a class="nav-brand" href="#">
+    <a class="nav-brand" href="#" onclick="goHome();return false" title="Home">
       <img src="assets/logo-nav.png" alt="OSRS Journal" class="brand-logo" height="32">
     </a>
     <div class="nav-search">
@@ -1115,6 +1115,19 @@ document.addEventListener('click', (e) => {
   if (panel.classList.contains('hidden')) return;
   if (!panel.contains(e.target) && e.target.id !== 'authBtn') closeAuthPanel();
 });
+
+/** Nav brand click — show the landing; if a character is loaded, offer the journal back via search/refresh. */
+function goHome() {
+  closeAuthPanel();
+  if (playerRSN) {
+    // Character loaded: toggle between journal and landing
+    const landingVisible = !document.getElementById('landing').classList.contains('hidden');
+    if (landingVisible) showJournal(); else showLanding();
+  } else {
+    showLanding();
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 
 /** Show the marketing landing view (no character loaded). */
 function showLanding() {
