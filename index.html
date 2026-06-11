@@ -809,7 +809,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
     <h1>Your Old School RuneScape journal</h1>
     <p class="landing-tag">Stats, quests, gear and bank — synced live from RuneLite to one beautiful dashboard.</p>
     <div class="landing-cta">
-      <button class="btn-primary landing-btn" type="button" onclick="toggleAuthPanel()">Sign in / Create account</button>
+      <button id="landingCta" class="btn-primary landing-btn" type="button" onclick="toggleAuthPanel()">Sign in / Create account</button>
       <div class="landing-search">
         <input id="landingRsnInput" type="text" placeholder="Or search any player..." maxlength="12"
           onkeydown="if(event.key==='Enter')landingSearch()" />
@@ -1127,6 +1127,13 @@ function goHome() {
     showLanding();
   }
   window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/** Swap the hero CTA for a signed-in user whose journal is already loaded. */
+function personalizeLanding(rsn) {
+  const cta = document.getElementById('landingCta');
+  cta.textContent = `Open my journal — ${rsn}`;
+  cta.onclick = () => { showJournal(); window.scrollTo({ top: 0 }); };
 }
 
 /** Show the marketing landing view (no character loaded). */
@@ -2530,6 +2537,8 @@ async function fetchPlayer(rsnOverride, options = {}) {
     updateCombatLevel();
     refreshExport();
     document.getElementById('statsHint').style.display = 'none';
+    // Background refreshes and pre-loads shouldn't yank the user out of the landing view
+    if (!options.silent && !options.keepView) showJournal();
     if (!options.silent) {
       msg.textContent = `✓ ${source}`;
       msg.className = 'status-msg ok';
@@ -2635,7 +2644,6 @@ function renderDashboard() {
   const totalXp = Object.values(playerSkills).reduce((a,v)=>a+(v.xp||0),0);
   const { qp, journalDone, journalTotal } = computeQuestStats();
 
-  if (playerRSN) showJournal();
   document.getElementById('dashRsn').textContent = playerRSN || '—';
   const avatar = document.getElementById('profileAvatar');
   if (avatar) avatar.textContent = playerRSN ? playerRSN.charAt(0).toUpperCase() : '?';
@@ -3371,6 +3379,7 @@ function switchTab(tab) {
       refreshExport();
       msg.textContent = `✓ Live from RuneLite plugin`;
       msg.className = 'status-msg ok';
+      showJournal();
       startLiveRefresh(localSession);
       return;
     } catch (e) {
@@ -3403,8 +3412,11 @@ function switchTab(tab) {
   const activeRsn = await getActiveRSN(savedRsn || null);
   if (activeRsn) {
     document.getElementById('rsnInput').value = activeRsn;
-    await fetchPlayer(activeRsn);
+    // Pre-load their journal in the background but land on the home page
+    await fetchPlayer(activeRsn, { keepView: true });
     startLiveRefresh();
+    showLanding();
+    personalizeLanding(activeRsn);
     return;
   }
 
