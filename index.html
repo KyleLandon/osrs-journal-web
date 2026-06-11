@@ -124,8 +124,33 @@ body {
   font-size: 13px; margin-bottom: 8px;
 }
 .auth-panel label { display: block; font-size: 12px; color: var(--text-dim); margin-bottom: 4px; }
+.auth-panel-head {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
+}
+.auth-panel-head strong { font-size: 13px; color: var(--text); }
+.auth-close {
+  background: none; border: none; color: var(--text-muted); font-size: 18px;
+  line-height: 1; cursor: pointer; padding: 2px 6px; border-radius: var(--radius);
+}
+.auth-close:hover { color: var(--text); background: var(--surface); }
 .auth-oauth-row { display: flex; gap: 8px; margin-bottom: 10px; }
 .auth-oauth-row button { flex: 1; font-size: 12px; padding: 8px 10px; }
+
+/* Toast notifications */
+.toast-wrap {
+  position: fixed; top: calc(var(--nav-height) + 12px); right: 16px; z-index: 400;
+  display: flex; flex-direction: column; gap: 8px; pointer-events: none;
+}
+.toast {
+  background: var(--card); border: 1px solid var(--border); border-left: 3px solid var(--accent);
+  border-radius: var(--radius); padding: 10px 14px; font-size: 13px; color: var(--text);
+  box-shadow: var(--shadow); max-width: 320px; animation: toastIn 0.2s ease;
+  opacity: 1; transition: opacity 0.3s ease;
+}
+.toast.ok { border-left-color: var(--green); }
+.toast.error { border-left-color: var(--red); }
+.toast.fade { opacity: 0; }
+@keyframes toastIn { from { transform: translateY(-6px); opacity: 0; } to { transform: none; opacity: 1; } }
 .auth-divider { text-align: center; font-size: 11px; color: var(--text-muted); margin: 10px 0; }
 .privacy-row {
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
@@ -558,6 +583,30 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 }
 .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 
+/* Get-started onboarding card */
+.get-started {
+  max-width: 560px; margin: 24px auto 28px; text-align: center;
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  padding: 28px 32px; box-shadow: var(--shadow);
+}
+.get-started.hidden { display: none; }
+.get-started h2 { font-size: 20px; margin-bottom: 6px; }
+.get-started > p { color: var(--text-dim); font-size: 14px; margin-bottom: 18px; }
+.get-started ol { list-style: none; text-align: left; margin: 0 auto; max-width: 420px; }
+.get-started li {
+  display: flex; align-items: center; gap: 12px; padding: 10px 0;
+  font-size: 14px; color: var(--text); border-bottom: 1px solid var(--border-subtle);
+}
+.get-started li:last-child { border-bottom: none; }
+.get-started a { color: var(--accent); }
+.gs-num {
+  flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%;
+  background: var(--accent-soft); color: var(--accent);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 600;
+}
+.gs-alt { color: var(--text-muted); font-size: 12px; margin-top: 16px; }
+
 /* Sync status banner */
 .sync-banner {
   max-width: var(--max-width);
@@ -667,8 +716,8 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
       <img src="assets/logo-nav.png" alt="OSRS Journal" class="brand-logo" height="32">
     </a>
     <div class="nav-search">
-      <input id="rsnInput" type="text" placeholder="Search player..." maxlength="12" />
-      <button id="fetchBtn" class="btn-primary" onclick="fetchPlayer()">Sync</button>
+      <input id="rsnInput" type="text" placeholder="Search player..." maxlength="12" onkeydown="if(event.key==='Enter')fetchPlayer()" />
+      <button id="fetchBtn" class="btn-primary" onclick="fetchPlayer()">Search</button>
     </div>
     <div class="nav-actions">
       <button id="authBtn" class="btn-secondary" type="button" onclick="toggleAuthPanel()" style="display:none">Sign in</button>
@@ -678,6 +727,10 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 </header>
 
 <div id="authPanel" class="auth-panel hidden">
+  <div class="auth-panel-head">
+    <strong>Account</strong>
+    <button class="auth-close" type="button" onclick="closeAuthPanel()" title="Close">&times;</button>
+  </div>
   <div id="authSignedOut">
     <p style="font-size:12px;color:var(--text-dim);margin-bottom:10px">Sign in to link your character and manage privacy.</p>
     <div class="auth-oauth-row">
@@ -697,8 +750,9 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
     <p style="font-size:13px;color:var(--text-dim);margin-bottom:8px">Signed in as <span id="authUserEmail"></span></p>
     <div id="linkedChars" style="font-size:12px;color:var(--text-muted);margin-bottom:8px"></div>
     <label for="pairCodeInput">Pairing code (from RuneLite plugin)</label>
-    <input id="pairCodeInput" type="text" placeholder="XXXX-XXXX" maxlength="9" />
-    <button class="btn-secondary" type="button" onclick="claimPairCode()" style="width:100%;margin-top:4px">Link character</button>
+    <input id="pairCodeInput" type="text" placeholder="XXXX-XXXX" maxlength="9" autocomplete="off" spellcheck="false"
+      oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')claimPairCode()" />
+    <button class="btn-primary" type="button" onclick="claimPairCode()" style="width:100%;margin-top:4px">Link character</button>
     <hr style="border:none;border-top:1px solid var(--border-subtle);margin:12px 0" />
     <div class="privacy-row" id="privacyRow" style="display:none">
       <span>Public profile <span style="color:var(--text-muted)">(skills &amp; quests)</span></span>
@@ -712,6 +766,17 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 <main class="main">
 
 <div id="syncBanner" class="sync-banner hidden"></div>
+
+<div id="getStartedCard" class="get-started hidden">
+  <h2>Welcome to OSRS Journal</h2>
+  <p>Track your stats, quests, gear and bank — synced live from RuneLite.</p>
+  <ol>
+    <li><span class="gs-num">1</span> Install the <strong>OSRS Journal</strong> plugin from the RuneLite Plugin Hub</li>
+    <li><span class="gs-num">2</span> <a href="#" onclick="toggleAuthPanel();return false">Sign in</a> here with Google, Discord or email</li>
+    <li><span class="gs-num">3</span> Enter the pairing code shown in the plugin sidebar</li>
+  </ol>
+  <p class="gs-alt">Or just search any public player above.</p>
+</div>
 
 <section class="profile-section" id="dashboard">
   <div class="profile-card">
@@ -778,7 +843,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
     <div class="section-title">Support Skills</div>
     <div class="skills-grid" id="grid-support"></div>
   </div>
-  <div class="hint" id="statsHint">Log in with the RuneLite plugin running, or enter your RSN and click Sync.</div>
+  <div class="hint" id="statsHint">Search a player above, or link your character with the RuneLite plugin to sync automatically.</div>
 </div>
 
 <!-- ===== EQUIPMENT ===== -->
@@ -960,6 +1025,39 @@ function toggleAuthPanel() {
   document.getElementById('authPanel').classList.toggle('hidden');
 }
 
+function closeAuthPanel() {
+  document.getElementById('authPanel').classList.add('hidden');
+}
+
+// Dismiss the account panel with Escape or by clicking outside it
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeAuthPanel();
+});
+document.addEventListener('click', (e) => {
+  const panel = document.getElementById('authPanel');
+  if (panel.classList.contains('hidden')) return;
+  if (!panel.contains(e.target) && e.target.id !== 'authBtn') closeAuthPanel();
+});
+
+/** Transient notification in the top-right corner. */
+function showToast(text, kind = '', durationMs = 4000) {
+  let wrap = document.getElementById('toastWrap');
+  if (!wrap) {
+    wrap = document.createElement('div');
+    wrap.id = 'toastWrap';
+    wrap.className = 'toast-wrap';
+    document.body.appendChild(wrap);
+  }
+  const toast = document.createElement('div');
+  toast.className = 'toast' + (kind ? ' ' + kind : '');
+  toast.textContent = text;
+  wrap.appendChild(toast);
+  setTimeout(() => {
+    toast.classList.add('fade');
+    setTimeout(() => toast.remove(), 350);
+  }, durationMs);
+}
+
 async function refreshAuthUi() {
   const authBtn = document.getElementById('authBtn');
   if (!HOSTED_MODE || !supabaseClient) {
@@ -1039,9 +1137,15 @@ async function signInWithEmail() {
     msg.className = 'status-msg error';
     return;
   }
-  msg.textContent = 'Signed in!';
-  msg.className = 'status-msg ok';
+  msg.textContent = '';
   await refreshAuthUi();
+  // Keep the panel open only if they still need to link a character.
+  if (linkedCharacterMeta.length) {
+    closeAuthPanel();
+    showToast('Signed in!', 'ok');
+  } else {
+    showToast('Signed in — enter your pairing code to link a character.', 'ok', 6000);
+  }
 }
 
 async function signUpWithEmail() {
@@ -1100,7 +1204,8 @@ async function signOut() {
 }
 
 async function claimPairCode() {
-  const code = document.getElementById('pairCodeInput').value.trim().toUpperCase();
+  let code = document.getElementById('pairCodeInput').value.trim().toUpperCase().replace(/\s+/g, '');
+  if (/^[A-Z0-9]{8}$/.test(code)) code = code.slice(0, 4) + '-' + code.slice(4); // allow typing without the dash
   const msg = document.getElementById('authMsg');
   if (!code || !API_BASE_URL) return;
   if (!authSession?.access_token) {
@@ -1120,9 +1225,11 @@ async function claimPairCode() {
     });
     const body = await res.json();
     if (!res.ok) throw new Error(body.error || 'Link failed');
-    msg.textContent = `Linked ${body.rsn}!`;
-    msg.className = 'status-msg ok';
+    msg.textContent = '';
+    document.getElementById('pairCodeInput').value = '';
     await refreshAuthUi();
+    closeAuthPanel();
+    showToast(`${body.rsn} linked! Loading your journal...`, 'ok', 6000);
     document.getElementById('rsnInput').value = body.rsn;
     await fetchPlayer(body.rsn);
   } catch (e) {
@@ -2415,6 +2522,7 @@ function renderDashboard() {
   const totalXp = Object.values(playerSkills).reduce((a,v)=>a+(v.xp||0),0);
   const { qp, journalDone, journalTotal } = computeQuestStats();
 
+  if (playerRSN) document.getElementById('getStartedCard').classList.add('hidden');
   document.getElementById('dashRsn').textContent = playerRSN || '—';
   const avatar = document.getElementById('profileAvatar');
   if (avatar) avatar.textContent = playerRSN ? playerRSN.charAt(0).toUpperCase() : '?';
@@ -3110,9 +3218,22 @@ function switchTab(tab) {
   }
 
   if (supabaseClient) {
-    supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+    supabaseClient.auth.onAuthStateChange(async (event, session) => {
+      const wasSignedOut = !authSession;
       authSession = session;
       await refreshAuthUi();
+      if (event === 'SIGNED_IN' && wasSignedOut && session) {
+        // Fresh sign-in (e.g. returning from Google/Discord OAuth)
+        if (linkedCharacterMeta.length) {
+          closeAuthPanel();
+        } else {
+          // Walk them to the pairing step
+          document.getElementById('authPanel').classList.remove('hidden');
+          showToast('Signed in — enter your pairing code from the RuneLite plugin.', 'ok', 6000);
+          const pairInput = document.getElementById('pairCodeInput');
+          if (pairInput) pairInput.focus();
+        }
+      }
     });
     const { data } = await supabaseClient.auth.getSession();
     authSession = data.session;
@@ -3190,7 +3311,14 @@ function switchTab(tab) {
     updateSyncBanner();
     refreshExport();
   }
-  msg.textContent = 'Log in with the RuneLite plugin running to auto-load your character.';
+  if (HOSTED_MODE) {
+    msg.textContent = authSession
+      ? 'No character linked yet — enter the pairing code from the RuneLite plugin.'
+      : 'Search any public player, or sign in to link your character.';
+    if (!playerRSN) document.getElementById('getStartedCard').classList.remove('hidden');
+  } else {
+    msg.textContent = 'Log in with the RuneLite plugin running to auto-load your character.';
+  }
 })();
 
 /** Keep the page in sync with the character currently logged into RuneLite. */
