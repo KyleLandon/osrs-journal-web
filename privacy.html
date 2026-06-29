@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy — OSRS Journal</title>
+<link rel="icon" type="image/png" href="/assets/favicon-32.png">
+<style>
+  :root {
+    --bg: #0f1219; --text: #e2e8f0; --muted: #94a3b8; --accent: #60a5fa;
+    --border: #1e293b; --card: #171b26;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.6;
+  }
+  main {
+    max-width: 720px; margin: 0 auto; padding: 32px 20px 48px;
+  }
+  h1 { font-size: 1.75rem; margin: 0 0 8px; }
+  h2 { font-size: 1.1rem; margin: 28px 0 8px; color: #f1f5f9; }
+  p, li { color: var(--muted); font-size: 14px; }
+  a { color: var(--accent); }
+  .meta { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 18px; margin: 16px 0;
+  }
+  footer { margin-top: 32px; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Privacy Policy</h1>
+  <p class="meta">OSRS Journal · Last updated: June 28, 2026 · <a href="/">Back to journal</a></p>
+
+  <p>OSRS Journal ("we", "the service") is operated by Kyle Landon. This policy explains what data
+  the RuneLite plugin and website collect, how it is used, and your choices.</p>
+
+  <h2>What we collect</h2>
+  <div class="card">
+    <p><strong>From the RuneLite plugin</strong> (only while you are logged into Old School RuneScape
+    with sync enabled):</p>
+    <ul>
+      <li>Character name (RSN)</li>
+      <li>Skill levels and XP</li>
+      <li>Quest completion states</li>
+      <li>Worn equipment (item names and IDs)</li>
+      <li>Bank contents — <em>only if you enable "Sync Bank" in plugin settings</em></li>
+    </ul>
+    <p>We do <strong>not</strong> read your Jagex password, email, or RuneLite credentials.</p>
+  </div>
+  <div class="card">
+    <p><strong>From the website</strong> when you create an account:</p>
+    <ul>
+      <li>Email address and authentication data (via Supabase Auth — Google, Discord, or email)</li>
+      <li>Your linked character names and privacy preferences</li>
+    </ul>
+  </div>
+
+  <h2>How we use data</h2>
+  <ul>
+    <li>Display your journal dashboard at <a href="https://journal.osrsjournal.com">journal.osrsjournal.com</a></li>
+    <li>Link your in-game character to your website account (pairing code)</li>
+    <li>Optionally show skills and quests on a public profile (on by default; you can turn this off)</li>
+  </ul>
+  <p>Bank and worn gear are <strong>never</strong> shown on public profiles — only to you when signed in.</p>
+
+  <h2>Where data is stored</h2>
+  <p>Game sync data and accounts are stored in <a href="https://supabase.com">Supabase</a> (hosted PostgreSQL).
+  The website is served via <a href="https://www.cloudflare.com">Cloudflare</a>. OAuth sign-in uses
+  Google and/or Discord when you choose those providers.</p>
+
+  <h2>Sharing</h2>
+  <p>We do not sell your data. We do not share bank or equipment data with other users.
+  Public profiles expose only skills and quest progress for characters you mark public.</p>
+
+  <h2>Retention &amp; deletion</h2>
+  <p>Data is kept while your account is active. You can delete your account and all synced data
+  from the website under <strong>Account → Delete account &amp; data</strong>, or by contacting
+  <a href="https://github.com/KyleLandon/osrs-journal-plugin/issues">GitHub issues</a>.</p>
+
+  <h2>Children</h2>
+  <p>The service is not directed at children under 13. We do not knowingly collect data from children.</p>
+
+  <h2>Changes</h2>
+  <p>We may update this policy. The "Last updated" date at the top will change when we do.</p>
+
+  <h2>Contact</h2>
+  <p>Questions: <a href="https://github.com/KyleLandon/osrs-journal-plugin/issues">GitHub issues</a></p>
+
+  <footer>
+    <a href="/">journal.osrsjournal.com</a> · Not affiliated with Jagex Limited or RuneLite
+  </footer>
+</main>
+</body>
+</html>

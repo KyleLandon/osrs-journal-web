@@ -158,6 +158,20 @@ body {
   border-top: 1px solid var(--border-subtle);
 }
 .privacy-row input { width: auto; margin: 0; }
+.btn-danger {
+  background: transparent; border: 1px solid var(--red); color: var(--red);
+  padding: 8px 14px; border-radius: var(--radius); cursor: pointer; font-size: 12px;
+  width: 100%; margin-top: 8px;
+}
+.btn-danger:hover { background: rgba(239, 68, 68, 0.1); }
+.site-footer {
+  text-align: center; padding: 24px 16px 32px; font-size: 12px; color: var(--text-muted);
+  border-top: 1px solid var(--border-subtle); margin-top: 24px;
+}
+.site-footer a { color: var(--accent); text-decoration: none; }
+.site-footer a:hover { text-decoration: underline; }
+.auth-legal { font-size: 11px; color: var(--text-muted); margin-top: 10px; line-height: 1.5; }
+.auth-legal a { color: var(--accent); }
 .btn-secondary {
   background: var(--surface); border: 1px solid var(--border); color: var(--text);
   padding: 8px 14px; border-radius: var(--radius); cursor: pointer; font-size: 13px;
@@ -783,6 +797,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
     <input id="authPassword" type="password" placeholder="••••••••" autocomplete="current-password" />
     <button class="btn-primary" type="button" onclick="signInWithEmail()" style="width:100%;margin-top:4px">Sign in</button>
     <button class="btn-secondary" type="button" onclick="signUpWithEmail()" style="width:100%;margin-top:6px">Create account</button>
+    <p class="auth-legal">By signing in you agree to our <a href="/privacy.html" target="_blank" rel="noopener">Privacy Policy</a>.</p>
     <p style="font-size:11px;color:var(--text-muted);margin-top:10px">Have a pairing code from the RuneLite plugin? Sign in first, then enter it here.</p>
   </div>
   <div id="authSignedIn" style="display:none">
@@ -798,6 +813,8 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
       <input id="privacyToggle" type="checkbox" checked onchange="updateProfilePrivacy()" title="When off, only you can see your stats" />
     </div>
     <button class="btn-secondary" type="button" onclick="signOut()" style="width:100%">Sign out</button>
+    <button class="btn-danger" type="button" onclick="deleteAccount()">Delete account &amp; data</button>
+    <p class="auth-legal"><a href="/privacy.html" target="_blank" rel="noopener">Privacy Policy</a></p>
   </div>
   <p class="status-msg" id="authMsg" style="margin-top:8px"></p>
 </div>
@@ -832,7 +849,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
     <div class="feature-card">
       <div class="feature-icon">⚔️</div>
       <h3>Gear &amp; bank tracking</h3>
-      <p>Your worn equipment and bank value, mirrored from the game in real time.</p>
+      <p>Your worn equipment syncs automatically. Bank sync is <strong>off by default</strong> — enable it in plugin settings if you want bank gear on the site.</p>
     </div>
     <div class="feature-card">
       <div class="feature-icon">🔗</div>
@@ -1321,6 +1338,40 @@ async function signOut() {
   // then return to a clean home page.
   ['osrs_rsn', 'osrs_skills', 'osrs_gold', 'osrs_equip'].forEach(k => localStorage.removeItem(k));
   window.location.href = window.location.origin + window.location.pathname;
+}
+
+async function deleteAccount() {
+  const msg = document.getElementById('authMsg');
+  if (!authSession?.access_token || !API_BASE_URL) {
+    msg.textContent = 'Sign in first.';
+    msg.className = 'status-msg error';
+    return;
+  }
+  const confirmed = window.confirm(
+    'Permanently delete your OSRS Journal account and all synced character data?\n\nThis cannot be undone.'
+  );
+  if (!confirmed) return;
+  const typed = window.prompt('Type DELETE to confirm account removal:');
+  if (typed !== 'DELETE') {
+    msg.textContent = 'Account deletion cancelled.';
+    msg.className = 'status-msg';
+    return;
+  }
+  msg.textContent = 'Deleting account...';
+  msg.className = 'status-msg';
+  try {
+    const res = await fetch(`${API_BASE_URL}/account-delete`, {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + authSession.access_token },
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body.error || 'Deletion failed');
+    showToast('Account deleted', 'ok', 5000);
+    await signOut();
+  } catch (e) {
+    msg.textContent = e.message;
+    msg.className = 'status-msg error';
+  }
 }
 
 async function claimPairCode() {
@@ -3415,7 +3466,7 @@ function switchTab(tab) {
     // Pre-load their journal in the background but land on the home page
     await fetchPlayer(activeRsn, { keepView: true });
     startLiveRefresh();
-    showLanding();
+    showJournal();
     personalizeLanding(activeRsn);
     return;
   }
@@ -3447,8 +3498,21 @@ function switchTab(tab) {
 })();
 
 /** Keep the page in sync with the character currently logged into RuneLite. */
+const LIVE_REFRESH_MS = 15000;
+let liveRefreshTimer = null;
+let liveRefreshVisibilityHandler = null;
+
 function startLiveRefresh(localSessionToken) {
-  setInterval(async () => {
+  if (liveRefreshTimer) {
+    clearInterval(liveRefreshTimer);
+    liveRefreshTimer = null;
+  }
+  if (liveRefreshVisibilityHandler) {
+    document.removeEventListener('visibilitychange', liveRefreshVisibilityHandler);
+    liveRefreshVisibilityHandler = null;
+  }
+
+  async function pullLatest() {
     if (dataSource !== 'supabase') return;
     if (localSessionToken && API_BASE_URL) {
       try {
@@ -3466,8 +3530,19 @@ function startLiveRefresh(localSessionToken) {
     const currentRsn = document.getElementById('rsnInput').value.trim();
     if (!activeRsn || activeRsn.toLowerCase() !== currentRsn.toLowerCase()) return;
     await fetchPlayer(activeRsn, { silent: true });
-  }, 60000);
+  }
+
+  liveRefreshTimer = setInterval(pullLatest, LIVE_REFRESH_MS);
+  liveRefreshVisibilityHandler = () => {
+    if (!document.hidden) pullLatest();
+  };
+  document.addEventListener('visibilitychange', liveRefreshVisibilityHandler);
+  pullLatest();
 }
 </script>
+<footer class="site-footer">
+  <a href="/privacy.html">Privacy Policy</a>
+  · OSRS Journal — not affiliated with Jagex or RuneLite
+</footer>
 </body>
 </html>
