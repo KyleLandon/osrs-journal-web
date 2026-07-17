@@ -833,6 +833,83 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 .quest-details a { color: var(--accent-hover); text-decoration: none; }
 .quest-details a:hover { text-decoration: underline; }
 .quest-grid.blocked-view { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+.quest-req-tag.ready { background: var(--green-soft); color: #4ade80; }
+.quest-req-tag.ready a { color: inherit; text-decoration: none; }
+.quest-req-tag.ready a:hover { text-decoration: underline; }
+
+/* Banked XP */
+.section-note { font-size: 11px; font-weight: 500; color: var(--text-muted); text-transform: none; letter-spacing: 0; margin-left: 8px; }
+.banked-xp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.banked-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+}
+.banked-head { display: flex; align-items: center; gap: 8px; }
+.banked-head img { flex-shrink: 0; }
+.banked-skill { font-size: 13px; font-weight: 700; }
+.banked-levels { margin-left: auto; font-size: 11px; font-weight: 700; color: var(--gold); }
+.banked-total { font-size: 1.15rem; font-weight: 800; color: var(--green); margin: 6px 0 4px; }
+.banked-items { display: flex; flex-direction: column; gap: 2px; }
+.banked-item { font-size: 11px; color: var(--text-dim); }
+.banked-item em { font-style: normal; color: var(--text-muted); }
+.banked-item.more { color: var(--text-muted); }
+.banked-xp-foot { font-size: 11px; color: var(--text-muted); margin-top: 10px; }
+
+/* Goal planner */
+.goal-intro h2 { font-size: 1.25rem; margin-bottom: 6px; }
+.goal-intro p { font-size: 13px; color: var(--text-dim); max-width: 640px; }
+.goal-toolbar {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+  margin: 16px 0;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 12px 14px;
+}
+.goal-toolbar-label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.goal-presets { display: flex; flex-wrap: wrap; gap: 6px; }
+.goal-preset-chip {
+  font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 99px;
+  background: var(--surface); border: 1px solid var(--border); color: var(--text);
+  cursor: pointer;
+}
+.goal-preset-chip:hover { border-color: var(--accent); color: var(--accent-hover); }
+.goal-custom { display: flex; gap: 6px; margin-left: auto; }
+.goal-input {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  color: var(--text); font-size: 12px; padding: 6px 10px; min-width: 190px; font-family: inherit;
+}
+.goal-input:focus { outline: none; border-color: var(--accent); }
+.goal-list { display: flex; flex-direction: column; gap: 12px; }
+.goal-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 14px 16px;
+}
+.goal-card.complete { border-color: rgba(34, 197, 94, 0.4); }
+.goal-card-head { display: flex; align-items: baseline; gap: 8px; }
+.goal-title { font-size: 15px; font-weight: 700; flex: 1; }
+.goal-sub { font-size: 12px; font-weight: 500; color: var(--text-muted); margin-left: 6px; }
+.goal-remove {
+  background: none; border: none; color: var(--text-muted); font-size: 18px;
+  cursor: pointer; padding: 0 4px; line-height: 1;
+}
+.goal-remove:hover { color: var(--red); }
+.goal-progress { height: 6px; background: var(--border-subtle); border-radius: 99px; margin-top: 10px; overflow: hidden; }
+.goal-progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent-dark), var(--accent-hover)); border-radius: 99px; transition: width 0.4s; }
+.goal-card.complete .goal-progress-fill { background: var(--green); }
+.goal-progress-label { font-size: 11px; color: var(--text-dim); margin-top: 6px; }
+.goal-card.complete .goal-progress-label { color: var(--green); font-weight: 700; }
+.goal-detail-row {
+  display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+  margin-top: 10px; font-size: 12px;
+}
+.goal-detail-row .quest-missing-label { margin-bottom: 0; min-width: 52px; }
+.goal-detail-row a { color: inherit; text-decoration: none; }
+.goal-detail-row a:hover { text-decoration: underline; }
+@media (max-width: 640px) {
+  .goal-custom { margin-left: 0; width: 100%; }
+  .goal-input { flex: 1; min-width: 0; }
+}
 
 /* Quest banner sync note row */
 .quest-banner-footer {
@@ -1028,6 +1105,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
     <button class="tab" role="tab" aria-selected="false" aria-controls="panel-equipment" onclick="switchTab('equipment')">Equipment</button>
     <button class="tab" role="tab" aria-selected="false" aria-controls="panel-quests" onclick="switchTab('quests')">Quests</button>
     <button class="tab" role="tab" aria-selected="false" aria-controls="panel-bosses" onclick="switchTab('bosses')">Bosses</button>
+    <button class="tab" role="tab" aria-selected="false" aria-controls="panel-goals" onclick="switchTab('goals')">Goals</button>
     <button class="tab" role="tab" aria-selected="false" aria-controls="panel-plan" onclick="switchTab('plan')">AI Export</button>
   </nav>
   <div class="page-content">
@@ -1049,6 +1127,11 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
   <div class="skills-section">
     <div class="section-title">Support Skills</div>
     <div class="skills-grid" id="grid-support"></div>
+  </div>
+  <div class="skills-section" id="bankedXpSection" style="display:none">
+    <div class="section-title">Banked XP <span class="section-note">XP already sitting in your bank</span></div>
+    <div class="banked-xp-grid" id="bankedXpGrid" role="list"></div>
+    <p class="banked-xp-foot">Per-skill potential at standard rates — items that train multiple skills (like logs) are counted toward each, so totals aren't additive.</p>
   </div>
   <div class="hint" id="statsHint">Search a player above, or link your character with the RuneLite plugin to sync automatically.</div>
 </div>
@@ -1149,6 +1232,25 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 <!-- ===== BOSS TRACKER ===== -->
 <div class="panel" id="panel-bosses" role="tabpanel">
   <div id="bossContent"><div class="hint">Fetch your stats to see which bosses you can access.</div></div>
+</div>
+
+<!-- ===== GOALS ===== -->
+<div class="panel" id="panel-goals" role="tabpanel">
+  <div class="goal-intro">
+    <h2>Goal Planner</h2>
+    <p>Pick a target and the planner walks the full quest dependency tree, merges every skill requirement, and tracks your progress live as you play.</p>
+  </div>
+  <div class="goal-toolbar">
+    <span class="goal-toolbar-label">Add a goal</span>
+    <span class="goal-presets" id="goalPresetChips"></span>
+    <span class="goal-custom">
+      <input list="goalQuestOptions" id="goalQuestInput" class="goal-input" placeholder="…or any quest by name">
+      <datalist id="goalQuestOptions"></datalist>
+      <button class="btn-secondary" type="button" onclick="addGoalFromInput()">Add</button>
+    </span>
+  </div>
+  <div class="goal-list" id="goalList" role="list"></div>
+  <div class="hint" id="goalHint" style="display:none"></div>
 </div>
 
   </div><!-- /page-content -->
@@ -2057,6 +2159,69 @@ function formatXp(n) {
   return String(n);
 }
 
+// ─── NET WORTH HISTORY ───────────────────────────────────────────────────────
+// When a signed-in owner views their own bank-synced character, the client
+// computes the GE-estimated bank value and records one point per day via the
+// /networth Edge Function (JWT-verified ownership). History is owner-only —
+// wealth never shows on public profiles. Both directions fail silently.
+
+let netWorthHistory = null; // [{ snap_date, value }] ascending, or null
+
+async function recordNetWorth() {
+  if (!HOSTED_MODE || !authSession || !viewingOwnCharacter || !bankSynced || !API_BASE_URL) return;
+  const value = bankValueEstimate();
+  if (value == null) return;
+  const today = new Date().toISOString().slice(0, 10);
+  try {
+    // Skip the round trip if today's value is already recorded and barely moved
+    const last = JSON.parse(localStorage.getItem('osrs_networth_sent') || '{}');
+    if (last.rsn === playerRSN && last.date === today && Math.abs((last.value || 0) - value) < Math.max(10000, value * 0.01)) return;
+  } catch (_) {}
+  try {
+    const res = await fetch(`${API_BASE_URL}/networth`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: SUPABASE_KEY,
+        Authorization: 'Bearer ' + authSession.access_token,
+      },
+      body: JSON.stringify({ rsn: playerRSN, value: Math.round(value) }),
+    });
+    if (res.ok) {
+      localStorage.setItem('osrs_networth_sent', JSON.stringify({ rsn: playerRSN, date: today, value }));
+    }
+  } catch (_) { /* best effort */ }
+}
+
+async function loadNetWorth(rsn) {
+  netWorthHistory = null;
+  if (!HOSTED_MODE || !authSession || !viewingOwnCharacter) return;
+  try {
+    const headers = await getAuthHeaders();
+    const since = new Date(Date.now() - 8 * 864e5).toISOString().slice(0, 10);
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/player_networth?rsn=eq.${encodeURIComponent(rsn)}` +
+        `&snap_date=gte.${since}&select=snap_date,value&order=snap_date.asc`,
+      { headers }
+    );
+    if (!res.ok) return;
+    const rows = await res.json();
+    if (rows.length) netWorthHistory = rows;
+  } catch (_) { /* history stays hidden */ }
+}
+
+/** "+1.2M this week" suffix for the gold note, or '' without enough history. */
+function netWorthDeltaText() {
+  const bankVal = bankValueEstimate();
+  if (bankVal == null || !netWorthHistory?.length) return '';
+  const today = new Date().toISOString().slice(0, 10);
+  const prior = netWorthHistory.filter(r => r.snap_date < today);
+  if (!prior.length) return '';
+  const delta = bankVal - prior[0].value;
+  if (Math.abs(delta) < 1000) return '';
+  return ` · ${delta >= 0 ? '+' : '−'}${formatGold(Math.abs(delta))} this week`;
+}
+
 // ─── GE PRICES (OSRS wiki real-time prices API) ──────────────────────────────
 // Free, no auth. Both payloads are big (~1MB) so they're fetched lazily, kept
 // in memory, and cached in localStorage (prices 1h, id mapping 24h).
@@ -2295,7 +2460,12 @@ async function fetchPlayer(rsnOverride, options = {}) {
       loadXpGains(rsn).then(() => { renderStats(); renderDashboard(); });
     }
     if (bankSynced) {
-      loadGePrices().then(p => { if (p) renderDashboard(); });
+      loadGePrices().then(p => {
+        if (!p) return;
+        renderDashboard();
+        // Record today's net worth, then pull history for the weekly delta
+        recordNetWorth().then(() => loadNetWorth(rsn)).then(() => renderDashboard());
+      });
     }
     if (equipSynced) {
       Promise.all([loadGePrices(), loadGeMapping()]).then(([p, m]) => { if (p && m) renderDashboard(); });
@@ -2483,7 +2653,7 @@ function renderDashboard() {
   goldInput.title = bankSynced ? 'Synced from bank — open bank in-game to update' : 'Enter GP manually or open bank in-game to sync';
   const bankVal = bankValueEstimate();
   document.getElementById('dashGoldNote').textContent = bankSynced
-    ? (bankVal != null ? `Bank value ~${formatGold(bankVal)} (GE est.)` : 'Synced from bank')
+    ? (bankVal != null ? `Bank value ~${formatGold(bankVal)} (GE est.)${netWorthDeltaText()}` : 'Synced from bank')
     : (playerGold ? 'Manual entry — click to edit' : 'Click to enter, or open bank in-game');
 
   // XP gains — shown once at least one earlier snapshot day exists
@@ -2528,6 +2698,7 @@ function renderDashboard() {
   }
 
   renderNextUp();
+  renderGoals();
 }
 
 // ─── NEXT UP (recommendations) ────────────────────────────────────────────────
@@ -2600,11 +2771,17 @@ function buildNextUpRecommendations() {
     if (!best || best.score < 30) continue;
     const preview = best.unlocked.slice(0, 3).join(', ');
     const extra = best.unlocked.length > 3 ? ` +${best.unlocked.length - 3} more` : '';
+    let why = `${best.level - have} level${best.level - have === 1 ? '' : 's'} unlocks: ${preview}${extra}`;
+    // If the bank already holds meaningful XP toward this skill, say so.
+    const banked = computeBankedXp()?.[skill];
+    if (banked && banked.total >= 10000) {
+      why += ` — and you have ~${formatXp(Math.floor(banked.total))} XP banked for it`;
+    }
     recs.push({
       type: 'skill',
       tag: 'Skill target',
       title: `${formatSkillName(skill)} ${have} → ${best.level}`,
-      why: `${best.level - have} level${best.level - have === 1 ? '' : 's'} unlocks: ${preview}${extra}`,
+      why,
       score: best.score,
       tab: 'stats',
     });
@@ -2783,6 +2960,62 @@ function renderStats() {
       </div>`;
     }).join('');
   }
+  renderBankedXp();
+}
+
+// ─── BANKED XP ────────────────────────────────────────────────────────────────
+// Scans the synced bank against the curated BANKED_XP table and shows how much
+// XP is already "in the bank" per skill — plus the level it would take you to.
+// Purely client-side; hidden entirely without a bank sync.
+
+/** { [skill]: { total, fromLevel, toLevel, items: [{name, qty, xp, via}] } } or null. */
+function computeBankedXp() {
+  if (!bankSynced || !playerBank.length || typeof BANKED_XP === 'undefined') return null;
+  const bySkill = {};
+  for (const row of playerBank) {
+    const opts = BANKED_XP[(row.item_name || '').toLowerCase()];
+    if (!opts) continue;
+    const qty = row.quantity || 1;
+    for (const o of opts) {
+      const entry = (bySkill[o.skill] ??= { total: 0, items: [] });
+      const xp = o.xp * qty;
+      entry.total += xp;
+      entry.items.push({ name: row.item_name, qty, xp, via: o.via });
+    }
+  }
+  for (const [skill, e] of Object.entries(bySkill)) {
+    // Trivial amounts are noise, not a plan
+    if (e.total < 500) { delete bySkill[skill]; continue; }
+    e.items.sort((a, b) => b.xp - a.xp);
+    const cur = playerSkills[skill] || { level: 1, xp: 0 };
+    e.fromLevel = cur.level || xpToLevel(cur.xp || 0);
+    e.toLevel = Math.min(99, xpToLevel((cur.xp || 0) + Math.floor(e.total)));
+  }
+  return Object.keys(bySkill).length ? bySkill : null;
+}
+
+function renderBankedXp() {
+  const section = document.getElementById('bankedXpSection');
+  if (!section) return;
+  const data = computeBankedXp();
+  if (!data) { section.style.display = 'none'; return; }
+  section.style.display = '';
+  const entries = Object.entries(data).sort((a, b) => b[1].total - a[1].total);
+  document.getElementById('bankedXpGrid').innerHTML = entries.map(([skill, e]) => {
+    const iconHtml = `<img src="assets/skills/${skill}.png" alt="" width="22" height="22" loading="lazy" onerror="this.style.display='none'">`;
+    const levels = e.toLevel > e.fromLevel
+      ? `<span class="banked-levels">${e.fromLevel} → ${e.toLevel}</span>`
+      : '';
+    const items = e.items.slice(0, 3).map(it =>
+      `<span class="banked-item" title="${it.via.replace(/"/g, '&quot;')}">${it.qty.toLocaleString()} × ${it.name} <em>+${formatXp(it.xp)}</em></span>`
+    ).join('');
+    const more = e.items.length > 3 ? `<span class="banked-item more">+${e.items.length - 3} more</span>` : '';
+    return `<div class="banked-card" role="listitem">
+      <div class="banked-head">${iconHtml}<span class="banked-skill">${formatSkillName(skill)}</span>${levels}</div>
+      <div class="banked-total">+${formatXp(Math.floor(e.total))} XP</div>
+      <div class="banked-items">${items}${more}</div>
+    </div>`;
+  }).join('');
 }
 
 // ─── EQUIPMENT ────────────────────────────────────────────────────────────────
@@ -3470,9 +3703,180 @@ function renderBosses() {
   document.getElementById('bossContent').innerHTML = html;
 }
 
+// ─── GOAL PLANNER ─────────────────────────────────────────────────────────────
+// Goals are quest-shaped targets ("Barrows gloves" = Recipe for Disaster). The
+// planner recursively walks quest prerequisites, merges the max skill req per
+// skill across the whole tree, and counts done quests + met skills as progress.
+// Stored in localStorage per RSN; recomputed from live data on every render.
+
+function goalStorageAll() {
+  try { return JSON.parse(localStorage.getItem('osrs_goals') || '{}'); } catch (_) { return {}; }
+}
+function getPlayerGoals() {
+  return goalStorageAll()[(playerRSN || '').toLowerCase()] || [];
+}
+function savePlayerGoals(goals) {
+  const all = goalStorageAll();
+  all[(playerRSN || '').toLowerCase()] = goals;
+  localStorage.setItem('osrs_goals', JSON.stringify(all));
+}
+
+/** Every quest in the prerequisite tree of `name`, including itself (canonical names). */
+function questDependencyChain(name, seen = new Set()) {
+  const canonical = normalizeQuestName(name);
+  if (seen.has(canonical)) return seen;
+  seen.add(canonical);
+  const d = getQuestDetails(canonical);
+  for (const req of (d?.questReqs || [])) {
+    const reqName = req.replace(/\s*\(.*\)$/, '').trim();
+    if (!reqName || VAGUE_QUEST_REQS.has(reqName)) continue;
+    questDependencyChain(reqName, seen);
+  }
+  return seen;
+}
+
+function computeGoalPlan(goal) {
+  const questNames = goal.all
+    ? getJournalQuestList().map(q => q.name)
+    : [...questDependencyChain(goal.quest)];
+
+  const skillReq = {};
+  for (const qn of questNames) {
+    const d = getQuestDetails(qn);
+    for (const [sk, lv] of Object.entries(d?.skillReqs || {})) {
+      if (sk === 'combat') continue;
+      skillReq[sk] = Math.max(skillReq[sk] || 0, lv);
+    }
+  }
+  const skills = Object.entries(skillReq)
+    .map(([sk, need]) => ({ sk, need, have: questSkillLevel(sk), met: questSkillLevel(sk) >= need }))
+    .sort((a, b) => (a.met - b.met) || a.sk.localeCompare(b.sk));
+
+  const journal = getJournalQuestList();
+  const quests = questNames.map(name => {
+    const entry = journal.find(j => j.name === name);
+    return {
+      name,
+      done: qd(name),
+      ready: entry ? !isQuestBlocked(entry) && !qd(name) : !qd(name),
+    };
+  });
+
+  const totalSteps = quests.length + skills.length;
+  const doneSteps = quests.filter(q => q.done).length + skills.filter(s => s.met).length;
+  return {
+    quests, skills, totalSteps, doneSteps,
+    pct: totalSteps ? Math.round((doneSteps / totalSteps) * 100) : 0,
+  };
+}
+
+function goalKey(goal) {
+  return goal.all ? '__all' : normalizeQuestName(goal.quest);
+}
+
+function addGoal(goal) {
+  const goals = getPlayerGoals();
+  if (goals.some(g => goalKey(g) === goalKey(goal))) {
+    showToast('That goal is already on your list.', 'error');
+    return;
+  }
+  goals.push(goal);
+  savePlayerGoals(goals);
+  renderGoals();
+}
+
+function addGoalPreset(i) {
+  const p = GOAL_PRESETS[i];
+  if (!p) return;
+  addGoal(p.all ? { label: p.label, all: true } : { label: p.label, quest: p.quest });
+}
+
+function addGoalFromInput() {
+  const input = document.getElementById('goalQuestInput');
+  const raw = (input.value || '').trim();
+  if (!raw) return;
+  const match = getJournalQuestList().find(q => q.name.toLowerCase() === raw.toLowerCase());
+  if (!match) {
+    showToast(`Couldn't find a quest called "${raw}".`, 'error');
+    return;
+  }
+  input.value = '';
+  addGoal({ label: match.name, quest: match.name });
+}
+
+function removeGoal(idx) {
+  const goals = getPlayerGoals();
+  goals.splice(idx, 1);
+  savePlayerGoals(goals);
+  renderGoals();
+}
+
+function renderGoals() {
+  const list = document.getElementById('goalList');
+  const hint = document.getElementById('goalHint');
+  if (!list) return;
+
+  // Preset chips + quest datalist, populated once
+  const chips = document.getElementById('goalPresetChips');
+  if (chips && !chips.childElementCount && typeof GOAL_PRESETS !== 'undefined') {
+    chips.innerHTML = GOAL_PRESETS.map((p, i) =>
+      `<button class="goal-preset-chip" type="button" onclick="addGoalPreset(${i})">${p.label}</button>`
+    ).join('');
+  }
+  const datalist = document.getElementById('goalQuestOptions');
+  if (datalist && !datalist.childElementCount) {
+    datalist.innerHTML = getJournalQuestList().map(q => `<option value="${q.name.replace(/"/g, '&quot;')}">`).join('');
+  }
+
+  if (!playerSkills.attack) {
+    list.innerHTML = '';
+    hint.style.display = '';
+    hint.textContent = 'Search or sync a character first — goals track live quest and skill progress.';
+    return;
+  }
+
+  const goals = getPlayerGoals();
+  if (!goals.length) {
+    list.innerHTML = '';
+    hint.style.display = '';
+    hint.textContent = 'No goals yet — pick a preset above or add any quest to build its full requirement tree.';
+    return;
+  }
+  hint.style.display = 'none';
+
+  list.innerHTML = goals.map((goal, idx) => {
+    const plan = computeGoalPlan(goal);
+    const complete = plan.doneSteps >= plan.totalSteps && plan.totalSteps > 0;
+    const remaining = plan.quests.filter(q => !q.done)
+      .sort((a, b) => (b.ready - a.ready) || a.name.localeCompare(b.name));
+    const CHIP_CAP = 24;
+    const questChips = remaining.slice(0, CHIP_CAP).map(q =>
+      `<span class="quest-req-tag ${q.ready ? 'ready' : 'quest'}" title="${q.ready ? 'You can start this now' : 'Blocked by requirements'}">${questWikiLink(q.name)}</span>`
+    ).join('');
+    const moreChip = remaining.length > CHIP_CAP ? `<span class="quest-req-tag">+${remaining.length - CHIP_CAP} more</span>` : '';
+    const unmetSkills = plan.skills.filter(s => !s.met);
+    const skillChips = unmetSkills.map(s =>
+      `<span class="quest-req-tag skill">${formatSkillName(s.sk)} ${s.have}/${s.need}</span>`
+    ).join('');
+    const sub = goal.all ? 'All journal quests' : (goal.quest !== goal.label ? goal.quest : '');
+    return `<div class="goal-card${complete ? ' complete' : ''}" role="listitem">
+      <div class="goal-card-head">
+        <div class="goal-title">${goal.label || goal.quest}${sub ? ` <span class="goal-sub">${sub}</span>` : ''}</div>
+        <button class="goal-remove" type="button" onclick="removeGoal(${idx})" aria-label="Remove goal" title="Remove goal">×</button>
+      </div>
+      <div class="goal-progress" role="progressbar" aria-valuenow="${plan.pct}" aria-valuemin="0" aria-valuemax="100">
+        <div class="goal-progress-fill" style="width:${plan.pct}%"></div>
+      </div>
+      <div class="goal-progress-label">${complete ? 'Goal complete!' : `${plan.doneSteps} of ${plan.totalSteps} steps done · ${plan.pct}%`}</div>
+      ${!complete && remaining.length ? `<div class="goal-detail-row"><span class="quest-missing-label">Quests left (${remaining.length})</span><span class="quest-missing-tags">${questChips}${moreChip}</span></div>` : ''}
+      ${!complete && unmetSkills.length ? `<div class="goal-detail-row"><span class="quest-missing-label">Skill targets</span><span class="quest-missing-tags">${skillChips}</span></div>` : ''}
+    </div>`;
+  }).join('');
+}
+
 // ─── TABS ─────────────────────────────────────────────────────────────────────
 function switchTab(tab) {
-  const tabs = ['stats','equipment','quests','bosses','plan'];
+  const tabs = ['stats','equipment','quests','bosses','goals','plan'];
   document.querySelectorAll('.tab').forEach((t,i) => {
     const active = tabs[i] === tab;
     t.classList.toggle('active', active);
@@ -3483,6 +3887,7 @@ function switchTab(tab) {
   if (tab==='plan') refreshExport();
   if (tab==='bosses') renderBosses();
   if (tab==='equipment') renderSyncedEquipment();
+  if (tab==='goals') renderGoals();
 }
 
 // Arrow-key navigation between tabs (WAI-ARIA tabs pattern)
@@ -3560,7 +3965,11 @@ document.querySelector('.page-tabs').addEventListener('keydown', (e) => {
       showJournal();
       document.title = `${playerRSN} — OSRS Journal`;
       loadXpGains(playerRSN).then(() => { renderStats(); renderDashboard(); });
-      if (bankSynced) loadGePrices().then(p => { if (p) renderDashboard(); });
+      if (bankSynced) loadGePrices().then(p => {
+        if (!p) return;
+        renderDashboard();
+        recordNetWorth().then(() => loadNetWorth(playerRSN)).then(() => renderDashboard());
+      });
       if (equipSynced) Promise.all([loadGePrices(), loadGeMapping()]).then(([p, m]) => { if (p && m) renderDashboard(); });
       startLiveRefresh(localSession);
       return;

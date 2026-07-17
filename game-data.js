@@ -649,6 +649,121 @@ const TIER_LABELS = {
   endgame:'End Game'
 };
 
+// ─── BANKED XP ───────────────────────────────────────────────────────────────
+// XP locked inside common bank resources. Keys are lowercase item names as the
+// plugin syncs them; each item can offer XP in multiple skills (a maple log is
+// Fletching OR Firemaking) — totals are per-skill potential, not additive.
+// Values are standard no-boost XP per item.
+const BANKED_XP = {
+  // Logs — fletch (longbow u) or burn
+  'logs':           [{skill:'fletching',xp:10,  via:'Longbows (u)'}, {skill:'firemaking',xp:40,   via:'Burn'}],
+  'oak logs':       [{skill:'fletching',xp:25,  via:'Oak longbows (u)'}, {skill:'firemaking',xp:60,  via:'Burn'}],
+  'willow logs':    [{skill:'fletching',xp:41.5,via:'Willow longbows (u)'}, {skill:'firemaking',xp:90, via:'Burn'}],
+  'teak logs':      [{skill:'firemaking',xp:105,via:'Burn'}, {skill:'construction',xp:90,via:'Teak planks (sawmill)'}],
+  'maple logs':     [{skill:'fletching',xp:58.3,via:'Maple longbows (u)'}, {skill:'firemaking',xp:135,via:'Burn'}],
+  'mahogany logs':  [{skill:'firemaking',xp:157.5,via:'Burn'}, {skill:'construction',xp:140,via:'Mahogany planks (sawmill)'}],
+  'yew logs':       [{skill:'fletching',xp:75,  via:'Yew longbows (u)'}, {skill:'firemaking',xp:202.5,via:'Burn'}],
+  'magic logs':     [{skill:'fletching',xp:91.5,via:'Magic longbows (u)'}, {skill:'firemaking',xp:303.8,via:'Burn'}],
+  'redwood logs':   [{skill:'firemaking',xp:350,via:'Burn'}],
+  // Planks — build furniture
+  'plank':          [{skill:'construction',xp:29, via:'Build furniture'}],
+  'oak plank':      [{skill:'construction',xp:60, via:'Oak furniture'}],
+  'teak plank':     [{skill:'construction',xp:90, via:'Teak furniture'}],
+  'mahogany plank': [{skill:'construction',xp:140,via:'Mahogany furniture'}],
+  // Bones — bury / gilded altar (altar multiplies ×3.5)
+  'bones':                 [{skill:'prayer',xp:4.5, via:'Gilded altar ×3.5'}],
+  'big bones':             [{skill:'prayer',xp:15,  via:'Gilded altar ×3.5'}],
+  'babydragon bones':      [{skill:'prayer',xp:30,  via:'Gilded altar ×3.5'}],
+  'dragon bones':          [{skill:'prayer',xp:72,  via:'Gilded altar ×3.5'}],
+  'wyvern bones':          [{skill:'prayer',xp:72,  via:'Gilded altar ×3.5'}],
+  'lava dragon bones':     [{skill:'prayer',xp:85,  via:'Gilded altar ×3.5'}],
+  'dagannoth bones':       [{skill:'prayer',xp:125, via:'Gilded altar ×3.5'}],
+  'superior dragon bones': [{skill:'prayer',xp:150, via:'Gilded altar ×3.5'}],
+  'wyrm bones':            [{skill:'prayer',xp:50,  via:'Gilded altar ×3.5'}],
+  'drake bones':           [{skill:'prayer',xp:80,  via:'Gilded altar ×3.5'}],
+  'hydra bones':           [{skill:'prayer',xp:110, via:'Gilded altar ×3.5'}],
+  // Raw fish — cook
+  'raw shrimps':    [{skill:'cooking',xp:30, via:'Cook'}],
+  'raw sardine':    [{skill:'cooking',xp:40, via:'Cook'}],
+  'raw herring':    [{skill:'cooking',xp:50, via:'Cook'}],
+  'raw trout':      [{skill:'cooking',xp:70, via:'Cook'}],
+  'raw pike':       [{skill:'cooking',xp:80, via:'Cook'}],
+  'raw salmon':     [{skill:'cooking',xp:90, via:'Cook'}],
+  'raw tuna':       [{skill:'cooking',xp:100,via:'Cook'}],
+  'raw lobster':    [{skill:'cooking',xp:120,via:'Cook'}],
+  'raw swordfish':  [{skill:'cooking',xp:140,via:'Cook'}],
+  'raw monkfish':   [{skill:'cooking',xp:150,via:'Cook'}],
+  'raw karambwan':  [{skill:'cooking',xp:190,via:'Cook'}],
+  'raw shark':      [{skill:'cooking',xp:210,via:'Cook'}],
+  'raw manta ray':  [{skill:'cooking',xp:216,via:'Cook'}],
+  'raw anglerfish': [{skill:'cooking',xp:230,via:'Cook'}],
+  // Ores & bars — smelt / smith
+  'iron ore':       [{skill:'smithing',xp:12.5,via:'Smelt'}],
+  'silver ore':     [{skill:'smithing',xp:13.7,via:'Smelt'}],
+  'gold ore':       [{skill:'smithing',xp:56.2,via:'Smelt (goldsmith gauntlets)'}],
+  'bronze bar':     [{skill:'smithing',xp:12.5,via:'Smith at anvil'}],
+  'iron bar':       [{skill:'smithing',xp:25,  via:'Smith at anvil'}],
+  'steel bar':      [{skill:'smithing',xp:37.5,via:'Smith at anvil'}],
+  'mithril bar':    [{skill:'smithing',xp:50,  via:'Smith at anvil'}],
+  'adamantite bar': [{skill:'smithing',xp:62.5,via:'Smith at anvil'}],
+  'runite bar':     [{skill:'smithing',xp:75,  via:'Smith at anvil'}],
+  // Herbs — standard potion per herb (grimy and clean count the same)
+  'grimy guam leaf':   [{skill:'herblore',xp:25,   via:'Attack potions'}],
+  'guam leaf':         [{skill:'herblore',xp:25,   via:'Attack potions'}],
+  'grimy marrentill':  [{skill:'herblore',xp:37.5, via:'Antipoison'}],
+  'marrentill':        [{skill:'herblore',xp:37.5, via:'Antipoison'}],
+  'grimy tarromin':    [{skill:'herblore',xp:50,   via:'Strength potions'}],
+  'tarromin':          [{skill:'herblore',xp:50,   via:'Strength potions'}],
+  'grimy harralander': [{skill:'herblore',xp:62.5, via:'Restore potions'}],
+  'harralander':       [{skill:'herblore',xp:62.5, via:'Restore potions'}],
+  'grimy ranarr weed': [{skill:'herblore',xp:87.5, via:'Prayer potions'}],
+  'ranarr weed':       [{skill:'herblore',xp:87.5, via:'Prayer potions'}],
+  'grimy toadflax':    [{skill:'herblore',xp:180,  via:'Saradomin brews'}],
+  'toadflax':          [{skill:'herblore',xp:180,  via:'Saradomin brews'}],
+  'grimy irit leaf':   [{skill:'herblore',xp:100,  via:'Super attacks'}],
+  'irit leaf':         [{skill:'herblore',xp:100,  via:'Super attacks'}],
+  'grimy avantoe':     [{skill:'herblore',xp:117.5,via:'Super energies'}],
+  'avantoe':           [{skill:'herblore',xp:117.5,via:'Super energies'}],
+  'grimy kwuarm':      [{skill:'herblore',xp:125,  via:'Super strengths'}],
+  'kwuarm':            [{skill:'herblore',xp:125,  via:'Super strengths'}],
+  'grimy snapdragon':  [{skill:'herblore',xp:142.5,via:'Super restores'}],
+  'snapdragon':        [{skill:'herblore',xp:142.5,via:'Super restores'}],
+  'grimy cadantine':   [{skill:'herblore',xp:150,  via:'Super defences'}],
+  'cadantine':         [{skill:'herblore',xp:150,  via:'Super defences'}],
+  'grimy lantadyme':   [{skill:'herblore',xp:157.5,via:'Magic potions'}],
+  'lantadyme':         [{skill:'herblore',xp:157.5,via:'Magic potions'}],
+  'grimy dwarf weed':  [{skill:'herblore',xp:162.5,via:'Ranging potions'}],
+  'dwarf weed':        [{skill:'herblore',xp:162.5,via:'Ranging potions'}],
+  'grimy torstol':     [{skill:'herblore',xp:150,  via:'Super combats'}],
+  'torstol':           [{skill:'herblore',xp:150,  via:'Super combats'}],
+  // Crafting
+  'uncut sapphire':    [{skill:'crafting',xp:50,   via:'Cut'}],
+  'uncut emerald':     [{skill:'crafting',xp:67.5, via:'Cut'}],
+  'uncut ruby':        [{skill:'crafting',xp:85,   via:'Cut'}],
+  'uncut diamond':     [{skill:'crafting',xp:107.5,via:'Cut'}],
+  'uncut dragonstone': [{skill:'crafting',xp:137.5,via:'Cut'}],
+  'flax':              [{skill:'crafting',xp:15,   via:'Spin bowstrings'}],
+  'green dragonhide':  [{skill:'crafting',xp:62,   via:"D'hide bodies (tan first)"}],
+  'blue dragonhide':   [{skill:'crafting',xp:70,   via:"D'hide bodies (tan first)"}],
+  'red dragonhide':    [{skill:'crafting',xp:78,   via:"D'hide bodies (tan first)"}],
+  'black dragonhide':  [{skill:'crafting',xp:86,   via:"D'hide bodies (tan first)"}],
+  // Runecraft
+  'pure essence': [{skill:'runecraft',xp:9, via:'Nature runes (varies by rune)'}],
+};
+
+// ─── GOAL PRESETS ────────────────────────────────────────────────────────────
+// One-click goals for the planner; anything quest-shaped works via the picker.
+const GOAL_PRESETS = [
+  { id: 'barrows-gloves', label: 'Barrows gloves',       quest: 'Recipe for Disaster' },
+  { id: 'ancients',       label: 'Ancient Magicks',      quest: 'Desert Treasure I' },
+  { id: 'fairy-rings',    label: 'Fairy rings',          quest: 'Fairytale II - Cure a Queen' },
+  { id: 'avas',           label: "Ava's device",         quest: 'Animal Magnetism' },
+  { id: 'dscim',          label: 'Dragon scimitar',      quest: 'Monkey Madness I' },
+  { id: 'priff',          label: 'Prifddinas',           quest: 'Song of the Elves' },
+  { id: 'ds2',            label: "Ava's assembler (DS2)",quest: 'Dragon Slayer II' },
+  { id: 'quest-cape',     label: 'Quest point cape',     all: true },
+];
+
 // ─── NEXT UP — curated unlock values ─────────────────────────────────────────
 // Hand-tuned "how much does finishing this quest improve an account" weights
 // (0–100) with the one-line reason shown on the dashboard card. Quests not
