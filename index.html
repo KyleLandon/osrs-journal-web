@@ -146,6 +146,40 @@ body {
 .auth-oauth-row { display: flex; gap: 8px; margin-bottom: 10px; }
 .auth-oauth-row button { flex: 1; font-size: 12px; padding: 8px 10px; }
 
+/* Pairing modal — required after sign-in until a plugin character is linked */
+.pair-modal-overlay {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(8, 10, 14, 0.78);
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+}
+.pair-modal-overlay.hidden { display: none; }
+.pair-modal {
+  width: min(420px, 100%);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 22px 24px;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+}
+.pair-modal h2 { font-size: 18px; font-weight: 800; margin: 0 0 8px; }
+.pair-modal p { font-size: 13px; color: var(--text-dim); line-height: 1.5; margin: 0 0 14px; }
+.pair-modal ol {
+  margin: 0 0 16px; padding-left: 18px;
+  font-size: 13px; color: var(--text-dim); line-height: 1.55;
+}
+.pair-modal ol li { margin-bottom: 6px; }
+.pair-modal ol strong { color: var(--text); }
+.pair-modal label { display: block; font-size: 12px; color: var(--text-dim); margin-bottom: 4px; }
+.pair-modal input {
+  width: 100%; background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: 10px 12px; border-radius: var(--radius);
+  font-size: 16px; letter-spacing: 0.12em; font-weight: 700; text-align: center;
+  margin-bottom: 12px;
+}
+.pair-modal-actions { display: flex; flex-direction: column; gap: 8px; }
+.pair-modal-msg { margin-top: 10px; min-height: 1.2em; }
+
 /* Toast notifications */
 .toast-wrap {
   position: fixed; top: calc(var(--nav-height) + 12px); right: 16px; z-index: 400;
@@ -1247,6 +1281,27 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
   <p class="status-msg" id="authMsg" style="margin-top:8px"></p>
 </div>
 
+<!-- Pairing gate: signed-in users must link a plugin character before their journal -->
+<div id="pairModal" class="pair-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="pairModalTitle">
+  <div class="pair-modal">
+    <h2 id="pairModalTitle">Link your character</h2>
+    <p>You're signed in, but no RuneLite character is linked yet. Enter the pairing code from the plugin to open your journal.</p>
+    <ol>
+      <li>Open <strong>RuneLite</strong> with the <strong>OSRS Journal</strong> plugin enabled</li>
+      <li>Log into Old School and open the plugin sidebar</li>
+      <li>Copy the pairing code shown there (looks like <strong>ABCD-EFGH</strong>)</li>
+    </ol>
+    <label for="pairModalInput">Pairing code</label>
+    <input id="pairModalInput" type="text" placeholder="XXXX-XXXX" maxlength="9" autocomplete="off" spellcheck="false"
+      oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')claimPairCodeFromModal()" />
+    <div class="pair-modal-actions">
+      <button class="btn-primary" type="button" onclick="claimPairCodeFromModal()">Link &amp; open journal</button>
+      <button class="btn-secondary" type="button" onclick="dismissPairModal()">Not now — stay on home</button>
+    </div>
+    <p class="status-msg pair-modal-msg" id="pairModalMsg"></p>
+  </div>
+</div>
+
 <!-- ===== LANDING (shown until a character is loaded) ===== -->
 <section id="landing" class="landing hidden">
   <div class="landing-hero">
@@ -1737,7 +1792,13 @@ function isAuthPanelOpener(el) {
 // Opener buttons are ignored so the same click that opens the panel doesn't
 // immediately close it again (document listener runs after the button onclick).
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') closeAuthPanel();
+  if (e.key !== 'Escape') return;
+  const pairModal = document.getElementById('pairModal');
+  if (pairModal && !pairModal.classList.contains('hidden')) {
+    dismissPairModal();
+    return;
+  }
+  closeAuthPanel();
 });
 document.addEventListener('click', (e) => {
   const panel = document.getElementById('authPanel');
@@ -1753,11 +1814,74 @@ function goHome() {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-/** Swap the hero CTA for a signed-in user whose journal is already loaded. */
+/** True when signed in but no plugin character is linked yet. */
+function needsPairing() {
+  return Boolean(HOSTED_MODE && authSession && !linkedCharacterMeta.length);
+}
+
+/** Swap the hero CTA for a signed-in user. */
 function personalizeLanding(rsn) {
   const cta = document.getElementById('landingCta');
-  cta.textContent = `Open my journal — ${rsn}`;
-  cta.onclick = () => { showJournal(); window.scrollTo({ top: 0 }); };
+  if (!cta) return;
+  if (needsPairing()) {
+    cta.textContent = 'Link character with plugin code';
+    cta.onclick = () => showPairModal();
+    return;
+  }
+  if (rsn) {
+    cta.textContent = `Open my journal — ${rsn}`;
+    cta.onclick = () => { openOwnJournal(); window.scrollTo({ top: 0 }); };
+    return;
+  }
+  cta.textContent = 'Sign in / Create account';
+  cta.onclick = () => toggleAuthPanel();
+}
+
+/** Open the signed-in user's journal, or the pairing modal if none is linked. */
+function openOwnJournal() {
+  if (needsPairing()) {
+    showPairModal();
+    return;
+  }
+  showJournal();
+}
+
+function showPairModal() {
+  closeAuthPanel();
+  const modal = document.getElementById('pairModal');
+  if (!modal) return;
+  modal.classList.remove('hidden');
+  const msg = document.getElementById('pairModalMsg');
+  if (msg) { msg.textContent = ''; msg.className = 'status-msg pair-modal-msg'; }
+  const input = document.getElementById('pairModalInput');
+  if (input) {
+    input.value = document.getElementById('pairCodeInput')?.value || '';
+    setTimeout(() => input.focus(), 50);
+  }
+}
+
+/** Stay on the landing page; public search still works without linking. */
+function dismissPairModal() {
+  document.getElementById('pairModal')?.classList.add('hidden');
+  showLanding();
+  personalizeLanding(null);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function closePairModal() {
+  document.getElementById('pairModal')?.classList.add('hidden');
+}
+
+/** If signed in with no linked character, show the pairing gate and stay on home. */
+function requirePairingOrContinue() {
+  if (!needsPairing()) {
+    closePairModal();
+    return false;
+  }
+  showLanding();
+  personalizeLanding(null);
+  showPairModal();
+  return true;
 }
 
 /** Show the marketing landing view (no character loaded). */
@@ -1767,8 +1891,9 @@ function showLanding() {
   document.title = 'OSRS Journal';
 }
 
-/** Show the journal dashboard view. */
+/** Show the journal dashboard view (public search or a linked character). */
 function showJournal() {
+  closePairModal();
   document.getElementById('landing').classList.add('hidden');
   document.getElementById('journalMain').style.display = '';
   if (playerRSN) document.title = `${playerRSN} — OSRS Journal`;
@@ -1842,10 +1967,18 @@ async function refreshAuthUi() {
     }
     // Dashboard privacy badge depends on linkedCharacterMeta
     renderDashboard();
+    if (needsPairing()) personalizeLanding(null);
+    else if (names[0]) personalizeLanding(names[0]);
   } else {
     signedOut.style.display = '';
     signedIn.style.display = 'none';
     authBtn.textContent = 'Sign in';
+    closePairModal();
+    const cta = document.getElementById('landingCta');
+    if (cta && !playerRSN) {
+      cta.textContent = 'Sign in / Create account';
+      cta.onclick = () => toggleAuthPanel();
+    }
   }
 }
 
@@ -1887,12 +2020,13 @@ async function signInWithEmail() {
   }
   msg.textContent = '';
   await refreshAuthUi();
-  // Keep the panel open only if they still need to link a character.
   if (linkedCharacterMeta.length) {
     closeAuthPanel();
     showToast('Signed in!', 'ok');
   } else {
-    showToast('Signed in — enter your pairing code to link a character.', 'ok', 6000);
+    // Gate the journal until they enter a plugin pairing code.
+    closeAuthPanel();
+    showPairModal();
   }
 }
 
@@ -2009,10 +2143,26 @@ async function deleteAccount() {
   }
 }
 
-async function claimPairCode() {
-  let code = document.getElementById('pairCodeInput').value.trim().toUpperCase().replace(/\s+/g, '');
-  if (/^[A-Z0-9]{8}$/.test(code)) code = code.slice(0, 4) + '-' + code.slice(4); // allow typing without the dash
-  const msg = document.getElementById('authMsg');
+function normalizePairCode(raw) {
+  let code = (raw || '').trim().toUpperCase().replace(/\s+/g, '');
+  if (/^[A-Z0-9]{8}$/.test(code)) code = code.slice(0, 4) + '-' + code.slice(4);
+  return code;
+}
+
+async function claimPairCodeFromModal() {
+  const input = document.getElementById('pairModalInput');
+  const panelInput = document.getElementById('pairCodeInput');
+  if (panelInput && input) panelInput.value = input.value;
+  await claimPairCode({
+    code: input?.value,
+    msgEl: document.getElementById('pairModalMsg'),
+    fromModal: true,
+  });
+}
+
+async function claimPairCode(opts = {}) {
+  const msg = opts.msgEl || document.getElementById('authMsg');
+  const code = normalizePairCode(opts.code ?? document.getElementById('pairCodeInput')?.value);
   if (!code || !API_BASE_URL) return;
   if (!authSession?.access_token) {
     msg.textContent = 'Sign in first, then enter the pairing code from the plugin.';
@@ -2020,6 +2170,7 @@ async function claimPairCode() {
     return;
   }
   msg.textContent = 'Linking...';
+  msg.className = 'status-msg';
   try {
     const res = await fetch(`${API_BASE_URL}/pair-claim`, {
       method: 'POST',
@@ -2032,9 +2183,13 @@ async function claimPairCode() {
     const body = await res.json();
     if (!res.ok) throw new Error(body.error || 'Link failed');
     msg.textContent = '';
-    document.getElementById('pairCodeInput').value = '';
+    const panelInput = document.getElementById('pairCodeInput');
+    const modalInput = document.getElementById('pairModalInput');
+    if (panelInput) panelInput.value = '';
+    if (modalInput) modalInput.value = '';
     await refreshAuthUi();
     closeAuthPanel();
+    closePairModal();
     showToast(`${body.rsn} linked! Loading your journal...`, 'ok', 6000);
     // Clear disclosure at the moment it matters: profiles default to public
     // (skills/quests only — never bank or gear).
@@ -2042,6 +2197,7 @@ async function claimPairCode() {
       'Your skills & quests are public by default (like the hiscores). Toggle "Public profile" under Account to go private.',
       '', 9000), 1500);
     document.getElementById('rsnInput').value = body.rsn;
+    personalizeLanding(body.rsn);
     await fetchPlayer(body.rsn);
   } catch (e) {
     msg.textContent = e.message;
@@ -5473,11 +5629,8 @@ function startSystemHealthChecks() {
         if (linkedCharacterMeta.length) {
           closeAuthPanel();
         } else {
-          // Walk them to the pairing step
-          document.getElementById('authPanel').classList.remove('hidden');
-          showToast('Signed in — enter your pairing code from the RuneLite plugin.', 'ok', 6000);
-          const pairInput = document.getElementById('pairCodeInput');
-          if (pairInput) pairInput.focus();
+          closeAuthPanel();
+          showPairModal();
         }
       }
     });
@@ -5571,9 +5724,15 @@ function startSystemHealthChecks() {
   }
   if (HOSTED_MODE) {
     msg.textContent = authSession
-      ? 'No character linked yet — enter the pairing code from the RuneLite plugin.'
+      ? (linkedCharacterMeta.length
+        ? 'Search any public player, or open your linked journal.'
+        : 'No character linked yet — enter the pairing code from the RuneLite plugin.')
       : 'Search any public player, or sign in to link your character.';
     if (!playerRSN) showLanding();
+    // Returning signed-in users without a linked character get the pairing popup.
+    if (requirePairingOrContinue()) {
+      msg.textContent = 'Enter the pairing code from the RuneLite plugin to open your journal.';
+    }
   } else {
     msg.textContent = 'Log in with the RuneLite plugin running to auto-load your character.';
   }
