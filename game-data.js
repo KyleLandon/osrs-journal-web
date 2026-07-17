@@ -598,6 +598,19 @@ const QUEST_REQ_OVERRIDES = {
   'Plague City': { questReqs: [] },
   'Monkey Madness I': { questReqs: ['The Grand Tree', 'Tree Gnome Village'] },
   'Below Ice Mountain': { questReqs: [] },
+  // Full RFD prerequisite set (subquest reqs + ability to start Legends' Quest),
+  // since both wiki and legacy data collapse it to "many subquests".
+  'Recipe for Disaster': { questReqs: [
+    "Cook's Assistant", 'Fishing Contest', 'Goblin Diplomacy', 'Big Chompy Bird Hunting',
+    'Murder Mystery', 'Nature Spirit', "Witch's House", "Gertrude's Cat",
+    'Shadow of the Storm', 'Monkey Madness I', 'Family Crest', "Heroes' Quest",
+    'Shilo Village', 'Underground Pass', 'Waterfall Quest',
+  ] },
+  "Legends' Quest": { questReqs: ['Family Crest', "Heroes' Quest", 'Shilo Village', 'Underground Pass', 'Waterfall Quest'] },
+  'Nature Spirit': { questReqs: ['Priest in Peril', 'The Restless Ghost'] },
+  'Jungle Potion': { questReqs: ['Druidic Ritual'] },
+  'Perilous Moons': { questReqs: ["Twilight's Promise"] },
+  "Twilight's Promise": { questReqs: ['Children of the Sun'] },
 };
 
 const QUEST_DETAILS = Object.fromEntries(QUESTS.map(q => [q.name, q]));
@@ -752,16 +765,31 @@ const BANKED_XP = {
 };
 
 // ─── GOAL PRESETS ────────────────────────────────────────────────────────────
-// One-click goals for the planner; anything quest-shaped works via the picker.
+// Main-goal milestones: the big account-defining unlocks. Picking one makes it
+// the account's MAIN GOAL — featured on the dashboard, boosted in Next Up.
+const GOAL_MAIN_PRESETS = [
+  { id: 'barrows-gloves', label: 'Barrows gloves',   quest: 'Recipe for Disaster',
+    desc: 'Best-in-slot gloves for nearly every build — the classic mid-game milestone' },
+  { id: 'ancients',       label: 'Desert Treasure',  quest: 'Desert Treasure I',
+    desc: 'Ancient Magicks: Ice Barrage and the spellbook that powers PvM and PvP' },
+  { id: 'ds2',            label: 'Dragon Slayer II', quest: 'Dragon Slayer II',
+    desc: "Ava's assembler, Myths' Guild, and the gateway to Vorkath money" },
+  { id: 'moons',          label: 'Moons of Peril',   quest: 'Perilous Moons',
+    desc: 'Unlock the Neypotzli moon bosses and their free-to-die mid-game armor' },
+  { id: 'priff',          label: 'Song of the Elves',quest: 'Song of the Elves',
+    desc: 'Prifddinas: Gauntlet, Zalcano, and the elven city end-game hub' },
+  { id: 'quest-cape',     label: 'Quest cape',       all: true,
+    desc: 'Every quest done — the completionist milestone that unlocks everything' },
+];
+
+// Smaller one-click goals for the planner; anything quest-shaped works via the picker.
 const GOAL_PRESETS = [
-  { id: 'barrows-gloves', label: 'Barrows gloves',       quest: 'Recipe for Disaster' },
-  { id: 'ancients',       label: 'Ancient Magicks',      quest: 'Desert Treasure I' },
   { id: 'fairy-rings',    label: 'Fairy rings',          quest: 'Fairytale II - Cure a Queen' },
   { id: 'avas',           label: "Ava's device",         quest: 'Animal Magnetism' },
   { id: 'dscim',          label: 'Dragon scimitar',      quest: 'Monkey Madness I' },
-  { id: 'priff',          label: 'Prifddinas',           quest: 'Song of the Elves' },
-  { id: 'ds2',            label: "Ava's assembler (DS2)",quest: 'Dragon Slayer II' },
-  { id: 'quest-cape',     label: 'Quest point cape',     all: true },
+  { id: 'ardy-cloak',     label: 'Ardougne cloak',       quest: 'Plague City' },
+  { id: 'lunars',         label: 'Lunar spellbook',      quest: 'Lunar Diplomacy' },
+  { id: 'piety',          label: 'Piety (Knight Waves)', quest: "King's Ransom" },
 ];
 
 // ─── NEXT UP — curated unlock values ─────────────────────────────────────────

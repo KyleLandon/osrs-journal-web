@@ -911,6 +911,116 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
   .goal-input { flex: 1; min-width: 0; }
 }
 
+/* Main goal — dashboard hero + planner picker */
+.main-goal {
+  background: linear-gradient(135deg, var(--card), var(--surface));
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-lg);
+  padding: 14px 18px;
+  margin-top: 14px;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.main-goal:hover { transform: translateY(-1px); }
+.main-goal.complete { border-color: var(--green); }
+.main-goal-row { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+.main-goal-tag {
+  font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px;
+  color: var(--gold); background: rgba(251, 191, 36, 0.12);
+  padding: 3px 9px; border-radius: 99px;
+}
+.main-goal-title { font-size: 16px; font-weight: 800; flex: 1; }
+.main-goal-pct { font-size: 14px; font-weight: 800; color: var(--accent-hover); }
+.main-goal.complete .main-goal-pct { color: var(--green); }
+.main-goal-next { font-size: 12px; color: var(--text-dim); margin-top: 8px; }
+.goal-main-picker {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 10px; margin: 16px 0;
+}
+.goal-main-card {
+  display: flex; flex-direction: column; gap: 4px; text-align: left;
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  padding: 12px 14px; cursor: pointer; color: var(--text); font-family: inherit;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.goal-main-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+.goal-main-card.selected { border-color: var(--gold); background: linear-gradient(135deg, var(--card), rgba(251, 191, 36, 0.06)); }
+.goal-main-card-label { font-size: 13px; font-weight: 700; }
+.goal-main-star { color: var(--gold); }
+.goal-main-card-desc { font-size: 11px; color: var(--text-dim); line-height: 1.45; }
+.goal-star {
+  background: none; border: none; font-size: 16px; cursor: pointer;
+  color: var(--text-muted); padding: 0 4px; line-height: 1;
+}
+.goal-star.active, .goal-star:hover { color: var(--gold); }
+.goal-card.is-main { border-color: rgba(251, 191, 36, 0.45); }
+
+/* Daily recap */
+.recap, .timeline {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 14px 18px; margin-top: 14px;
+}
+.recap-note { font-size: 11px; color: var(--text-muted); }
+.recap-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px; margin-top: 12px;
+}
+.recap-label { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.recap-val { font-size: 1.3rem; font-weight: 800; margin-top: 4px; color: var(--green); }
+.recap-sub { font-size: 11px; color: var(--text-dim); margin-top: 4px; line-height: 1.5; }
+.recap-cell.chart { min-width: 170px; }
+.recap-chart { margin-top: 8px; color: var(--accent-hover); }
+.recap-chart .spark { width: 100%; height: 44px; display: block; }
+.spark-empty { font-size: 11px; color: var(--text-muted); }
+
+/* Milestone timeline */
+.timeline-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.timeline-day { display: flex; gap: 12px; align-items: baseline; }
+.timeline-date { font-size: 11px; font-weight: 700; color: var(--text-muted); min-width: 72px; }
+.timeline-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.timeline-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 99px;
+  background: var(--surface); border: 1px solid var(--border); color: var(--text);
+}
+.timeline-chip img { display: block; }
+.timeline-chip.wealth { color: var(--gold); border-color: rgba(251, 191, 36, 0.35); }
+.timeline-chip.ninety-nine { color: var(--gold); border-color: var(--gold); font-weight: 800; }
+
+/* AI advisor */
+.ai-advisor {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 16px 18px; margin-bottom: 18px;
+}
+.advisor-settings { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.advisor-settings select, .advisor-field {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  color: var(--text); font-size: 12px; padding: 7px 10px; font-family: inherit;
+}
+.advisor-field { min-width: 180px; flex: 1; }
+.advisor-settings select:focus, .advisor-field:focus { outline: none; border-color: var(--accent); }
+.advisor-log {
+  display: flex; flex-direction: column; gap: 10px;
+  max-height: 420px; overflow-y: auto; margin-bottom: 10px;
+}
+.advisor-log:empty { display: none; }
+.advisor-msg {
+  font-size: 13px; line-height: 1.6; padding: 10px 14px;
+  border-radius: var(--radius-lg); white-space: pre-wrap; word-break: break-word;
+  max-width: 85%;
+}
+.advisor-msg.user { align-self: flex-end; background: var(--accent-soft); color: var(--text); }
+.advisor-msg.assistant { align-self: flex-start; background: var(--surface); border: 1px solid var(--border); }
+.advisor-msg.pending { color: var(--text-muted); font-style: italic; }
+.advisor-msg.error { border-color: rgba(239, 68, 68, 0.4); color: #f87171; }
+.advisor-input-row { display: flex; gap: 8px; align-items: flex-end; }
+.advisor-input-row textarea {
+  flex: 1; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); color: var(--text); font-size: 13px;
+  padding: 9px 12px; font-family: inherit; resize: vertical; min-height: 42px;
+}
+.advisor-input-row textarea:focus { outline: none; border-color: var(--accent); }
+
 /* Quest banner sync note row */
 .quest-banner-footer {
   grid-column: 1 / -1;
@@ -1090,12 +1200,56 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
     </div>
   </div>
 
+  <div class="main-goal" id="mainGoalHero" style="display:none" role="button" tabindex="0"
+       onclick="switchTab('goals')" onkeydown="if(event.key==='Enter')switchTab('goals')"
+       title="Open the goal planner"></div>
+
   <div class="next-up" id="nextUpSection" style="display:none">
     <div class="next-up-head">
       <span class="next-up-heading">Next up for your account</span>
       <button class="next-up-link" type="button" onclick="switchTab('plan')" title="Export your full account state for a detailed plan">Want a full plan? Export →</button>
     </div>
     <div class="next-up-grid" id="nextUpGrid" role="list"></div>
+  </div>
+
+  <div class="recap" id="recapSection" style="display:none">
+    <div class="next-up-head">
+      <span class="next-up-heading">Daily recap</span>
+      <span class="recap-note" id="recapNote">today so far</span>
+    </div>
+    <div class="recap-grid">
+      <div class="recap-cell">
+        <div class="recap-label">XP gained</div>
+        <div class="recap-val" id="recapXp">—</div>
+        <div class="recap-sub" id="recapXpTop"></div>
+      </div>
+      <div class="recap-cell">
+        <div class="recap-label">Levels gained</div>
+        <div class="recap-val" id="recapLevels">—</div>
+        <div class="recap-sub" id="recapLevelsList"></div>
+      </div>
+      <div class="recap-cell">
+        <div class="recap-label">Bank value</div>
+        <div class="recap-val" id="recapWealth">—</div>
+        <div class="recap-sub" id="recapWealthSub"></div>
+      </div>
+      <div class="recap-cell chart">
+        <div class="recap-label">Total XP · 30 days</div>
+        <div class="recap-chart" id="xpSpark"></div>
+      </div>
+      <div class="recap-cell chart">
+        <div class="recap-label">Bank value · 30 days</div>
+        <div class="recap-chart" id="worthSpark"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="timeline" id="timelineSection" style="display:none">
+    <div class="next-up-head">
+      <span class="next-up-heading">Recent milestones</span>
+      <span class="recap-note">last 30 days</span>
+    </div>
+    <div class="timeline-list" id="timelineList"></div>
   </div>
 </section>
 
@@ -1106,7 +1260,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
     <button class="tab" role="tab" aria-selected="false" aria-controls="panel-quests" onclick="switchTab('quests')">Quests</button>
     <button class="tab" role="tab" aria-selected="false" aria-controls="panel-bosses" onclick="switchTab('bosses')">Bosses</button>
     <button class="tab" role="tab" aria-selected="false" aria-controls="panel-goals" onclick="switchTab('goals')">Goals</button>
-    <button class="tab" role="tab" aria-selected="false" aria-controls="panel-plan" onclick="switchTab('plan')">AI Export</button>
+    <button class="tab" role="tab" aria-selected="false" aria-controls="panel-plan" onclick="switchTab('plan')">AI Advisor</button>
   </nav>
   <div class="page-content">
 
@@ -1209,8 +1363,27 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
   <div class="quest-grid" id="questGrid" role="list"></div>
 </div>
 
-<!-- ===== EXPORT ===== -->
+<!-- ===== AI ADVISOR + EXPORT ===== -->
 <div class="panel" id="panel-plan" role="tabpanel">
+  <div class="ai-advisor">
+    <div class="section-title">AI Advisor <span class="section-note">chats with any AI about your synced account — your key never leaves this browser</span></div>
+    <div class="advisor-settings">
+      <select id="aiProvider" onchange="advisorProviderChanged()" aria-label="AI provider">
+        <option value="openai">OpenAI</option>
+        <option value="anthropic">Anthropic</option>
+        <option value="custom">Custom (OpenAI-compatible)</option>
+      </select>
+      <input id="aiBaseUrl" class="advisor-field" placeholder="https://api.example.com/v1" style="display:none" aria-label="API base URL" onchange="advisorSaveSettings()">
+      <input id="aiModel" class="advisor-field" placeholder="model (blank = default)" aria-label="Model name" onchange="advisorSaveSettings()">
+      <input id="aiKey" class="advisor-field" type="password" placeholder="API key — stored only in this browser" aria-label="API key" onchange="advisorSaveSettings()">
+    </div>
+    <div class="advisor-log" id="advisorLog" aria-live="polite"></div>
+    <div class="advisor-input-row">
+      <textarea id="advisorInput" rows="2" placeholder="Ask anything about your account — e.g. “What should I focus on this week?”"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAdvisorMessage();}"></textarea>
+      <button onclick="sendAdvisorMessage()" id="advisorSend">Ask</button>
+    </div>
+  </div>
   <div class="export-hero">
     <h2>Export Player Data</h2>
     <p>Copy or download your synced OSRS profile and paste it into ChatGPT, Claude, Gemini, or any AI you prefer. Includes worn gear, bank equipment, skills, quests, gold, and boss access. Open your bank in-game before syncing for accurate gear data.</p>
@@ -1238,8 +1411,9 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 <div class="panel" id="panel-goals" role="tabpanel">
   <div class="goal-intro">
     <h2>Goal Planner</h2>
-    <p>Pick a target and the planner walks the full quest dependency tree, merges every skill requirement, and tracks your progress live as you play.</p>
+    <p>Pick a main goal — the milestone your account is working toward — and the planner walks the full quest dependency tree, merges every skill requirement, and tracks your progress live as you play. Your main goal is featured on the dashboard and boosts related recommendations.</p>
   </div>
+  <div class="goal-main-picker" id="goalMainPicker"></div>
   <div class="goal-toolbar">
     <span class="goal-toolbar-label">Add a goal</span>
     <span class="goal-presets" id="goalPresetChips"></span>
@@ -1969,13 +2143,20 @@ function getQuestDetails(name) {
   const legacy = QUEST_DETAILS[key] || QUEST_DETAILS[QUEST_DETAILS_ALIASES[normalizeQuestName(name)]];
 
   if (wiki || override) {
+    // Prefer the first NON-EMPTY quest-req list: the wiki generator flattens
+    // some quests' prerequisites into skill reqs and leaves questReqs empty
+    // (e.g. Desert Treasure I), which would otherwise mask the legacy chain.
+    const questReqs = override?.questReqs
+      ?? (wiki?.questReqs?.length ? wiki.questReqs : undefined)
+      ?? legacy?.questReqs
+      ?? [];
     return {
       name: key,
       qp: getQuestQp(name),
       diff: wiki?.diff || legacy?.diff || 'intermediate',
       reward: legacy?.reward || '',
       skillReqs: { ...(wiki?.skillReqs || legacy?.skillReqs || {}), ...(override?.skillReqs || {}) },
-      questReqs: override?.questReqs || wiki?.questReqs || legacy?.questReqs || [],
+      questReqs,
     };
   }
   return legacy || null;
@@ -2107,27 +2288,35 @@ async function fetchFromLocalhostSession(sessionToken) {
 
 /** { [skill]: { today, week } } — null until loaded, {} when no history yet. */
 let skillGains = null;
+/** Raw 31-day snapshot rows (asc by date) — feeds the recap, charts, timeline. */
+let snapshotRows = null;
+/** { [skill]: level } as of the last snapshot before today — for "levels gained today". */
+let skillLevelBaseline = {};
 
 async function loadXpGains(rsn) {
   skillGains = null;
+  snapshotRows = null;
+  skillLevelBaseline = {};
   if (!isSupabaseConfigured() || !rsn) return;
   try {
     const headers = (HOSTED_MODE && viewingOwnCharacter) ? await getAuthHeaders() : SB_HEADERS;
-    const since = new Date(Date.now() - 8 * 864e5).toISOString().slice(0, 10);
+    const since = new Date(Date.now() - 31 * 864e5).toISOString().slice(0, 10);
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/player_snapshots?rsn=eq.${encodeURIComponent(rsn)}` +
-        `&snap_date=gte.${since}&select=snap_date,skill,xp&order=snap_date.asc`,
+        `&snap_date=gte.${since}&select=snap_date,skill,level,xp&order=snap_date.asc`,
       { headers }
     );
     if (!res.ok) return;
     const rows = await res.json();
     const today = new Date().toISOString().slice(0, 10);
+    const weekAgo = new Date(Date.now() - 8 * 864e5).toISOString().slice(0, 10);
     const dayBaseline = {};   // latest snapshot before today
-    const weekBaseline = {};  // oldest snapshot in window
+    const weekBaseline = {};  // oldest snapshot within the last 8 days
     for (const r of rows) {
       if (r.snap_date >= today) continue;
-      if (weekBaseline[r.skill] === undefined) weekBaseline[r.skill] = r.xp;
+      if (r.snap_date >= weekAgo && weekBaseline[r.skill] === undefined) weekBaseline[r.skill] = r.xp;
       dayBaseline[r.skill] = r.xp;
+      skillLevelBaseline[r.skill] = r.level;
     }
     const gains = {};
     for (const [skill, d] of Object.entries(playerSkills)) {
@@ -2139,6 +2328,7 @@ async function loadXpGains(rsn) {
       };
     }
     skillGains = gains;
+    snapshotRows = rows;
   } catch (_) { /* gains stay hidden */ }
 }
 
@@ -2198,7 +2388,7 @@ async function loadNetWorth(rsn) {
   if (!HOSTED_MODE || !authSession || !viewingOwnCharacter) return;
   try {
     const headers = await getAuthHeaders();
-    const since = new Date(Date.now() - 8 * 864e5).toISOString().slice(0, 10);
+    const since = new Date(Date.now() - 31 * 864e5).toISOString().slice(0, 10);
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/player_networth?rsn=eq.${encodeURIComponent(rsn)}` +
         `&snap_date=gte.${since}&select=snap_date,value&order=snap_date.asc`,
@@ -2215,11 +2405,184 @@ function netWorthDeltaText() {
   const bankVal = bankValueEstimate();
   if (bankVal == null || !netWorthHistory?.length) return '';
   const today = new Date().toISOString().slice(0, 10);
-  const prior = netWorthHistory.filter(r => r.snap_date < today);
+  const weekAgo = new Date(Date.now() - 8 * 864e5).toISOString().slice(0, 10);
+  const prior = netWorthHistory.filter(r => r.snap_date < today && r.snap_date >= weekAgo);
   if (!prior.length) return '';
   const delta = bankVal - prior[0].value;
   if (Math.abs(delta) < 1000) return '';
   return ` · ${delta >= 0 ? '+' : '−'}${formatGold(Math.abs(delta))} this week`;
+}
+
+// ─── DAILY RECAP + TIMELINE ──────────────────────────────────────────────────
+// Everything here is derived from the 31-day snapshot window (snapshotRows,
+// netWorthHistory) plus live page state — no extra requests.
+
+/** Minimal inline SVG line chart; values in chronological order. */
+function sparklineSvg(values, { width = 220, height = 44 } = {}) {
+  if (!values || values.length < 2) {
+    return '<span class="spark-empty">Not enough history yet — check back tomorrow</span>';
+  }
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const span = max - min || 1;
+  const pts = values.map((v, i) => {
+    const x = (i / (values.length - 1)) * (width - 4) + 2;
+    const y = height - 3 - ((v - min) / span) * (height - 6);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+  return `<svg viewBox="0 0 ${width} ${height}" class="spark" preserveAspectRatio="none" role="img">
+    <polyline points="${pts}" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+  </svg>`;
+}
+
+/** Daily total-XP series from snapshots (each synced day has a full skill set). */
+function dailyTotalXpSeries() {
+  if (!snapshotRows?.length) return [];
+  const byDate = {};
+  for (const r of snapshotRows) {
+    if (r.skill === 'overall') continue;
+    byDate[r.snap_date] = (byDate[r.snap_date] || 0) + (r.xp || 0);
+  }
+  const series = Object.entries(byDate).sort((a, b) => a[0].localeCompare(b[0])).map(([, v]) => v);
+  // Append the live total so today's progress shows immediately
+  const liveTotal = Object.entries(playerSkills)
+    .filter(([k]) => k !== 'overall')
+    .reduce((a, [, v]) => a + (v.xp || 0), 0);
+  if (liveTotal > 0) series.push(liveTotal);
+  return series;
+}
+
+/** Level-up events reconstructed from snapshots + live levels. Newest first. */
+function buildTimelineEvents() {
+  const events = [];
+  if (snapshotRows?.length) {
+    const bySkill = {};
+    for (const r of snapshotRows) {
+      if (r.skill === 'overall') continue;
+      (bySkill[r.skill] ??= []).push(r);
+    }
+    const today = new Date().toISOString().slice(0, 10);
+    for (const [skill, rows] of Object.entries(bySkill)) {
+      for (let i = 1; i < rows.length; i++) {
+        if (rows[i].level > rows[i - 1].level) {
+          events.push({ date: rows[i].snap_date, type: 'level', skill, from: rows[i - 1].level, to: rows[i].level });
+        }
+      }
+      // Live level vs last snapshot — today's ding shows before tomorrow's snapshot
+      const last = rows[rows.length - 1];
+      const cur = playerSkills[skill]?.level || 0;
+      if (cur > last.level) {
+        events.push({ date: today, type: 'level', skill, from: last.level, to: cur });
+      }
+    }
+  }
+  if (netWorthHistory?.length > 1) {
+    const thresholds = [10e6, 25e6, 50e6, 100e6, 250e6, 500e6, 1e9, 2e9];
+    for (let i = 1; i < netWorthHistory.length; i++) {
+      for (const t of thresholds) {
+        if (netWorthHistory[i - 1].value < t && netWorthHistory[i].value >= t) {
+          events.push({ date: netWorthHistory[i].snap_date, type: 'wealth', threshold: t });
+        }
+      }
+    }
+  }
+  return events.sort((a, b) => b.date.localeCompare(a.date));
+}
+
+function formatRecapDate(iso) {
+  const d = new Date(iso + 'T12:00:00Z');
+  const today = new Date().toISOString().slice(0, 10);
+  const yesterday = new Date(Date.now() - 864e5).toISOString().slice(0, 10);
+  if (iso === today) return 'Today';
+  if (iso === yesterday) return 'Yesterday';
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+function renderRecap() {
+  const section = document.getElementById('recapSection');
+  if (!section) return;
+  // Needs at least one prior snapshot day, and only for full-sync profiles
+  const hasHistory = snapshotRows?.some(r => r.snap_date < new Date().toISOString().slice(0, 10));
+  if (!hasHistory || dataSource === 'wom' || !playerSkills.attack) {
+    section.style.display = 'none';
+    return;
+  }
+  section.style.display = '';
+
+  const todayGain = totalXpGain('today');
+  document.getElementById('recapXp').textContent = todayGain != null ? '+' + formatXp(todayGain) : '—';
+  const top = Object.entries(skillGains || {})
+    .filter(([, g]) => g.today > 0)
+    .sort((a, b) => b[1].today - a[1].today)
+    .slice(0, 3)
+    .map(([sk, g]) => `${formatSkillName(sk)} +${formatXp(g.today)}`);
+  document.getElementById('recapXpTop').textContent = top.length ? top.join(' · ') : 'No XP gained yet today';
+
+  const ups = [];
+  for (const [skill, d] of Object.entries(playerSkills)) {
+    if (skill === 'overall') continue;
+    const base = skillLevelBaseline[skill];
+    if (base != null && (d.level || 0) > base) ups.push({ skill, from: base, to: d.level });
+  }
+  document.getElementById('recapLevels').textContent = ups.length
+    ? '+' + ups.reduce((a, u) => a + (u.to - u.from), 0)
+    : '0';
+  document.getElementById('recapLevelsList').textContent = ups.length
+    ? ups.slice(0, 3).map(u => `${formatSkillName(u.skill)} ${u.from}→${u.to}`).join(' · ') + (ups.length > 3 ? ` +${ups.length - 3} more` : '')
+    : 'No level-ups yet today';
+
+  const bankVal = bankValueEstimate();
+  const wealthEl = document.getElementById('recapWealth');
+  const wealthSub = document.getElementById('recapWealthSub');
+  if (bankVal != null) {
+    wealthEl.textContent = formatGold(bankVal);
+    const today = new Date().toISOString().slice(0, 10);
+    const prior = (netWorthHistory || []).filter(r => r.snap_date < today);
+    if (prior.length) {
+      const delta = bankVal - prior[prior.length - 1].value;
+      wealthSub.textContent = Math.abs(delta) < 1000 ? 'No change today' : `${delta >= 0 ? '+' : '−'}${formatGold(Math.abs(delta))} today`;
+    } else {
+      wealthSub.textContent = 'GE estimate';
+    }
+  } else {
+    wealthEl.textContent = '—';
+    wealthSub.textContent = bankSynced ? 'Loading GE prices…' : 'Open bank in-game to track';
+  }
+
+  document.getElementById('xpSpark').innerHTML = sparklineSvg(dailyTotalXpSeries());
+  const worthSeries = (netWorthHistory || []).map(r => r.value);
+  if (bankVal != null) worthSeries.push(bankVal);
+  document.getElementById('worthSpark').innerHTML = sparklineSvg(worthSeries);
+}
+
+function renderTimeline() {
+  const section = document.getElementById('timelineSection');
+  if (!section) return;
+  const events = buildTimelineEvents();
+  if (!events.length) { section.style.display = 'none'; return; }
+  section.style.display = '';
+
+  // Group by date, newest first, cap the list to keep the dashboard tidy
+  const byDate = new Map();
+  for (const e of events.slice(0, 60)) {
+    if (!byDate.has(e.date)) byDate.set(e.date, []);
+    byDate.get(e.date).push(e);
+  }
+  document.getElementById('timelineList').innerHTML = [...byDate.entries()].slice(0, 10).map(([date, evs]) => {
+    const chips = evs.map(e => {
+      if (e.type === 'wealth') {
+        return `<span class="timeline-chip wealth">Bank passed ${formatGold(e.threshold)}</span>`;
+      }
+      const big = e.to === 99;
+      return `<span class="timeline-chip${big ? ' ninety-nine' : ''}">
+        <img src="assets/skills/${e.skill}.png" alt="" width="14" height="14" loading="lazy" onerror="this.style.display='none'">
+        ${formatSkillName(e.skill)} ${e.from}→${e.to}${big ? ' 🎉' : ''}</span>`;
+    }).join('');
+    return `<div class="timeline-day">
+      <div class="timeline-date">${formatRecapDate(date)}</div>
+      <div class="timeline-chips">${chips}</div>
+    </div>`;
+  }).join('');
 }
 
 // ─── GE PRICES (OSRS wiki real-time prices API) ──────────────────────────────
@@ -2697,8 +3060,58 @@ function renderDashboard() {
     privacyBadge.style.display = 'none';
   }
 
+  renderMainGoalHero();
   renderNextUp();
+  renderRecap();
+  renderTimeline();
   renderGoals();
+}
+
+// ─── MAIN GOAL (dashboard hero) ──────────────────────────────────────────────
+/** The one goal flagged main:true for this character, with its index, or null. */
+function getMainGoal() {
+  const goals = getPlayerGoals();
+  const idx = goals.findIndex(g => g.main);
+  return idx === -1 ? null : { goal: goals[idx], idx };
+}
+
+function setMainGoal(idx) {
+  const goals = getPlayerGoals();
+  if (!goals[idx]) return;
+  goals.forEach((g, i) => { g.main = i === idx; });
+  savePlayerGoals(goals);
+  renderGoals();
+  renderDashboard();
+}
+
+function renderMainGoalHero() {
+  const hero = document.getElementById('mainGoalHero');
+  if (!hero) return;
+  const main = getMainGoal();
+  if (!main || !playerSkills.attack) { hero.style.display = 'none'; return; }
+  hero.style.display = '';
+
+  const plan = computeGoalPlan(main.goal);
+  const complete = plan.doneSteps >= plan.totalSteps && plan.totalSteps > 0;
+  const ready = plan.quests.filter(q => !q.done && q.ready).map(q => q.name);
+  const unmetSkills = plan.skills.filter(s => !s.met);
+  const nextBits = [];
+  for (const name of ready.slice(0, 2)) nextBits.push(name);
+  if (unmetSkills.length && nextBits.length < 3) {
+    const s = unmetSkills[0];
+    nextBits.push(`${formatSkillName(s.sk)} ${s.have}/${s.need}`);
+  }
+  hero.innerHTML = `
+    <div class="main-goal-row">
+      <span class="main-goal-tag">Main goal</span>
+      <span class="main-goal-title">${main.goal.label || main.goal.quest}</span>
+      <span class="main-goal-pct">${complete ? 'Complete!' : plan.pct + '%'}</span>
+    </div>
+    <div class="goal-progress"><div class="goal-progress-fill" style="width:${plan.pct}%"></div></div>
+    <div class="main-goal-next">${complete
+      ? 'You did it — pick your next milestone in the goal planner.'
+      : (nextBits.length ? 'Next: ' + nextBits.join(' · ') : `${plan.totalSteps - plan.doneSteps} steps to go — open the planner for the full tree`)}</div>`;
+  hero.classList.toggle('complete', complete);
 }
 
 // ─── NEXT UP (recommendations) ────────────────────────────────────────────────
@@ -2718,6 +3131,18 @@ function buildNextUpRecommendations() {
   const journal = getJournalQuestList();
   const bosses = getBossExportEntries();
 
+  // Main goal context: quests and skills on the path get boosted. Quest-cape
+  // goals are skipped here — "everything advances it" is not useful signal.
+  const mainGoal = getMainGoal();
+  let mainQuestSet = null;
+  let mainSkillNeeds = null;
+  if (mainGoal && !mainGoal.goal.all) {
+    const plan = computeGoalPlan(mainGoal.goal);
+    mainQuestSet = new Set(plan.quests.filter(q => !q.done).map(q => q.name));
+    mainSkillNeeds = {};
+    for (const s of plan.skills) if (!s.met) mainSkillNeeds[s.sk] = s.need;
+  }
+
   // Quests that are the only thing between the player and a boss get a bonus.
   const questUnlocksBoss = {};
   for (const b of bosses) {
@@ -2735,6 +3160,10 @@ function buildNextUpRecommendations() {
     if (bossName) {
       score += 25;
       why += ` — and it's the last quest between you and ${bossName}`;
+    }
+    if (mainQuestSet?.has(q.name)) {
+      score += 35;
+      why += ` — advances your main goal (${mainGoal.goal.label || mainGoal.goal.quest})`;
     }
     if (score < 30) continue;
     recs.push({ type: 'quest', tag: 'Quest ready', title: q.name, why, score, tab: 'quests' });
@@ -2759,6 +3188,12 @@ function buildNextUpRecommendations() {
     if (b.status !== 'close' || b.unmet_quests.length) continue;
     for (const m of b.unmet_skills) addNeed(m.skill, m.need, m.have, b.name);
   }
+  // Skill walls on the main-goal path count even when no single quest is one level away
+  if (mainSkillNeeds) {
+    for (const [sk, need] of Object.entries(mainSkillNeeds)) {
+      addNeed(sk, need, questSkillLevel(sk), `${mainGoal.goal.label || mainGoal.goal.quest} (main goal)`);
+    }
+  }
   for (const [skill, needs] of Object.entries(needsBySkill)) {
     const have = questSkillLevel(skill);
     // Pick the target level with the best unlocks-per-level-gained trade-off.
@@ -2772,6 +3207,11 @@ function buildNextUpRecommendations() {
     const preview = best.unlocked.slice(0, 3).join(', ');
     const extra = best.unlocked.length > 3 ? ` +${best.unlocked.length - 3} more` : '';
     let why = `${best.level - have} level${best.level - have === 1 ? '' : 's'} unlocks: ${preview}${extra}`;
+    let score = best.score;
+    if (mainSkillNeeds?.[skill] != null && best.level >= Math.min(mainSkillNeeds[skill], have + NEXT_UP_SKILL_REACH)) {
+      score += 20;
+      why += ` — needed for your main goal`;
+    }
     // If the bank already holds meaningful XP toward this skill, say so.
     const banked = computeBankedXp()?.[skill];
     if (banked && banked.total >= 10000) {
@@ -2782,7 +3222,7 @@ function buildNextUpRecommendations() {
       tag: 'Skill target',
       title: `${formatSkillName(skill)} ${have} → ${best.level}`,
       why,
-      score: best.score,
+      score,
       tab: 'stats',
     });
   }
@@ -3474,6 +3914,23 @@ function buildExportData() {
       close: bosses.filter(b => b.status === 'close').map(b => ({ name: b.name, unmet_skills: b.unmet_skills, unmet_quests: b.unmet_quests })),
       locked: bosses.filter(b => b.status === 'locked').map(b => ({ name: b.name, tier: b.tier, unmet_skills: b.unmet_skills, unmet_quests: b.unmet_quests, drops: b.drops })),
     },
+    main_goal: buildMainGoalExport(),
+  };
+}
+
+/** Main-goal summary for exports / the AI advisor, or null if none is set. */
+function buildMainGoalExport() {
+  const main = getMainGoal();
+  if (!main) return null;
+  const plan = computeGoalPlan(main.goal);
+  return {
+    label: main.goal.label || main.goal.quest,
+    target: main.goal.all ? 'Quest point cape (all quests)' : main.goal.quest,
+    progress_pct: plan.pct,
+    steps_done: plan.doneSteps,
+    steps_total: plan.totalSteps,
+    quests_remaining: plan.quests.filter(q => !q.done).map(q => q.name + (q.ready ? ' (can start now)' : '')).slice(0, 40),
+    skill_targets: plan.skills.filter(s => !s.met).map(s => `${formatSkillName(s.sk)} ${s.have}/${s.need}`),
   };
 }
 
@@ -3491,6 +3948,13 @@ function buildExportMarkdown(data) {
     'IMPORTANT: Check the "Owned equipment" section — do NOT recommend buying items I already have in my bank or worn gear.',
     '```',
     '',
+    ...(data.main_goal ? [
+      '## Main goal',
+      `Working toward: **${data.main_goal.label}** (${data.main_goal.target}) — ${data.main_goal.progress_pct}% done (${data.main_goal.steps_done}/${data.main_goal.steps_total} steps).`,
+      data.main_goal.quests_remaining.length ? `- Quests remaining: ${data.main_goal.quests_remaining.join(', ')}` : '',
+      data.main_goal.skill_targets.length ? `- Skill targets: ${data.main_goal.skill_targets.join(', ')}` : '',
+      '',
+    ].filter(l => l !== '') .concat(['']) : []),
     '## Summary',
     `- **RSN:** ${p.rsn || '—'}`,
     `- **Combat level:** ${p.combat_level}`,
@@ -3667,6 +4131,141 @@ function downloadExport() {
   status.textContent = `Downloaded osrs-journal-${slug}.${ext}`;
 }
 
+// ─── AI ADVISOR ───────────────────────────────────────────────────────────────
+// Bring-your-own-key chat: the full account export is injected as the system
+// prompt and requests go straight from the browser to the provider — no key or
+// conversation ever touches our servers. Key/settings live in localStorage.
+
+const ADVISOR_DEFAULTS = {
+  openai: { url: 'https://api.openai.com/v1', model: 'gpt-4o-mini' },
+  anthropic: { url: 'https://api.anthropic.com', model: 'claude-3-5-haiku-latest' },
+  custom: { url: '', model: '' },
+};
+let advisorHistory = []; // [{role, content}] — session only, capped
+
+function advisorLoadSettings() {
+  let cfg = {};
+  try { cfg = JSON.parse(localStorage.getItem('osrs_ai_cfg') || '{}'); } catch (_) {}
+  const provider = cfg.provider || 'openai';
+  document.getElementById('aiProvider').value = provider;
+  document.getElementById('aiModel').value = cfg.model || '';
+  document.getElementById('aiBaseUrl').value = cfg.baseUrl || '';
+  document.getElementById('aiBaseUrl').style.display = provider === 'custom' ? '' : 'none';
+  document.getElementById('aiKey').value = localStorage.getItem('osrs_ai_key_' + provider) || '';
+}
+
+function advisorSaveSettings() {
+  const provider = document.getElementById('aiProvider').value;
+  localStorage.setItem('osrs_ai_cfg', JSON.stringify({
+    provider,
+    model: document.getElementById('aiModel').value.trim(),
+    baseUrl: document.getElementById('aiBaseUrl').value.trim(),
+  }));
+  const key = document.getElementById('aiKey').value.trim();
+  if (key) localStorage.setItem('osrs_ai_key_' + provider, key);
+}
+
+function advisorProviderChanged() {
+  advisorSaveSettings();
+  advisorLoadSettings();
+}
+
+function advisorAppend(role, text, cls = '') {
+  const log = document.getElementById('advisorLog');
+  const div = document.createElement('div');
+  div.className = `advisor-msg ${role} ${cls}`.trim();
+  div.textContent = text;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+  return div;
+}
+
+function advisorSystemPrompt() {
+  const context = playerSkills.attack ? buildExportMarkdown(buildExportData()) : '(no character synced yet)';
+  return 'You are an expert Old School RuneScape account advisor. Below is the player\'s full live account state from OSRS Journal. '
+    + 'Give specific, efficient, actionable advice for THIS account. Never recommend buying items already listed under owned equipment. '
+    + 'Prefer steps that advance the player\'s main goal when one is set. Be concise; use short lists.\n\n'
+    + context;
+}
+
+async function sendAdvisorMessage() {
+  const input = document.getElementById('advisorInput');
+  const question = input.value.trim();
+  if (!question) return;
+  advisorSaveSettings();
+
+  const provider = document.getElementById('aiProvider').value;
+  const key = (document.getElementById('aiKey').value || '').trim();
+  if (!key) {
+    showToast('Add your API key first — it stays in this browser.', 'error');
+    document.getElementById('aiKey').focus();
+    return;
+  }
+  const model = document.getElementById('aiModel').value.trim() || ADVISOR_DEFAULTS[provider].model;
+  const baseUrl = (provider === 'custom'
+    ? document.getElementById('aiBaseUrl').value.trim().replace(/\/$/, '')
+    : ADVISOR_DEFAULTS[provider].url);
+  if (!baseUrl || (provider === 'custom' && !model)) {
+    showToast('Custom provider needs a base URL and model name.', 'error');
+    return;
+  }
+
+  input.value = '';
+  advisorAppend('user', question);
+  advisorHistory.push({ role: 'user', content: question });
+  advisorHistory = advisorHistory.slice(-10);
+  const btn = document.getElementById('advisorSend');
+  btn.disabled = true;
+  const pending = advisorAppend('assistant', 'Thinking…', 'pending');
+
+  try {
+    let answer;
+    if (provider === 'anthropic') {
+      const res = await fetch(`${baseUrl}/v1/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': key,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model,
+          max_tokens: 1024,
+          system: advisorSystemPrompt(),
+          messages: advisorHistory,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error?.message || `Request failed (${res.status})`);
+      answer = (json.content || []).map(c => c.text || '').join('');
+    } else {
+      const res = await fetch(`${baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key },
+        body: JSON.stringify({
+          model,
+          messages: [{ role: 'system', content: advisorSystemPrompt() }, ...advisorHistory],
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error?.message || `Request failed (${res.status})`);
+      answer = json.choices?.[0]?.message?.content || '';
+    }
+    if (!answer) throw new Error('Empty response from the model.');
+    pending.classList.remove('pending');
+    pending.textContent = answer;
+    advisorHistory.push({ role: 'assistant', content: answer });
+  } catch (e) {
+    pending.classList.remove('pending');
+    pending.classList.add('error');
+    pending.textContent = `Error: ${e.message}`;
+    advisorHistory.pop(); // let the user retry the same question
+  }
+  btn.disabled = false;
+  document.getElementById('advisorLog').scrollTop = document.getElementById('advisorLog').scrollHeight;
+}
+
 // ─── BOSS TRACKER ─────────────────────────────────────────────────────────────
 function renderBosses() {
   const tiers = {};
@@ -3776,19 +4375,31 @@ function goalKey(goal) {
 
 function addGoal(goal) {
   const goals = getPlayerGoals();
-  if (goals.some(g => goalKey(g) === goalKey(goal))) {
+  const existing = goals.findIndex(g => goalKey(g) === goalKey(goal));
+  if (existing !== -1) {
+    if (goal.main) { setMainGoal(existing); return; }
     showToast('That goal is already on your list.', 'error');
     return;
   }
+  if (!goals.length) goal.main = true; // first goal becomes the main goal
+  if (goal.main) goals.forEach(g => { g.main = false; });
   goals.push(goal);
   savePlayerGoals(goals);
   renderGoals();
+  renderDashboard();
 }
 
 function addGoalPreset(i) {
   const p = GOAL_PRESETS[i];
   if (!p) return;
   addGoal(p.all ? { label: p.label, all: true } : { label: p.label, quest: p.quest });
+}
+
+/** Main-goal milestones: adding one (or clicking an existing one) makes it main. */
+function addMainGoalPreset(i) {
+  const p = GOAL_MAIN_PRESETS[i];
+  if (!p) return;
+  addGoal(p.all ? { label: p.label, all: true, main: true } : { label: p.label, quest: p.quest, main: true });
 }
 
 function addGoalFromInput() {
@@ -3809,12 +4420,28 @@ function removeGoal(idx) {
   goals.splice(idx, 1);
   savePlayerGoals(goals);
   renderGoals();
+  renderDashboard();
 }
 
 function renderGoals() {
   const list = document.getElementById('goalList');
   const hint = document.getElementById('goalHint');
   if (!list) return;
+
+  // Main-goal milestone cards — re-rendered each time to reflect the current pick
+  const mainPicker = document.getElementById('goalMainPicker');
+  if (mainPicker && typeof GOAL_MAIN_PRESETS !== 'undefined') {
+    const currentMainKey = getMainGoal() ? goalKey(getMainGoal().goal) : null;
+    mainPicker.innerHTML = GOAL_MAIN_PRESETS.map((p, i) => {
+      const key = p.all ? '__all' : normalizeQuestName(p.quest);
+      const isMain = key === currentMainKey;
+      return `<button class="goal-main-card${isMain ? ' selected' : ''}" type="button" onclick="addMainGoalPreset(${i})"
+        title="${isMain ? 'This is your main goal' : 'Set as your main goal'}">
+        <span class="goal-main-card-label">${p.label}${isMain ? ' <span class="goal-main-star">★</span>' : ''}</span>
+        <span class="goal-main-card-desc">${p.desc}</span>
+      </button>`;
+    }).join('');
+  }
 
   // Preset chips + quest datalist, populated once
   const chips = document.getElementById('goalPresetChips');
@@ -3859,9 +4486,12 @@ function renderGoals() {
       `<span class="quest-req-tag skill">${formatSkillName(s.sk)} ${s.have}/${s.need}</span>`
     ).join('');
     const sub = goal.all ? 'All journal quests' : (goal.quest !== goal.label ? goal.quest : '');
-    return `<div class="goal-card${complete ? ' complete' : ''}" role="listitem">
+    return `<div class="goal-card${complete ? ' complete' : ''}${goal.main ? ' is-main' : ''}" role="listitem">
       <div class="goal-card-head">
         <div class="goal-title">${goal.label || goal.quest}${sub ? ` <span class="goal-sub">${sub}</span>` : ''}</div>
+        <button class="goal-star${goal.main ? ' active' : ''}" type="button" onclick="setMainGoal(${idx})"
+          aria-label="${goal.main ? 'This is your main goal' : 'Set as main goal'}"
+          title="${goal.main ? 'Main goal — featured on your dashboard' : 'Set as main goal'}">${goal.main ? '★' : '☆'}</button>
         <button class="goal-remove" type="button" onclick="removeGoal(${idx})" aria-label="Remove goal" title="Remove goal">×</button>
       </div>
       <div class="goal-progress" role="progressbar" aria-valuenow="${plan.pct}" aria-valuemin="0" aria-valuemax="100">
@@ -3912,6 +4542,7 @@ document.querySelector('.page-tabs').addEventListener('keydown', (e) => {
   renderEquipDoll();
   renderSyncedEquipment();
   renderQuests();
+  advisorLoadSettings();
 
   const msg = document.getElementById('statusMsg');
   const configured = await loadSupabaseConfig();
