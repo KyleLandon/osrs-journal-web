@@ -1059,6 +1059,29 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
 <script>
+/*
+ * ARCHITECTURE OVERVIEW
+ *
+ * One page, three ways data can arrive (dataSource tracks which):
+ *   1. 'supabase' via localhost session — opened from the RuneLite plugin with
+ *      ?local_session=<token>; reads full private data (bank, gear) through the
+ *      /localhost-read Edge Function for ~5 minutes, no sign-in needed.
+ *   2. 'supabase' via REST — signed-in owners read their own rows (RLS-scoped
+ *      by their Auth JWT); anyone can read public profiles (skills/quests only,
+ *      enforced by RLS policies + column grants server-side).
+ *   3. 'wom' — Wise Old Man fallback, skills only, used ONLY when the character
+ *      isn't in our database at all.
+ *
+ * Writes from this page are minimal by design: privacy toggle (PATCH on
+ * user_characters, RLS-guarded) and calls to pair-claim / account-delete Edge
+ * Functions with the user's JWT. All game data is written by the plugin, never
+ * the browser.
+ *
+ * localStorage is a display cache only (last viewed character); the database
+ * is always the source of truth and a 15s poll keeps the page live while the
+ * tab is visible.
+ */
+
 // ─── SUPABASE CONFIG ──────────────────────────────────────────────────────────
 // Loaded from supabase-config.json (standalone) or served by the RuneLite plugin.
 let SUPABASE_URL = '';
@@ -1120,6 +1143,10 @@ async function loadSupabaseConfig() {
   return false;
 }
 
+/**
+ * REST headers for the current viewer: the user's JWT when signed in (RLS then
+ * grants their own rows), otherwise the anon key (public rows only).
+ */
 async function getAuthHeaders() {
   if (authSession?.access_token) {
     return {
@@ -1207,6 +1234,7 @@ function showToast(text, kind = '', durationMs = 4000) {
   }, durationMs);
 }
 
+/** Re-renders the account panel from the current session: signed-in state, linked characters, privacy toggle. */
 async function refreshAuthUi() {
   const authBtn = document.getElementById('authBtn');
   if (!HOSTED_MODE || !supabaseClient) {
@@ -2437,6 +2465,11 @@ async function getActiveRSN(preferredRsn) {
   return rows[0]?.rsn || null;
 }
 
+/**
+ * Loads one character's rows into page state (playerSkills, questsDone, wornGear,
+ * playerBank, gold...). Single entry point for all three data paths so every
+ * renderer reads the same shape. Returns the skill-row count (0 = nothing synced).
+ */
 function applyPlayerPayload(rsn, skills, quests, equip, bank, playerRow) {
   playerSkills = {};
   for (const row of skills) {
@@ -2580,7 +2613,14 @@ async function fetchFromWOM(rsn) {
   }
 }
 
-/** Main fetch button handler — tries Supabase first, falls back to WOM. */
+/**
+ * Main load path for a character (search button, ?rsn= links, live refresh).
+ * Tries our database first (own character → full data; other player → public
+ * profile), and only falls back to Wise Old Man when the character isn't in the
+ * DB at all — real errors surface to the user. `options.silent` suppresses UI
+ * churn during background refresh; `options.keepView` avoids yanking the user
+ * out of the landing page during pre-loads.
+ */
 async function fetchPlayer(rsnOverride, options = {}) {
   const rsn = (rsnOverride || document.getElementById('rsnInput').value).trim();
   if (!rsn) return;
@@ -3446,6 +3486,10 @@ function switchTab(tab) {
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
+// Boot order matters: quest metadata → Supabase config → auth state → then the
+// first data source that applies, checked from most to least specific:
+//   ?local_session (opened from RuneLite) → ?rsn (shared link / plugin fallback)
+//   → signed-in user's linked character → cached last character → landing page.
 (async function init() {
   await loadQuestReqs();
   renderEquipDoll();
