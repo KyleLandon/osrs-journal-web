@@ -1303,7 +1303,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 </div>
 
 <!-- ===== LANDING (shown until a character is loaded) ===== -->
-<section id="landing" class="landing hidden">
+<section id="landing" class="landing">
   <div class="landing-hero">
     <img src="assets/logo.png" alt="OSRS Journal" class="landing-logo" />
     <h1>Your Old School RuneScape journal</h1>
@@ -1351,7 +1351,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
   </div>
 </section>
 
-<main class="main" id="journalMain">
+<main class="main" id="journalMain" style="display:none">
 
 <div id="syncBanner" class="sync-banner hidden"></div>
 
@@ -1712,6 +1712,12 @@ let supabaseClient = null;
 let authSession = null;
 let viewingOwnCharacter = false;
 let linkedCharacterMeta = [];
+/** Prevents double pair-modal prompts from SIGNED_IN + init racing. */
+let pairingPromptShown = false;
+/** True while claimPairCode is in flight (blocks double-submit). */
+let pairingClaimInFlight = false;
+/** True while email sign-in / sign-up is in flight. */
+let authEmailInFlight = false;
 
 function normalizeApiBase(url) {
   let trimmed = (url || '').trim().replace(/\/$/, '');
@@ -1776,6 +1782,9 @@ async function getAuthHeaders() {
 }
 
 function toggleAuthPanel() {
+  // While the pairing gate is up, keep focus there (Account can wait).
+  const pairModal = document.getElementById('pairModal');
+  if (pairModal && !pairModal.classList.contains('hidden')) return;
   document.getElementById('authPanel').classList.toggle('hidden');
 }
 
@@ -1811,6 +1820,7 @@ document.addEventListener('click', (e) => {
 function goHome() {
   closeAuthPanel();
   showLanding();
+  personalizeLanding(linkedCharacterMeta[0]?.rsn || null);
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -1838,15 +1848,28 @@ function personalizeLanding(rsn) {
 }
 
 /** Open the signed-in user's journal, or the pairing modal if none is linked. */
-function openOwnJournal() {
+async function openOwnJournal() {
   if (needsPairing()) {
     showPairModal();
     return;
   }
-  showJournal();
+  const rsn = linkedCharacterMeta[0]?.rsn;
+  if (!rsn) {
+    showPairModal();
+    return;
+  }
+  document.getElementById('rsnInput').value = rsn;
+  await fetchPlayer(rsn);
+  startLiveRefresh();
 }
 
 function showPairModal() {
+  if (pairingPromptShown && !document.getElementById('pairModal')?.classList.contains('hidden')) {
+    // Already visible — just focus the input.
+    document.getElementById('pairModalInput')?.focus();
+    return;
+  }
+  pairingPromptShown = true;
   closeAuthPanel();
   const modal = document.getElementById('pairModal');
   if (!modal) return;
@@ -1872,7 +1895,7 @@ function closePairModal() {
   document.getElementById('pairModal')?.classList.add('hidden');
 }
 
-/** If signed in with no linked character, show the pairing gate and stay on home. */
+/** If signed in with no linked character, show the pairing gate once and stay on home. */
 function requirePairingOrContinue() {
   if (!needsPairing()) {
     closePairModal();
@@ -1880,7 +1903,8 @@ function requirePairingOrContinue() {
   }
   showLanding();
   personalizeLanding(null);
-  showPairModal();
+  if (!pairingPromptShown) showPairModal();
+  else document.getElementById('pairModal')?.classList.remove('hidden');
   return true;
 }
 
@@ -1929,7 +1953,11 @@ function showToast(text, kind = '', durationMs = 4000) {
 }
 
 /** Re-renders the account panel from the current session: signed-in state, linked characters, privacy toggle. */
-async function refreshAuthUi() {
+/**
+ * Refresh account UI from the current session.
+ * Pass { session } to skip a redundant getSession() round trip.
+ */
+async function refreshAuthUi(opts = {}) {
   const authBtn = document.getElementById('authBtn');
   if (!HOSTED_MODE || !supabaseClient) {
     authBtn.style.display = 'none';
@@ -1937,8 +1965,12 @@ async function refreshAuthUi() {
   }
   authBtn.style.display = '';
 
-  const { data } = await supabaseClient.auth.getSession();
-  authSession = data.session;
+  if (opts.session !== undefined) {
+    authSession = opts.session;
+  } else {
+    const { data } = await supabaseClient.auth.getSession();
+    authSession = data.session;
+  }
   const signedOut = document.getElementById('authSignedOut');
   const signedIn = document.getElementById('authSignedIn');
 
@@ -1966,10 +1998,12 @@ async function refreshAuthUi() {
       }
     }
     // Dashboard privacy badge depends on linkedCharacterMeta
-    renderDashboard();
+    if (playerSkills.attack) renderDashboard();
     if (needsPairing()) personalizeLanding(null);
     else if (names[0]) personalizeLanding(names[0]);
   } else {
+    linkedCharacterMeta = [];
+    pairingPromptShown = false;
     signedOut.style.display = '';
     signedIn.style.display = 'none';
     authBtn.textContent = 'Sign in';
@@ -2010,23 +2044,22 @@ async function signInWithEmail() {
   const email = document.getElementById('authEmail').value.trim();
   const password = document.getElementById('authPassword').value;
   const msg = document.getElementById('authMsg');
-  if (!email || !password || !supabaseClient) return;
+  if (!email || !password || !supabaseClient || authEmailInFlight) return;
+  authEmailInFlight = true;
   msg.textContent = 'Signing in...';
-  const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-  if (error) {
-    msg.textContent = error.message;
-    msg.className = 'status-msg error';
-    return;
-  }
-  msg.textContent = '';
-  await refreshAuthUi();
-  if (linkedCharacterMeta.length) {
-    closeAuthPanel();
-    showToast('Signed in!', 'ok');
-  } else {
-    // Gate the journal until they enter a plugin pairing code.
-    closeAuthPanel();
-    showPairModal();
+  msg.className = 'status-msg';
+  try {
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    if (error) {
+      msg.textContent = error.message;
+      msg.className = 'status-msg error';
+      return;
+    }
+    msg.textContent = '';
+    // onAuthStateChange also fires — skips because authSession is already set.
+    await handleSignedIn(data.session, { interactive: true });
+  } finally {
+    authEmailInFlight = false;
   }
 }
 
@@ -2034,20 +2067,59 @@ async function signUpWithEmail() {
   const email = document.getElementById('authEmail').value.trim();
   const password = document.getElementById('authPassword').value;
   const msg = document.getElementById('authMsg');
-  if (!email || !password || !supabaseClient) return;
+  if (!email || !password || !supabaseClient || authEmailInFlight) return;
   if (password.length < 8) {
     msg.textContent = 'Password must be at least 8 characters.';
     msg.className = 'status-msg error';
     return;
   }
+  authEmailInFlight = true;
   msg.textContent = 'Creating account...';
-  const { error } = await supabaseClient.auth.signUp({
-    email,
-    password,
-    options: { emailRedirectTo: authRedirectUrl() },
-  });
-  msg.textContent = error ? error.message : 'Account created — check email if confirmation is required.';
-  msg.className = error ? 'status-msg error' : 'status-msg ok';
+  msg.className = 'status-msg';
+  try {
+    const { data, error } = await supabaseClient.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: authRedirectUrl() },
+    });
+    if (error) {
+      msg.textContent = error.message;
+      msg.className = 'status-msg error';
+      return;
+    }
+    if (data.session) {
+      msg.textContent = 'Account created — link your character next.';
+      msg.className = 'status-msg ok';
+      await handleSignedIn(data.session, { interactive: true });
+      return;
+    }
+    msg.textContent = 'Account created — check your email to confirm, then sign in.';
+    msg.className = 'status-msg ok';
+  } finally {
+    authEmailInFlight = false;
+  }
+}
+
+/**
+ * Single post-sign-in pipeline for email, OAuth, and signup-with-immediate-session.
+ * Linked → open journal. Unlinked → pairing modal once.
+ */
+async function handleSignedIn(session, { interactive = false } = {}) {
+  if (!session) return;
+  await refreshAuthUi({ session });
+  closeAuthPanel();
+  if (linkedCharacterMeta.length) {
+    pairingPromptShown = false;
+    closePairModal();
+    if (interactive) {
+      showToast('Signed in!', 'ok');
+      await openOwnJournal();
+    }
+    return;
+  }
+  showLanding();
+  personalizeLanding(null);
+  showPairModal();
 }
 
 async function sendMagicLink() {
@@ -2163,12 +2235,35 @@ async function claimPairCodeFromModal() {
 async function claimPairCode(opts = {}) {
   const msg = opts.msgEl || document.getElementById('authMsg');
   const code = normalizePairCode(opts.code ?? document.getElementById('pairCodeInput')?.value);
-  if (!code || !API_BASE_URL) return;
+  if (!API_BASE_URL) return;
+  if (!code) {
+    msg.textContent = 'Enter the pairing code from the RuneLite plugin.';
+    msg.className = 'status-msg error';
+    return;
+  }
+  if (!/^[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code)) {
+    msg.textContent = 'Code should look like ABCD-EFGH.';
+    msg.className = 'status-msg error';
+    return;
+  }
   if (!authSession?.access_token) {
     msg.textContent = 'Sign in first, then enter the pairing code from the plugin.';
     msg.className = 'status-msg error';
     return;
   }
+  if (pairingClaimInFlight) return;
+  pairingClaimInFlight = true;
+
+  const buttons = [
+    document.querySelector('#pairModal .btn-primary'),
+    ...document.querySelectorAll('#authSignedIn .btn-primary'),
+  ].filter(Boolean);
+  buttons.forEach((b) => {
+    b.disabled = true;
+    if (!b.dataset.label) b.dataset.label = b.textContent;
+    b.textContent = 'Linking…';
+  });
+
   msg.textContent = 'Linking...';
   msg.className = 'status-msg';
   try {
@@ -2187,21 +2282,28 @@ async function claimPairCode(opts = {}) {
     const modalInput = document.getElementById('pairModalInput');
     if (panelInput) panelInput.value = '';
     if (modalInput) modalInput.value = '';
+    pairingPromptShown = false;
     await refreshAuthUi();
     closeAuthPanel();
     closePairModal();
-    showToast(`${body.rsn} linked! Loading your journal...`, 'ok', 6000);
-    // Clear disclosure at the moment it matters: profiles default to public
-    // (skills/quests only — never bank or gear).
-    setTimeout(() => showToast(
-      'Your skills & quests are public by default (like the hiscores). Toggle "Public profile" under Account to go private.',
-      '', 9000), 1500);
+    showToast(
+      `${body.rsn} linked! Skills & quests are public by default — change under Account anytime.`,
+      'ok',
+      7000,
+    );
     document.getElementById('rsnInput').value = body.rsn;
     personalizeLanding(body.rsn);
     await fetchPlayer(body.rsn);
+    startLiveRefresh();
   } catch (e) {
     msg.textContent = e.message;
     msg.className = 'status-msg error';
+  } finally {
+    pairingClaimInFlight = false;
+    buttons.forEach((b) => {
+      b.disabled = false;
+      b.textContent = b.dataset.label || 'Link character';
+    });
   }
 }
 
@@ -2214,12 +2316,16 @@ async function getLinkedCharacterMeta() {
 }
 
 async function getLinkedCharacters() {
+  // Prefer in-memory meta from refreshAuthUi to avoid a duplicate REST call.
+  if (linkedCharacterMeta.length) return linkedCharacterMeta.map(r => r.rsn);
   return (await getLinkedCharacterMeta()).map(r => r.rsn);
 }
 
 async function isOwnCharacter(rsn) {
   if (!HOSTED_MODE || !authSession) return false;
-  const linked = await getLinkedCharacters();
+  const linked = linkedCharacterMeta.length
+    ? linkedCharacterMeta.map(c => c.rsn)
+    : await getLinkedCharacters();
   return linked.some(r => r.toLowerCase() === rsn.toLowerCase());
 }
 
@@ -2561,7 +2667,9 @@ async function getActiveRSN(preferredRsn) {
   if (!isSupabaseConfigured()) return null;
 
   if (HOSTED_MODE) {
-    const linked = await getLinkedCharacters();
+    const linked = linkedCharacterMeta.length
+      ? linkedCharacterMeta.map(c => c.rsn)
+      : await getLinkedCharacters();
     if (!linked.length) return null;
     if (preferredRsn && linked.some(r => r.toLowerCase() === preferredRsn.toLowerCase())) {
       return linked.find(r => r.toLowerCase() === preferredRsn.toLowerCase());
@@ -5621,22 +5729,33 @@ function startSystemHealthChecks() {
 
   if (supabaseClient) {
     supabaseClient.auth.onAuthStateChange(async (event, session) => {
-      const wasSignedOut = !authSession;
-      authSession = session;
-      await refreshAuthUi();
-      if (event === 'SIGNED_IN' && wasSignedOut && session) {
-        // Fresh sign-in (e.g. returning from Google/Discord OAuth)
-        if (linkedCharacterMeta.length) {
-          closeAuthPanel();
-        } else {
-          closeAuthPanel();
-          showPairModal();
-        }
+      if (event === 'SIGNED_OUT') {
+        authSession = null;
+        linkedCharacterMeta = [];
+        pairingPromptShown = false;
+        await refreshAuthUi({ session: null });
+        return;
       }
+      if (event === 'TOKEN_REFRESHED') {
+        // Keep JWT fresh without re-fetching linked characters.
+        authSession = session;
+        return;
+      }
+      if (event === 'SIGNED_IN' && session) {
+        // Email/signup already ran handleSignedIn (authSession set) — skip.
+        // OAuth return lands here with authSession still null.
+        if (!authSession) {
+          await handleSignedIn(session, { interactive: false });
+        } else {
+          authSession = session;
+        }
+        return;
+      }
+      // INITIAL_SESSION / other — init's getSession path owns the first UI refresh.
+      authSession = session;
     });
     const { data } = await supabaseClient.auth.getSession();
-    authSession = data.session;
-    await refreshAuthUi();
+    await refreshAuthUi({ session: data.session });
   }
 
   const localSession = new URLSearchParams(window.location.search).get('local_session');
@@ -5695,13 +5814,14 @@ function startSystemHealthChecks() {
 
   const savedRsn = localStorage.getItem('osrs_rsn') || '';
   if (savedRsn) document.getElementById('rsnInput').value = savedRsn;
+  // Prefer in-memory links from refreshAuthUi (no second user_characters round trip).
   const activeRsn = await getActiveRSN(savedRsn || null);
   if (activeRsn) {
     document.getElementById('rsnInput').value = activeRsn;
-    // Pre-load their journal in the background but land on the home page
+    // Warm the journal in the background; stay on home with "Open my journal".
     await fetchPlayer(activeRsn, { keepView: true });
     startLiveRefresh();
-    showJournal();
+    showLanding();
     personalizeLanding(activeRsn);
     return;
   }
