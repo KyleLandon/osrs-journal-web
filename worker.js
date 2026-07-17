@@ -101,6 +101,26 @@ export default {
         console.error('og profile', e);
       }
     }
-    return env.ASSETS.fetch(request);
+
+    const assetRes = await env.ASSETS.fetch(request);
+    // HTML is the app shell (auth callback logic lives here) — never let the CDN
+    // keep a stale copy after deploy, or OAuth returns look "broken" for minutes.
+    const ct = assetRes.headers.get('content-type') || '';
+    const path = url.pathname;
+    const isHtml =
+      ct.includes('text/html') ||
+      path === '/' ||
+      path.endsWith('.html') ||
+      path === '/index.html';
+    if (isHtml && assetRes.status === 200) {
+      const headers = new Headers(assetRes.headers);
+      headers.set('Cache-Control', 'no-store, max-age=0');
+      return new Response(assetRes.body, {
+        status: assetRes.status,
+        statusText: assetRes.statusText,
+        headers,
+      });
+    }
+    return assetRes;
   },
 };
