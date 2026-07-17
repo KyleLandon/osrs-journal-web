@@ -2026,6 +2026,31 @@ function authRedirectUrl() {
   return window.location.origin + (window.location.pathname || '/');
 }
 
+/** True when the page loaded as an OAuth / magic-link callback (has ?code= or hash tokens). */
+function isAuthCallback() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.has('code') || params.has('error') || params.has('error_description')) return true;
+  const hash = (window.location.hash || '').replace(/^#/, '');
+  if (!hash) return false;
+  const hp = new URLSearchParams(hash);
+  return hp.has('access_token') || hp.has('error') || hp.has('error_description');
+}
+
+/** Remove auth callback params so a refresh doesn't re-trigger the exchange. */
+function stripAuthCallbackFromUrl() {
+  const url = new URL(window.location.href);
+  ['code', 'state', 'error', 'error_description', 'error_code'].forEach((k) => url.searchParams.delete(k));
+  const hash = (url.hash || '').replace(/^#/, '');
+  if (hash) {
+    const hp = new URLSearchParams(hash);
+    if (hp.has('access_token') || hp.has('error') || hp.has('refresh_token') || hp.has('expires_in')) {
+      url.hash = '';
+    }
+  }
+  const clean = url.pathname + (url.search || '') + (url.hash || '');
+  history.replaceState({}, '', clean || '/');
+}
+
 async function signInWithOAuth(provider) {
   const msg = document.getElementById('authMsg');
   if (!supabaseClient) return;
@@ -5727,6 +5752,9 @@ function startSystemHealthChecks() {
   }
   startSystemHealthChecks();
 
+  // OAuth/magic-link return: must open journal / pairing, not sit on a cold landing.
+  const authCallback = isAuthCallback();
+
   if (supabaseClient) {
     supabaseClient.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_OUT') {
@@ -5737,24 +5765,35 @@ function startSystemHealthChecks() {
         return;
       }
       if (event === 'TOKEN_REFRESHED') {
-        // Keep JWT fresh without re-fetching linked characters.
         authSession = session;
         return;
       }
-      if (event === 'SIGNED_IN' && session) {
-        // Email/signup already ran handleSignedIn (authSession set) — skip.
-        // OAuth return lands here with authSession still null.
-        if (!authSession) {
-          await handleSignedIn(session, { interactive: false });
-        } else {
-          authSession = session;
+      // INITIAL_SESSION / SIGNED_IN: init (and email handlers) own navigation.
+      // Only keep the in-memory session in sync so JWT headers stay current.
+      if (session) authSession = session;
+    });
+    // getSession awaits PKCE code exchange when ?code= is present.
+    const { data, error: sessionErr } = await supabaseClient.auth.getSession();
+    if (authCallback) stripAuthCallbackFromUrl();
+    if (sessionErr) console.warn('auth getSession', sessionErr);
+
+    if (authCallback) {
+      if (data.session) {
+        await handleSignedIn(data.session, { interactive: true });
+        if (needsPairing()) {
+          msg.textContent = 'Enter the pairing code from the RuneLite plugin to open your journal.';
+          msg.className = 'status-msg';
         }
+        // Linked users are already in openOwnJournal; unlinked stay on pair modal.
         return;
       }
-      // INITIAL_SESSION / other — init's getSession path owns the first UI refresh.
-      authSession = session;
-    });
-    const { data } = await supabaseClient.auth.getSession();
+      msg.textContent = 'Sign-in did not finish — try Google/Discord again, or use email.';
+      msg.className = 'status-msg error';
+      showLanding();
+      await refreshAuthUi({ session: null });
+      return;
+    }
+
     await refreshAuthUi({ session: data.session });
   }
 
