@@ -955,6 +955,66 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 .goal-star.active, .goal-star:hover { color: var(--gold); }
 .goal-card.is-main { border-color: rgba(251, 191, 36, 0.45); }
 
+.main-goal.suggestion { border-style: dashed; }
+.main-goal-set {
+  background: none; border: none; color: var(--accent-hover); font-weight: 700;
+  font-size: 12px; cursor: pointer; padding: 0; font-family: inherit; text-decoration: underline;
+}
+.goal-section-title { font-size: 13px; font-weight: 800; margin: 18px 0 10px; }
+.goal-main-card-pct { font-size: 11px; font-weight: 800; color: var(--accent-hover); margin-left: 6px; }
+.goal-main-card.roadmap.selected { border-color: var(--accent); background: linear-gradient(135deg, var(--card), var(--accent-soft)); }
+.goal-suggest-badge {
+  font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;
+  color: var(--green); background: var(--green-soft); padding: 2px 7px; border-radius: 99px; margin-left: 6px;
+}
+.roadmap-picker { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
+
+/* Ordered goal path */
+.goal-detail-row.column { flex-direction: column; align-items: stretch; gap: 6px; }
+.goal-path { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 5px; }
+.goal-path li { font-size: 12.5px; line-height: 1.5; }
+.goal-path li::marker { color: var(--text-muted); font-weight: 700; font-size: 11px; }
+.goal-path a { color: var(--text); text-decoration: none; }
+.goal-path a:hover { color: var(--accent-hover); text-decoration: underline; }
+.path-badge { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 99px; background: var(--surface); border: 1px solid var(--border); color: var(--text-muted); margin-left: 4px; }
+.path-badge.ready { background: var(--green-soft); color: #4ade80; border-color: rgba(34, 197, 94, 0.3); }
+.path-badge.skill { background: var(--orange-soft); color: var(--orange); border-color: rgba(245, 158, 11, 0.3); cursor: help; }
+.goal-path-more summary { font-size: 11px; color: var(--text-muted); cursor: pointer; margin: 4px 0; }
+.goal-path-more summary:hover { color: var(--accent-hover); }
+.hint-hover { font-weight: 500; text-transform: none; letter-spacing: 0; color: var(--text-muted); }
+
+/* Roadmap stages */
+.roadmap-stage { margin-top: 14px; }
+.roadmap-stage.done { display: flex; align-items: center; gap: 8px; margin-top: 10px; color: var(--green); font-size: 12.5px; font-weight: 700; }
+.roadmap-stage-check { font-weight: 800; }
+.roadmap-stage-title { font-size: 13px; font-weight: 800; }
+.roadmap-stage-count { font-size: 11px; font-weight: 700; color: var(--text-muted); margin-left: 6px; }
+.roadmap-stage-why { font-size: 12px; color: var(--text-dim); margin: 4px 0 8px; line-height: 1.55; max-width: 640px; }
+.roadmap-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+.roadmap-steps li { font-size: 12.5px; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.roadmap-mark { font-weight: 800; width: 14px; flex-shrink: 0; text-align: center; color: var(--text-muted); }
+.roadmap-steps li.done { color: var(--text-muted); }
+.roadmap-steps li.done .roadmap-mark { color: var(--green); }
+.roadmap-steps li.blocked { color: var(--text-dim); }
+.roadmap-steps li a { color: inherit; text-decoration: none; }
+.roadmap-steps li a:hover { color: var(--accent-hover); text-decoration: underline; }
+.roadmap-sub { font-size: 11px; color: var(--text-muted); }
+.roadmap-tip { font-size: 12px; color: var(--gold); font-style: italic; padding-left: 22px; }
+
+/* Money makers */
+.money-section { margin-top: 22px; }
+.money-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.money-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 12px 14px;
+}
+.money-card.locked { opacity: 0.75; border-style: dashed; }
+.money-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.money-name { font-size: 13px; font-weight: 700; }
+.money-gp { font-size: 12px; font-weight: 800; color: var(--gold); white-space: nowrap; }
+.money-note { font-size: 11px; color: var(--text-dim); margin-top: 5px; line-height: 1.5; }
+.money-missing { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+
 /* Daily recap */
 .recap, .timeline {
   background: var(--card); border: 1px solid var(--border);
@@ -1413,6 +1473,9 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
     <h2>Goal Planner</h2>
     <p>Pick a main goal — the milestone your account is working toward — and the planner walks the full quest dependency tree, merges every skill requirement, and tracks your progress live as you play. Your main goal is featured on the dashboard and boosts related recommendations.</p>
   </div>
+  <div class="goal-section-title">Guided roadmaps <span class="section-note">step-by-step journeys for learning players</span></div>
+  <div class="roadmap-picker" id="roadmapPicker"></div>
+  <div class="goal-section-title">Account milestones <span class="section-note">pick one as your main goal</span></div>
   <div class="goal-main-picker" id="goalMainPicker"></div>
   <div class="goal-toolbar">
     <span class="goal-toolbar-label">Add a goal</span>
@@ -1425,6 +1488,10 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
   </div>
   <div class="goal-list" id="goalList" role="list"></div>
   <div class="hint" id="goalHint" style="display:none"></div>
+  <div class="money-section" id="moneySection" style="display:none">
+    <div class="goal-section-title">Money makers for your account <span class="section-note">gated by your actual stats &amp; quests</span></div>
+    <div class="money-grid" id="moneyGrid" role="list"></div>
+  </div>
 </div>
 
   </div><!-- /page-content -->
@@ -3087,20 +3154,32 @@ function setMainGoal(idx) {
 function renderMainGoalHero() {
   const hero = document.getElementById('mainGoalHero');
   if (!hero) return;
+  if (!playerSkills.attack) { hero.style.display = 'none'; return; }
   const main = getMainGoal();
-  if (!main || !playerSkills.attack) { hero.style.display = 'none'; return; }
-  hero.style.display = '';
 
+  // No main goal yet: suggest the closest milestone instead of hiding
+  if (!main) {
+    const s = suggestedMainPreset();
+    if (!s || dataSource === 'wom') { hero.style.display = 'none'; return; }
+    hero.style.display = '';
+    hero.classList.remove('complete');
+    hero.classList.add('suggestion');
+    hero.innerHTML = `
+      <div class="main-goal-row">
+        <span class="main-goal-tag">Suggested goal</span>
+        <span class="main-goal-title">${s.preset.label}</span>
+        <span class="main-goal-pct">${s.pct}% there</span>
+      </div>
+      <div class="goal-progress"><div class="goal-progress-fill" style="width:${s.pct}%"></div></div>
+      <div class="main-goal-next">${s.preset.desc} —
+        <button class="main-goal-set" type="button" onclick="event.stopPropagation();addMainGoalPreset(${s.idx})">Set as main goal</button></div>`;
+    return;
+  }
+
+  hero.style.display = '';
+  hero.classList.remove('suggestion');
   const plan = computeGoalPlan(main.goal);
   const complete = plan.doneSteps >= plan.totalSteps && plan.totalSteps > 0;
-  const ready = plan.quests.filter(q => !q.done && q.ready).map(q => q.name);
-  const unmetSkills = plan.skills.filter(s => !s.met);
-  const nextBits = [];
-  for (const name of ready.slice(0, 2)) nextBits.push(name);
-  if (unmetSkills.length && nextBits.length < 3) {
-    const s = unmetSkills[0];
-    nextBits.push(`${formatSkillName(s.sk)} ${s.have}/${s.need}`);
-  }
   hero.innerHTML = `
     <div class="main-goal-row">
       <span class="main-goal-tag">Main goal</span>
@@ -3110,8 +3189,20 @@ function renderMainGoalHero() {
     <div class="goal-progress"><div class="goal-progress-fill" style="width:${plan.pct}%"></div></div>
     <div class="main-goal-next">${complete
       ? 'You did it — pick your next milestone in the goal planner.'
-      : (nextBits.length ? 'Next: ' + nextBits.join(' · ') : `${plan.totalSteps - plan.doneSteps} steps to go — open the planner for the full tree`)}</div>`;
+      : (plan.next.length ? 'Next: ' + plan.next.join(' · ') : `${plan.totalSteps - plan.doneSteps} steps to go — open the planner for the full tree`)}</div>`;
   hero.classList.toggle('complete', complete);
+}
+
+/** Closest incomplete main-goal milestone by progress percent, or null. */
+function suggestedMainPreset() {
+  if (typeof GOAL_MAIN_PRESETS === 'undefined' || !playerSkills.attack) return null;
+  let best = null;
+  GOAL_MAIN_PRESETS.forEach((p, idx) => {
+    const plan = computeGoalPlan(p.all ? { label: p.label, all: true } : { label: p.label, quest: p.quest });
+    if (plan.totalSteps > 0 && plan.doneSteps >= plan.totalSteps) return; // already done
+    if (!best || plan.pct > best.pct) best = { preset: p, idx, pct: plan.pct };
+  });
+  return best;
 }
 
 // ─── NEXT UP (recommendations) ────────────────────────────────────────────────
@@ -3216,6 +3307,9 @@ function buildNextUpRecommendations() {
     const banked = computeBankedXp()?.[skill];
     if (banked && banked.total >= 10000) {
       why += ` — and you have ~${formatXp(Math.floor(banked.total))} XP banked for it`;
+    } else {
+      const train = trainingHint(skill, have);
+      if (train) why += `. Train: ${train}`;
     }
     recs.push({
       type: 'skill',
@@ -3235,9 +3329,13 @@ function buildNextUpRecommendations() {
     } else {
       why = `You meet the requirements for a better ${g.slot} (currently: ${g.from})`;
       if (g.price != null) {
-        why += g.affordable
-          ? ` — ~${formatGold(g.price)} on the GE, and you can afford it`
-          : ` — ~${formatGold(g.price)} on the GE (save up)`;
+        if (g.affordable) {
+          why += ` — ~${formatGold(g.price)} on the GE, and you can afford it`;
+        } else {
+          why += ` — ~${formatGold(g.price)} on the GE`;
+          const earn = moneyMakerReport().available[0];
+          why += earn ? `. Earn it: ${earn.name} (~${formatGold(earn.gpHr)}/hr)` : ' (save up)';
+        }
       }
     }
     recs.push({
@@ -3384,9 +3482,10 @@ function renderStats() {
       const xp = d.xp || 0;
       const prog = sk === 'overall' ? Math.round(lvl/2277*100) : levelProgress(xp, lvl);
       const xpStr = xp > 1000000 ? (xp/1000000).toFixed(2)+'m xp' : xp > 1000 ? (xp/1000).toFixed(1)+'k xp' : xp+' xp';
+      const train = sk !== 'overall' && lvl < 99 ? trainingHint(sk, lvl) : '';
       const tooltip = sk === 'overall'
         ? `${lvl} / 2277 total level`
-        : (lvl >= 99 ? 'Maxed' : `${xpToNextLevel(xp, lvl).toLocaleString()} XP to level ${lvl + 1}`);
+        : (lvl >= 99 ? 'Maxed' : `${xpToNextLevel(xp, lvl).toLocaleString()} XP to level ${lvl + 1}${train ? ` — Train: ${train}` : ''}`);
       const gain = skillGains?.[sk]?.today;
       const gainHtml = gain > 0 ? ` <span class="skill-gain">+${formatXp(gain)}</span>` : '';
       return `<div class="skill-card${sk === 'overall' ? ' skill-overall' : ''}" title="${tooltip}">
@@ -3915,6 +4014,9 @@ function buildExportData() {
       locked: bosses.filter(b => b.status === 'locked').map(b => ({ name: b.name, tier: b.tier, unmet_skills: b.unmet_skills, unmet_quests: b.unmet_quests, drops: b.drops })),
     },
     main_goal: buildMainGoalExport(),
+    money_makers_available: moneyMakerReport().available.slice(0, 6).map(m => ({
+      name: m.name, gp_per_hour: m.gpHr, note: m.note,
+    })),
   };
 }
 
@@ -3955,6 +4057,11 @@ function buildExportMarkdown(data) {
       data.main_goal.skill_targets.length ? `- Skill targets: ${data.main_goal.skill_targets.join(', ')}` : '',
       '',
     ].filter(l => l !== '') .concat(['']) : []),
+    ...(data.money_makers_available?.length ? [
+      '## Money makers available now',
+      ...data.money_makers_available.map(m => `- ${m.name}: ~${formatGold(m.gp_per_hour)}/hr — ${m.note}`),
+      '',
+    ] : []),
     '## Summary',
     `- **RSN:** ${p.rsn || '—'}`,
     `- **Combat level:** ${p.combat_level}`,
@@ -4320,6 +4427,38 @@ function savePlayerGoals(goals) {
   localStorage.setItem('osrs_goals', JSON.stringify(all));
 }
 
+/** "Train via: Canifis rooftops (~20k XP/hr)" for the player's current level. */
+function trainingHint(skill, level = questSkillLevel(skill)) {
+  const brackets = (typeof TRAINING_METHODS !== 'undefined' ? TRAINING_METHODS : {})[skill];
+  if (!brackets) return '';
+  const b = brackets.find(x => level < x.to) || brackets[brackets.length - 1];
+  return b.method + (b.xpHr ? ` (~${formatXp(b.xpHr)} XP/hr)` : '');
+}
+
+/** Money makers split into what the account can do now vs almost-unlocked. */
+function moneyMakerReport() {
+  if (typeof MONEY_MAKERS === 'undefined') return { available: [], almost: [] };
+  const available = [];
+  const almost = [];
+  for (const m of MONEY_MAKERS) {
+    const missing = [];
+    for (const [sk, lv] of Object.entries(m.reqs)) {
+      const have = questSkillLevel(sk);
+      if (have < lv) missing.push({ type: 'skill', label: `${formatSkillName(sk)} ${have}/${lv}`, gap: lv - have });
+    }
+    for (const q of m.questReqs) {
+      if (!qd(q)) missing.push({ type: 'quest', label: q, gap: 99 });
+    }
+    if (!missing.length) available.push(m);
+    else if (missing.length <= 2 && missing.every(x => x.type === 'quest' || x.gap <= 15)) {
+      almost.push({ ...m, missing });
+    }
+  }
+  available.sort((a, b) => b.gpHr - a.gpHr);
+  almost.sort((a, b) => b.gpHr - a.gpHr);
+  return { available, almost };
+}
+
 /** Every quest in the prerequisite tree of `name`, including itself (canonical names). */
 function questDependencyChain(name, seen = new Set()) {
   const canonical = normalizeQuestName(name);
@@ -4335,6 +4474,7 @@ function questDependencyChain(name, seen = new Set()) {
 }
 
 function computeGoalPlan(goal) {
+  if (goal.roadmap) return computeRoadmapPlan(goal);
   const questNames = goal.all
     ? getJournalQuestList().map(q => q.name)
     : [...questDependencyChain(goal.quest)];
@@ -4361,15 +4501,117 @@ function computeGoalPlan(goal) {
     };
   });
 
+  const order = orderGoalQuests(questNames, journal);
   const totalSteps = quests.length + skills.length;
   const doneSteps = quests.filter(q => q.done).length + skills.filter(s => s.met).length;
+  const next = [
+    ...order.filter(o => o.ready).slice(0, 2).map(o => o.name),
+    ...skills.filter(s => !s.met).slice(0, 1).map(s => `${formatSkillName(s.sk)} ${s.have}/${s.need}`),
+  ].slice(0, 3);
   return {
-    quests, skills, totalSteps, doneSteps,
+    quests, skills, order, next, totalSteps, doneSteps,
     pct: totalSteps ? Math.round((doneSteps / totalSteps) * 100) : 0,
   };
 }
 
+/**
+ * Orders a goal's remaining quests into a sensible walkthrough: prerequisites
+ * always come before dependents (topological), and among the available picks,
+ * quests you can start right now come first, then easier difficulties.
+ */
+function orderGoalQuests(questNames, journal = getJournalQuestList()) {
+  const inTree = new Set(questNames);
+  const remaining = questNames.filter(n => !qd(n));
+  const entryOf = {};
+  const prereqsOf = {};
+  for (const n of remaining) {
+    entryOf[n] = journal.find(j => j.name === n);
+    prereqsOf[n] = ((getQuestDetails(n)?.questReqs) || [])
+      .map(r => normalizeQuestName(r.replace(/\s*\(.*\)$/, '').trim()))
+      .filter(r => r && !VAGUE_QUEST_REQS.has(r) && inTree.has(r) && !qd(r));
+  }
+  const rank = (n) => {
+    const e = entryOf[n];
+    const missing = e ? getQuestMissingReqs(e) : [];
+    const ready = e ? missing.length === 0 : true;
+    const skillWalls = missing.filter(m => m.type === 'skill').length;
+    return [ready ? 0 : 1, skillWalls, QUEST_DIFF_ORDER[e?.diff] ?? 3, e?.qp ?? 0];
+  };
+  const pool = new Set(remaining);
+  const placed = new Set();
+  const order = [];
+  while (pool.size) {
+    let candidates = [...pool].filter(n => prereqsOf[n].every(r => placed.has(r)));
+    if (!candidates.length) candidates = [...pool]; // cycle guard — shouldn't happen
+    candidates.sort((a, b) => {
+      const ra = rank(a), rb = rank(b);
+      for (let i = 0; i < ra.length; i++) if (ra[i] !== rb[i]) return ra[i] - rb[i];
+      return a.localeCompare(b);
+    });
+    const pick = candidates[0];
+    pool.delete(pick);
+    placed.add(pick);
+    const e = entryOf[pick];
+    const missing = e ? getQuestMissingReqs(e) : [];
+    order.push({
+      name: pick,
+      ready: missing.length === 0,
+      missingSkills: missing.filter(m => m.type === 'skill').map(m => m.label),
+    });
+  }
+  return order;
+}
+
+/** Roadmap goals: staged checklists of quests, skill targets, and tips. */
+function computeRoadmapPlan(goal) {
+  const def = (typeof ROADMAPS !== 'undefined' ? ROADMAPS : []).find(r => r.id === goal.roadmap);
+  if (!def) return { stages: [], next: [], totalSteps: 0, doneSteps: 0, pct: 0, quests: [], skills: [], order: [] };
+  let totalSteps = 0;
+  let doneSteps = 0;
+  const next = [];
+  const stages = def.stages.map(st => {
+    const steps = st.steps.map(step => {
+      if (step.tip) return { type: 'tip', label: step.tip, done: false, counted: false };
+      if (step.skill) {
+        const have = questSkillLevel(step.skill);
+        const done = have >= step.level;
+        return {
+          type: 'skill', done, counted: true,
+          label: `${formatSkillName(step.skill)} ${step.level}`,
+          sub: done ? '' : `now ${have}${step.tipText ? ' — ' + step.tipText : ''}`,
+          tipText: step.tipText, skill: step.skill, level: step.level,
+        };
+      }
+      const done = qd(step.q);
+      return {
+        type: 'quest', done, counted: true,
+        label: step.q, sub: step.tipText || '',
+        inProgress: qi(step.q),
+        ready: !done && (() => {
+          const e = getJournalQuestList().find(j => j.name === normalizeQuestName(step.q));
+          return e ? !isQuestBlocked(e) : true;
+        })(),
+        quest: step.q,
+      };
+    });
+    const counted = steps.filter(s => s.counted);
+    const stDone = counted.filter(s => s.done).length;
+    totalSteps += counted.length;
+    doneSteps += stDone;
+    for (const s of counted) {
+      if (!s.done && next.length < 3) next.push(s.label);
+    }
+    return { title: st.title, why: st.why, steps, done: stDone, total: counted.length };
+  });
+  return {
+    stages, next, totalSteps, doneSteps,
+    pct: totalSteps ? Math.round((doneSteps / totalSteps) * 100) : 0,
+    quests: [], skills: [], order: [],
+  };
+}
+
 function goalKey(goal) {
+  if (goal.roadmap) return '__rm_' + goal.roadmap;
   return goal.all ? '__all' : normalizeQuestName(goal.quest);
 }
 
@@ -4423,21 +4665,46 @@ function removeGoal(idx) {
   renderDashboard();
 }
 
+/** Adds a guided roadmap as a goal (promotes to main if it's the first). */
+function addRoadmapGoal(i) {
+  const rm = (typeof ROADMAPS !== 'undefined' ? ROADMAPS : [])[i];
+  if (!rm) return;
+  addGoal({ label: rm.label, roadmap: rm.id });
+}
+
 function renderGoals() {
   const list = document.getElementById('goalList');
   const hint = document.getElementById('goalHint');
   if (!list) return;
 
+  const activeKeys = new Set(getPlayerGoals().map(goalKey));
+
+  // Guided roadmap cards with live progress
+  const roadmapPicker = document.getElementById('roadmapPicker');
+  if (roadmapPicker && typeof ROADMAPS !== 'undefined') {
+    roadmapPicker.innerHTML = ROADMAPS.map((rm, i) => {
+      const active = activeKeys.has('__rm_' + rm.id);
+      const plan = playerSkills.attack ? computeRoadmapPlan({ roadmap: rm.id }) : null;
+      return `<button class="goal-main-card roadmap${active ? ' selected' : ''}" type="button" onclick="addRoadmapGoal(${i})"
+        title="${active ? 'Already on your goal list' : 'Add this roadmap to your goals'}">
+        <span class="goal-main-card-label">${rm.label}${plan ? ` <span class="goal-main-card-pct">${plan.pct}%</span>` : ''}</span>
+        <span class="goal-main-card-desc">${rm.desc}</span>
+      </button>`;
+    }).join('');
+  }
+
   // Main-goal milestone cards — re-rendered each time to reflect the current pick
   const mainPicker = document.getElementById('goalMainPicker');
   if (mainPicker && typeof GOAL_MAIN_PRESETS !== 'undefined') {
     const currentMainKey = getMainGoal() ? goalKey(getMainGoal().goal) : null;
+    const suggested = currentMainKey ? null : suggestedMainPreset();
     mainPicker.innerHTML = GOAL_MAIN_PRESETS.map((p, i) => {
       const key = p.all ? '__all' : normalizeQuestName(p.quest);
       const isMain = key === currentMainKey;
+      const isSuggested = suggested?.idx === i;
       return `<button class="goal-main-card${isMain ? ' selected' : ''}" type="button" onclick="addMainGoalPreset(${i})"
         title="${isMain ? 'This is your main goal' : 'Set as your main goal'}">
-        <span class="goal-main-card-label">${p.label}${isMain ? ' <span class="goal-main-star">★</span>' : ''}</span>
+        <span class="goal-main-card-label">${p.label}${isMain ? ' <span class="goal-main-star">★</span>' : ''}${isSuggested ? ' <span class="goal-suggest-badge">Closest milestone</span>' : ''}</span>
         <span class="goal-main-card-desc">${p.desc}</span>
       </button>`;
     }).join('');
@@ -4474,18 +4741,8 @@ function renderGoals() {
   list.innerHTML = goals.map((goal, idx) => {
     const plan = computeGoalPlan(goal);
     const complete = plan.doneSteps >= plan.totalSteps && plan.totalSteps > 0;
-    const remaining = plan.quests.filter(q => !q.done)
-      .sort((a, b) => (b.ready - a.ready) || a.name.localeCompare(b.name));
-    const CHIP_CAP = 24;
-    const questChips = remaining.slice(0, CHIP_CAP).map(q =>
-      `<span class="quest-req-tag ${q.ready ? 'ready' : 'quest'}" title="${q.ready ? 'You can start this now' : 'Blocked by requirements'}">${questWikiLink(q.name)}</span>`
-    ).join('');
-    const moreChip = remaining.length > CHIP_CAP ? `<span class="quest-req-tag">+${remaining.length - CHIP_CAP} more</span>` : '';
-    const unmetSkills = plan.skills.filter(s => !s.met);
-    const skillChips = unmetSkills.map(s =>
-      `<span class="quest-req-tag skill">${formatSkillName(s.sk)} ${s.have}/${s.need}</span>`
-    ).join('');
-    const sub = goal.all ? 'All journal quests' : (goal.quest !== goal.label ? goal.quest : '');
+    const sub = goal.roadmap ? 'Guided roadmap' : (goal.all ? 'All journal quests' : (goal.quest !== goal.label ? goal.quest : ''));
+    const body = complete ? '' : (goal.roadmap ? renderRoadmapBody(plan) : renderGoalPathBody(plan));
     return `<div class="goal-card${complete ? ' complete' : ''}${goal.main ? ' is-main' : ''}" role="listitem">
       <div class="goal-card-head">
         <div class="goal-title">${goal.label || goal.quest}${sub ? ` <span class="goal-sub">${sub}</span>` : ''}</div>
@@ -4498,10 +4755,81 @@ function renderGoals() {
         <div class="goal-progress-fill" style="width:${plan.pct}%"></div>
       </div>
       <div class="goal-progress-label">${complete ? 'Goal complete!' : `${plan.doneSteps} of ${plan.totalSteps} steps done · ${plan.pct}%`}</div>
-      ${!complete && remaining.length ? `<div class="goal-detail-row"><span class="quest-missing-label">Quests left (${remaining.length})</span><span class="quest-missing-tags">${questChips}${moreChip}</span></div>` : ''}
-      ${!complete && unmetSkills.length ? `<div class="goal-detail-row"><span class="quest-missing-label">Skill targets</span><span class="quest-missing-tags">${skillChips}</span></div>` : ''}
+      ${body}
     </div>`;
   }).join('');
+
+  renderMoneyMakers();
+}
+
+/** Numbered do-this-next walkthrough for quest-shaped goals. */
+function renderGoalPathBody(plan) {
+  const rows = [];
+  if (plan.order.length) {
+    const VISIBLE = 8;
+    const li = (o) => {
+      let badge;
+      if (o.ready) badge = '<span class="path-badge ready">ready now</span>';
+      else if (o.missingSkills.length) badge = `<span class="path-badge skill" title="Train: ${o.missingSkills.map(l => trainingHint(l.split(' ')[0].toLowerCase())).filter(Boolean).join(' · ').replace(/"/g, '&quot;')}">needs ${o.missingSkills.join(', ')}</span>`;
+      else badge = '<span class="path-badge">after the steps above</span>';
+      return `<li>${questWikiLink(o.name)} ${badge}</li>`;
+    };
+    const head = plan.order.slice(0, VISIBLE).map(li).join('');
+    const rest = plan.order.slice(VISIBLE).map(li).join('');
+    rows.push(`<div class="goal-detail-row column"><span class="quest-missing-label">Your path — in order</span>
+      <ol class="goal-path">${head}</ol>
+      ${rest ? `<details class="goal-path-more"><summary>+${plan.order.length - VISIBLE} more steps</summary><ol class="goal-path" start="${VISIBLE + 1}">${rest}</ol></details>` : ''}
+    </div>`);
+  }
+  const unmetSkills = plan.skills.filter(s => !s.met);
+  if (unmetSkills.length) {
+    const skillChips = unmetSkills.map(s =>
+      `<span class="quest-req-tag skill" title="Train: ${trainingHint(s.sk).replace(/"/g, '&quot;')}">${formatSkillName(s.sk)} ${s.have}/${s.need}</span>`
+    ).join('');
+    rows.push(`<div class="goal-detail-row"><span class="quest-missing-label">Skill targets <span class="hint-hover">(hover for how)</span></span><span class="quest-missing-tags">${skillChips}</span></div>`);
+  }
+  return rows.join('');
+}
+
+/** Staged checklist view for roadmap goals; finished stages collapse to a line. */
+function renderRoadmapBody(plan) {
+  return plan.stages.map(st => {
+    const finished = st.done >= st.total && st.total > 0;
+    if (finished) {
+      return `<div class="roadmap-stage done"><span class="roadmap-stage-check">✓</span><span class="roadmap-stage-title">${st.title}</span></div>`;
+    }
+    const items = st.steps.map(s => {
+      if (s.type === 'tip') return `<li class="roadmap-tip">${s.label}</li>`;
+      const cls = s.done ? 'done' : (s.ready || s.type === 'skill' ? 'ready' : 'blocked');
+      const mark = s.done ? '✓' : (s.inProgress ? '…' : '○');
+      const training = s.type === 'skill' && !s.done ? ` <span class="path-badge skill" title="${trainingHint(s.skill).replace(/"/g, '&quot;')}">how?</span>` : '';
+      const label = s.type === 'quest' ? questWikiLink(s.label) : s.label;
+      return `<li class="${cls}"><span class="roadmap-mark">${mark}</span>${label}${s.sub ? ` <span class="roadmap-sub">${s.sub}</span>` : ''}${training}</li>`;
+    }).join('');
+    return `<div class="roadmap-stage">
+      <div class="roadmap-stage-title">${st.title} <span class="roadmap-stage-count">${st.done}/${st.total}</span></div>
+      <div class="roadmap-stage-why">${st.why}</div>
+      <ul class="roadmap-steps">${items}</ul>
+    </div>`;
+  }).join('');
+}
+
+/** "What can I do for gp right now" — bottom of the Goals tab. */
+function renderMoneyMakers() {
+  const section = document.getElementById('moneySection');
+  if (!section) return;
+  if (!playerSkills.attack || dataSource === 'wom') { section.style.display = 'none'; return; }
+  const { available, almost } = moneyMakerReport();
+  if (!available.length && !almost.length) { section.style.display = 'none'; return; }
+  section.style.display = '';
+  const card = (m, locked) => `<div class="money-card${locked ? ' locked' : ''}" role="listitem">
+    <div class="money-head"><span class="money-name">${m.name}</span><span class="money-gp">~${formatGold(m.gpHr)}/hr</span></div>
+    <div class="money-note">${m.note}</div>
+    ${locked ? `<div class="money-missing">${m.missing.map(x => `<span class="quest-req-tag ${x.type === 'skill' ? 'skill' : 'quest'}">${x.label}</span>`).join('')}</div>` : ''}
+  </div>`;
+  document.getElementById('moneyGrid').innerHTML =
+    available.slice(0, 6).map(m => card(m, false)).join('') +
+    almost.slice(0, 3).map(m => card(m, true)).join('');
 }
 
 // ─── TABS ─────────────────────────────────────────────────────────────────────
