@@ -11,6 +11,9 @@
 <meta property="og:image" content="https://journal.osrsjournal.com/assets/icon.png">
 <meta property="og:url" content="https://journal.osrsjournal.com/">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="OSRS Journal">
+<meta name="twitter:description" content="Live-synced Old School RuneScape stats, quests and gear — straight from RuneLite to one dashboard.">
+<meta name="twitter:image" content="https://journal.osrsjournal.com/assets/icon.png">
 <title>OSRS Journal</title>
 <link rel="icon" href="assets/favicon-32.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -976,6 +979,71 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
   background: none; border: none; color: var(--accent-hover); font-weight: 700;
   font-size: 12px; cursor: pointer; padding: 0; font-family: inherit; text-decoration: underline;
 }
+.next-session {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 14px 18px; margin-top: 14px;
+}
+.next-session-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 12px; margin-bottom: 8px; flex-wrap: wrap;
+}
+.next-session-tag {
+  font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px;
+  color: var(--accent-hover); background: rgba(59, 130, 246, 0.12);
+  padding: 3px 9px; border-radius: 99px;
+}
+.next-session-title { font-size: 16px; font-weight: 800; margin: 4px 0 6px; }
+.next-session-why { font-size: 13px; color: var(--text-dim); line-height: 1.45; margin-bottom: 10px; }
+.next-session-meta {
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  font-size: 12px; color: var(--text-muted);
+}
+.next-session-meta a { color: var(--accent); }
+.next-session-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.diary-grid, .ca-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px; margin-top: 12px;
+}
+.diary-card, .ca-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 12px 14px;
+}
+.diary-card.complete, .ca-card.complete { border-color: rgba(34, 197, 94, 0.45); }
+.diary-card-head, .ca-card-head {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 8px;
+}
+.diary-name, .ca-name { font-weight: 800; font-size: 14px; }
+.diary-reward, .ca-sub { font-size: 11px; color: var(--text-muted); }
+.diary-tiers { display: flex; flex-direction: column; gap: 6px; }
+.diary-tier {
+  display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  font-size: 12px; padding: 4px 0; border-top: 1px solid var(--border-subtle);
+}
+.diary-tier:first-child { border-top: none; }
+.diary-tier .done { color: var(--green); font-weight: 700; }
+.diary-tier .ready { color: var(--accent-hover); font-weight: 700; }
+.diary-tier .blocked { color: var(--text-muted); }
+.ca-bar {
+  height: 6px; background: var(--surface); border-radius: 99px; overflow: hidden; margin: 8px 0 4px;
+}
+.ca-bar-fill { height: 100%; background: var(--accent); border-radius: 99px; }
+.ca-count { font-size: 12px; font-weight: 700; color: var(--text-dim); }
+.onboard-overlay {
+  position: fixed; inset: 0; z-index: 200; background: rgba(8, 10, 14, 0.72);
+  display: flex; align-items: flex-end; justify-content: center; padding: 24px;
+}
+.onboard-card {
+  width: min(440px, 100%); background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 20px 22px; box-shadow: 0 20px 50px rgba(0,0,0,0.45);
+}
+.onboard-step { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); }
+.onboard-title { font-size: 18px; font-weight: 800; margin: 6px 0 8px; }
+.onboard-body { font-size: 14px; color: var(--text-dim); line-height: 1.5; margin-bottom: 16px; }
+.onboard-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.onboard-spotlight {
+  outline: 2px solid var(--accent); outline-offset: 3px;
+  border-radius: var(--radius-lg); position: relative; z-index: 201;
+}
 .goal-section-title { font-size: 13px; font-weight: 800; margin: 18px 0 10px; }
 .goal-main-card-pct { font-size: 11px; font-weight: 800; color: var(--accent-hover); margin-left: 6px; }
 .goal-main-card.roadmap.selected { border-color: var(--accent); background: linear-gradient(135deg, var(--card), var(--accent-soft)); }
@@ -1278,9 +1346,11 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 
   <div class="main-goal" id="mainGoalHero" style="display:none" role="button" tabindex="0"
        onclick="switchTab('goals')" onkeydown="if(event.key==='Enter')switchTab('goals')"
-       title="Open the goal planner"></div>
+       title="Open the goal planner" data-tour="main-goal"></div>
 
-  <div class="next-up" id="nextUpSection" style="display:none">
+  <div class="next-session" id="nextSessionSection" style="display:none" data-tour="next-session"></div>
+
+  <div class="next-up" id="nextUpSection" style="display:none" data-tour="next-up">
     <div class="next-up-head">
       <span class="next-up-heading">Next up for your account</span>
       <button class="next-up-link" type="button" onclick="switchTab('plan')" title="Export your full account state for a detailed plan">Want a full plan? Export →</button>
@@ -1335,7 +1405,9 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
     <button class="tab" role="tab" aria-selected="false" aria-controls="panel-equipment" onclick="switchTab('equipment')">Equipment</button>
     <button class="tab" role="tab" aria-selected="false" aria-controls="panel-quests" onclick="switchTab('quests')">Quests</button>
     <button class="tab" role="tab" aria-selected="false" aria-controls="panel-bosses" onclick="switchTab('bosses')">Bosses</button>
-    <button class="tab" role="tab" aria-selected="false" aria-controls="panel-goals" onclick="switchTab('goals')">Goals</button>
+    <button class="tab" role="tab" aria-selected="false" aria-controls="panel-diaries" onclick="switchTab('diaries')">Diaries</button>
+    <button class="tab" role="tab" aria-selected="false" aria-controls="panel-ca" onclick="switchTab('ca')">Combat Achievements</button>
+    <button class="tab" role="tab" aria-selected="false" aria-controls="panel-goals" onclick="switchTab('goals')" data-tour="goals-tab">Goals</button>
     <button class="tab" role="tab" aria-selected="false" aria-controls="panel-plan" onclick="switchTab('plan')">AI Advisor</button>
   </nav>
   <div class="page-content">
@@ -1483,11 +1555,31 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
   <div id="bossContent"><div class="hint">Fetch your stats to see which bosses you can access.</div></div>
 </div>
 
+<!-- ===== ACHIEVEMENT DIARIES ===== -->
+<div class="panel" id="panel-diaries" role="tabpanel">
+  <div class="goal-intro">
+    <h2>Achievement Diaries</h2>
+    <p>Live-synced from RuneLite on login. Green = complete; blue = your stats clear the skill walls for that tier.</p>
+  </div>
+  <div class="diary-grid" id="diaryGrid"></div>
+  <div class="hint" id="diaryHint">Log in with the OSRS Journal plugin to sync diary completion.</div>
+</div>
+
+<!-- ===== COMBAT ACHIEVEMENTS ===== -->
+<div class="panel" id="panel-ca" role="tabpanel">
+  <div class="goal-intro">
+    <h2>Combat Achievements</h2>
+    <p>Tier progress synced from the game on login. Pair with the Bosses tab to see what content you can attempt next.</p>
+  </div>
+  <div class="ca-grid" id="caGrid"></div>
+  <div class="hint" id="caHint">Log in with the OSRS Journal plugin to sync combat achievement progress.</div>
+</div>
+
 <!-- ===== GOALS ===== -->
-<div class="panel" id="panel-goals" role="tabpanel">
+<div class="panel" id="panel-goals" role="tabpanel" data-tour="goals-panel">
   <div class="goal-intro">
     <h2>Goal Planner</h2>
-    <p>Pick a main goal — the milestone your account is working toward — and the planner walks the full quest dependency tree, merges every skill requirement, and tracks your progress live as you play. Your main goal is featured on the dashboard and boosts related recommendations.</p>
+    <p>Pick a main goal — the milestone your account is working toward — and the planner walks the full quest dependency tree, merges every skill requirement, and tracks your progress live as you play. Your main goal is featured on the dashboard and boosts related recommendations. Goals sync to your account when signed in.</p>
   </div>
   <div class="goal-section-title">Guided roadmaps <span class="section-note">step-by-step journeys for learning players</span></div>
   <div class="roadmap-picker" id="roadmapPicker"></div>
@@ -1514,6 +1606,18 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 </div><!-- /page-shell -->
 
 </main>
+
+<div class="onboard-overlay" id="onboardOverlay" style="display:none" role="dialog" aria-modal="true" aria-labelledby="onboardTitle">
+  <div class="onboard-card">
+    <div class="onboard-step" id="onboardStep">Step 1 of 3</div>
+    <div class="onboard-title" id="onboardTitle">Welcome</div>
+    <div class="onboard-body" id="onboardBody"></div>
+    <div class="onboard-actions">
+      <button class="btn-secondary" type="button" onclick="skipOnboarding()">Skip</button>
+      <button class="btn-primary" type="button" id="onboardNextBtn" onclick="advanceOnboarding()">Next</button>
+    </div>
+  </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
 <script src="game-data.js"></script>
@@ -2398,6 +2502,14 @@ let skillGains = null;
 let snapshotRows = null;
 /** { [skill]: level } as of the last snapshot before today — for "levels gained today". */
 let skillLevelBaseline = {};
+/** Synced diary rows: [{ region, tier, complete }] */
+let playerDiaries = [];
+/** Synced CA rows: [{ tier, completed }] */
+let playerCombatAchievements = [];
+/** Debounce handle for server-side goal sync */
+let goalsSyncTimer = null;
+/** Onboarding tour step index, or -1 when inactive */
+let onboardStep = -1;
 
 async function loadXpGains(rsn) {
   skillGains = null;
@@ -2906,6 +3018,8 @@ async function fetchPlayer(rsnOverride, options = {}) {
       playerBank = [];
       bankSynced = false;
       questsInProgress = new Set();
+      playerDiaries = [];
+      playerCombatAchievements = [];
       source = '📊 Skills only from Wise Old Man';
       dataSource = 'wom';
     }
@@ -2927,6 +3041,10 @@ async function fetchPlayer(rsnOverride, options = {}) {
     // Progressive enhancements — re-render whichever section they feed when ready
     if (dataSource !== 'wom') {
       loadXpGains(rsn).then(() => { renderStats(); renderDashboard(); });
+      loadDiariesAndCa(rsn).then(() => { renderDiaries(); renderCombatAchievements(); });
+    }
+    if (viewingOwnCharacter && dataSource === 'supabase') {
+      loadGoalsFromServer(rsn).then(() => { renderGoals(); renderDashboard(); });
     }
     if (bankSynced) {
       loadGePrices().then(p => {
@@ -2964,8 +3082,37 @@ async function fetchPlayer(rsnOverride, options = {}) {
  * refresh/back/bookmarks work. Background refreshes replace instead of pushing
  * to avoid flooding history; plugin localhost sessions keep their own URL.
  */
+function setMetaContent(selector, content) {
+  const el = document.querySelector(selector);
+  if (el) el.setAttribute('content', content);
+}
+
+/** Keep title + OG/twitter tags in sync for the open tab (crawlers use the Worker). */
+function updateShareMeta(rsn) {
+  const title = `${rsn} — OSRS Journal`;
+  document.title = title;
+  const { qp, journalDone, journalTotal } = computeQuestStats();
+  const total = playerSkills.overall?.level;
+  const main = getMainGoal();
+  const parts = [];
+  if (total) parts.push(`Total level ${total}`);
+  if (qp != null) parts.push(`${qp} QP`);
+  if (journalDone) parts.push(`${journalDone}/${journalTotal} quests`);
+  if (main) parts.push(`Working on ${main.goal.label || main.goal.quest}`);
+  const desc = parts.length
+    ? parts.join(' · ') + ' — live-synced from RuneLite.'
+    : `${rsn}'s OSRS Journal — skills, quests, and next unlocks.`;
+  const url = `${WEB_APP_URL || window.location.origin}/?rsn=${encodeURIComponent(rsn)}`;
+  setMetaContent('meta[property="og:title"]', title);
+  setMetaContent('meta[property="og:description"]', desc);
+  setMetaContent('meta[property="og:url"]', url);
+  setMetaContent('meta[name="twitter:title"]', title);
+  setMetaContent('meta[name="twitter:description"]', desc);
+  setMetaContent('meta[name="description"]', desc);
+}
+
 function updateProfileUrl(rsn, options = {}) {
-  document.title = `${rsn} — OSRS Journal`;
+  updateShareMeta(rsn);
   if (window.location.search.includes('local_session')) return;
   try {
     const url = new URL(window.location);
@@ -3004,9 +3151,12 @@ async function shareProfile() {
   }
   const ownChar = linkedCharacterMeta.find(c => c.rsn.toLowerCase() === playerRSN.toLowerCase());
   if (ownChar && !ownChar.is_public) {
-    showToast('Link copied — but your profile is private. Enable "Public profile" under Account so others can view it.', 'error', 7000);
+    showToast('Link copied — but your profile is private. Enable "Public profile" under Account so Discord/Reddit previews work.', 'error', 7000);
   } else {
-    showToast('Profile link copied!', 'ok');
+    const main = getMainGoal();
+    showToast(main
+      ? `Link copied — previews show your main goal (${main.goal.label || main.goal.quest}).`
+      : 'Link copied — share it anywhere for a live profile preview.', 'ok', 5000);
   }
 }
 
@@ -3167,10 +3317,14 @@ function renderDashboard() {
   }
 
   renderMainGoalHero();
+  renderNextSession();
   renderNextUp();
   renderRecap();
   renderTimeline();
   renderGoals();
+  renderDiaries();
+  renderCombatAchievements();
+  maybeStartOnboarding();
 }
 
 // ─── MAIN GOAL (dashboard hero) ──────────────────────────────────────────────
@@ -4470,6 +4624,65 @@ function savePlayerGoals(goals) {
   const all = goalStorageAll();
   all[(playerRSN || '').toLowerCase()] = goals;
   localStorage.setItem('osrs_goals', JSON.stringify(all));
+  scheduleGoalsServerSync(goals);
+}
+
+/** Push goals to Supabase after a short debounce (own character + signed in). */
+function scheduleGoalsServerSync(goals) {
+  if (!HOSTED_MODE || !authSession || !viewingOwnCharacter || !playerRSN || !API_BASE_URL) return;
+  clearTimeout(goalsSyncTimer);
+  goalsSyncTimer = setTimeout(() => persistGoalsToServer(goals), 600);
+}
+
+async function persistGoalsToServer(goals) {
+  try {
+    await fetch(`${API_BASE_URL}/goals`, {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer ' + authSession.access_token,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ rsn: playerRSN, goals }),
+    });
+  } catch (_) { /* offline / transient — localStorage still has them */ }
+}
+
+/** Load server goals when signed in; merge wins for non-empty server copy. */
+async function loadGoalsFromServer(rsn) {
+  if (!HOSTED_MODE || !authSession || !viewingOwnCharacter || !API_BASE_URL) return;
+  try {
+    const res = await fetch(`${API_BASE_URL}/goals?rsn=${encodeURIComponent(rsn)}`, {
+      headers: { Authorization: 'Bearer ' + authSession.access_token },
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    const remote = Array.isArray(data.goals) ? data.goals : [];
+    const local = getPlayerGoals();
+    if (remote.length) {
+      const all = goalStorageAll();
+      all[(rsn || '').toLowerCase()] = remote;
+      localStorage.setItem('osrs_goals', JSON.stringify(all));
+    } else if (local.length) {
+      // First sync of local-only goals up to the server
+      await persistGoalsToServer(local);
+    }
+  } catch (_) { /* keep local */ }
+}
+
+async function loadDiariesAndCa(rsn) {
+  playerDiaries = [];
+  playerCombatAchievements = [];
+  if (!isSupabaseConfigured() || !rsn) return;
+  const q = encodeURIComponent(rsn);
+  const headers = viewingOwnCharacter && HOSTED_MODE ? await getAuthHeaders() : SB_HEADERS;
+  try {
+    const [dRes, cRes] = await Promise.all([
+      fetch(`${SUPABASE_URL}/rest/v1/player_diaries?rsn=eq.${q}&select=region,tier,complete`, { headers }),
+      fetch(`${SUPABASE_URL}/rest/v1/player_combat_achievements?rsn=eq.${q}&select=tier,completed`, { headers }),
+    ]);
+    if (dRes.ok) playerDiaries = await dRes.json();
+    if (cRes.ok) playerCombatAchievements = await cRes.json();
+  } catch (_) { /* optional tables */ }
 }
 
 /** "Train via: Canifis rooftops (~20k XP/hr)" for the player's current level. */
@@ -4877,20 +5090,302 @@ function renderMoneyMakers() {
     almost.slice(0, 3).map(m => card(m, true)).join('');
 }
 
+// ─── NEXT SESSION ─────────────────────────────────────────────────────────────
+/** One concrete 30–60 min action pulled from the main goal path. */
+function computeNextSession() {
+  const main = getMainGoal();
+  if (!main || dataSource === 'wom') return null;
+  const plan = computeGoalPlan(main.goal);
+  if (!plan.totalSteps || plan.doneSteps >= plan.totalSteps) return null;
+  const goalLabel = main.goal.label || main.goal.quest || 'your main goal';
+
+  // Prefer an ordered quest step that is ready now
+  const readyQuest = (plan.order || []).find(s => s.ready);
+  if (readyQuest) {
+    return {
+      kind: 'quest',
+      title: readyQuest.name,
+      why: `Advances ${goalLabel}. One focused session if you're prepared.`,
+      mins: '30–60 min',
+      hint: '',
+      wiki: canLinkQuestWiki(readyQuest.name) ? questWikiUrl(readyQuest.name) : null,
+      tab: 'goals',
+    };
+  }
+
+  // Roadmap: first incomplete counted step
+  if (plan.stages) {
+    for (const st of plan.stages) {
+      const step = (st.steps || []).find(s => s.counted && !s.done);
+      if (!step) continue;
+      if (step.type === 'skill') {
+        const hint = trainingHint(step.skill, questSkillLevel(step.skill));
+        return {
+          kind: 'skill',
+          title: step.label,
+          why: `Next on ${goalLabel}${step.sub ? ' — ' + step.sub : ''}.`,
+          mins: '30–60 min',
+          hint,
+          wiki: null,
+          tab: 'stats',
+        };
+      }
+      if (step.type === 'quest') {
+        return {
+          kind: 'quest',
+          title: step.quest || step.label,
+          why: `Next on ${goalLabel}${step.sub ? ' — ' + step.sub : ''}.`,
+          mins: '30–60 min',
+          hint: '',
+          wiki: canLinkQuestWiki(step.quest || step.label) ? questWikiUrl(step.quest || step.label) : null,
+          tab: 'goals',
+        };
+      }
+    }
+  }
+
+  // Next skill wall on a quest goal
+  const skillWall = (plan.skills || []).find(s => !s.met);
+  if (skillWall) {
+    const hint = trainingHint(skillWall.sk, skillWall.have);
+    const gap = skillWall.need - skillWall.have;
+    return {
+      kind: 'skill',
+      title: `${formatSkillName(skillWall.sk)} ${skillWall.have} → ${skillWall.need}`,
+      why: `${gap} level${gap === 1 ? '' : 's'} left for ${goalLabel}.`,
+      mins: gap <= 5 ? '30–60 min' : 'a few sessions',
+      hint,
+      wiki: null,
+      tab: 'stats',
+    };
+  }
+
+  const nextLabel = (plan.next && plan.next[0]) || null;
+  if (nextLabel) {
+    return {
+      kind: 'step',
+      title: nextLabel,
+      why: `Next step toward ${goalLabel}.`,
+      mins: '30–60 min',
+      hint: '',
+      wiki: null,
+      tab: 'goals',
+    };
+  }
+  return null;
+}
+
+function renderNextSession() {
+  const el = document.getElementById('nextSessionSection');
+  if (!el) return;
+  const s = computeNextSession();
+  if (!s) { el.style.display = 'none'; return; }
+  el.style.display = '';
+  const wiki = s.wiki ? `<a href="${s.wiki}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">Wiki guide →</a>` : '';
+  el.innerHTML = `
+    <div class="next-session-head">
+      <span class="next-session-tag">Do this next session</span>
+      <span class="recap-note">${s.mins}</span>
+    </div>
+    <div class="next-session-title">${s.title}</div>
+    <div class="next-session-why">${s.why}${s.hint ? ` Train: ${s.hint}` : ''}</div>
+    <div class="next-session-meta">${wiki}</div>
+    <div class="next-session-actions">
+      <button class="btn-primary" type="button" onclick="switchTab('${s.tab}')">Open ${s.tab === 'goals' ? 'goal path' : s.tab === 'stats' ? 'skills' : s.tab}</button>
+    </div>`;
+}
+
+// ─── ACHIEVEMENT DIARIES ──────────────────────────────────────────────────────
+function diaryComplete(region, tier) {
+  return playerDiaries.some(d => d.region === region && d.tier === tier && d.complete);
+}
+
+function diaryTierReady(tierMeta) {
+  for (const [sk, need] of Object.entries(tierMeta.skillReqs || {})) {
+    if (questSkillLevel(sk) < need) return false;
+  }
+  return true;
+}
+
+function renderDiaries() {
+  const grid = document.getElementById('diaryGrid');
+  const hint = document.getElementById('diaryHint');
+  if (!grid) return;
+  if (typeof ACHIEVEMENT_DIARIES === 'undefined') {
+    grid.innerHTML = '';
+    if (hint) hint.style.display = '';
+    return;
+  }
+  const synced = playerDiaries.length > 0;
+  if (hint) {
+    hint.style.display = synced ? 'none' : '';
+    hint.textContent = synced
+      ? ''
+      : (dataSource === 'wom'
+        ? 'Diary sync requires the RuneLite plugin.'
+        : 'Log in with the OSRS Journal plugin to sync diary completion. Skill walls still show below.');
+  }
+  grid.innerHTML = ACHIEVEMENT_DIARIES.map(d => {
+    const tiers = DIARY_TIERS.map(tier => {
+      const meta = d.tiers[tier] || {};
+      const done = diaryComplete(d.id, tier);
+      const ready = !done && diaryTierReady(meta);
+      const missing = Object.entries(meta.skillReqs || {})
+        .filter(([sk, need]) => questSkillLevel(sk) < need)
+        .map(([sk, need]) => `${formatSkillName(sk)} ${questSkillLevel(sk)}/${need}`)
+        .slice(0, 2);
+      const status = done ? 'done' : ready ? 'ready' : 'blocked';
+      const label = done ? 'Complete' : ready ? 'Skills ready' : (missing.join(', ') || 'Blocked');
+      return `<div class="diary-tier"><span>${tier}</span><span class="${status}">${label}</span></div>`;
+    }).join('');
+    const doneCount = DIARY_TIERS.filter(t => diaryComplete(d.id, t)).length;
+    return `<div class="diary-card${doneCount === 4 ? ' complete' : ''}">
+      <div class="diary-card-head">
+        <span class="diary-name">${d.label}</span>
+        <span class="diary-reward">${doneCount}/4 · ${d.reward}</span>
+      </div>
+      <div class="diary-tiers">${tiers}</div>
+    </div>`;
+  }).join('');
+}
+
+// ─── COMBAT ACHIEVEMENTS ──────────────────────────────────────────────────────
+function renderCombatAchievements() {
+  const grid = document.getElementById('caGrid');
+  const hint = document.getElementById('caHint');
+  if (!grid || typeof COMBAT_ACHIEVEMENT_TIERS === 'undefined') return;
+  const synced = playerCombatAchievements.length > 0;
+  if (hint) {
+    hint.style.display = synced ? 'none' : '';
+    hint.textContent = synced ? '' : 'Log in with the OSRS Journal plugin to sync combat achievement counts.';
+  }
+  const byTier = Object.fromEntries(playerCombatAchievements.map(r => [r.tier, r.completed || 0]));
+  grid.innerHTML = COMBAT_ACHIEVEMENT_TIERS.map(t => {
+    const done = byTier[t.id] || 0;
+    const pct = Math.min(100, Math.round((done / t.total) * 100));
+    const complete = done >= t.total;
+    return `<div class="ca-card${complete ? ' complete' : ''}">
+      <div class="ca-card-head">
+        <span class="ca-name">${t.label}</span>
+        <span class="ca-count">${done} / ${t.total}</span>
+      </div>
+      <div class="ca-bar"><div class="ca-bar-fill" style="width:${pct}%"></div></div>
+      <div class="ca-sub">${complete ? 'Tier complete' : `${t.total - done} left · ${pct}%`}</div>
+    </div>`;
+  }).join('');
+}
+
+// ─── ONBOARDING WALKTHROUGH ───────────────────────────────────────────────────
+const ONBOARD_STEPS = [
+  {
+    title: 'Pick a main goal',
+    body: 'Choose the milestone your account is working toward — Barrows gloves, Desert Treasure, Dragon Slayer II, and more. Everything else on the site orients around it.',
+    spotlight: 'main-goal',
+    tab: null,
+    action: null,
+  },
+  {
+    title: 'See what to do next',
+    body: 'Your dashboard shows a focused next session plus Next Up recommendations — quests, skills, and gear ranked for this account.',
+    spotlight: 'next-session',
+    tab: null,
+    action: null,
+  },
+  {
+    title: 'Follow the ordered path',
+    body: 'Open Goals for a step-by-step walkthrough of quests and skills. Your plan syncs to your account when you\'re signed in.',
+    spotlight: 'goals-tab',
+    tab: 'goals',
+    action: () => switchTab('goals'),
+  },
+];
+
+function onboardStorageKey() {
+  return 'osrs_onboarded_' + (playerRSN || '').toLowerCase();
+}
+
+function maybeStartOnboarding() {
+  if (onboardStep >= 0) return;
+  if (!viewingOwnCharacter || dataSource !== 'supabase' || !playerSkills.attack) return;
+  if (localStorage.getItem(onboardStorageKey())) return;
+  // Wait until the hero is painted so spotlight targets exist
+  requestAnimationFrame(() => startOnboarding());
+}
+
+function startOnboarding() {
+  onboardStep = 0;
+  showOnboardingStep();
+}
+
+function clearOnboardSpotlight() {
+  document.querySelectorAll('.onboard-spotlight').forEach(el => el.classList.remove('onboard-spotlight'));
+}
+
+function showOnboardingStep() {
+  const overlay = document.getElementById('onboardOverlay');
+  if (!overlay || onboardStep < 0 || onboardStep >= ONBOARD_STEPS.length) {
+    skipOnboarding();
+    return;
+  }
+  const step = ONBOARD_STEPS[onboardStep];
+  clearOnboardSpotlight();
+  if (step.action) step.action();
+  const target = document.querySelector(`[data-tour="${step.spotlight}"]`);
+  if (target && target.style.display !== 'none') {
+    target.classList.add('onboard-spotlight');
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  document.getElementById('onboardStep').textContent = `Step ${onboardStep + 1} of ${ONBOARD_STEPS.length}`;
+  document.getElementById('onboardTitle').textContent = step.title;
+  document.getElementById('onboardBody').textContent = step.body;
+  document.getElementById('onboardNextBtn').textContent =
+    onboardStep === ONBOARD_STEPS.length - 1 ? 'Got it' : 'Next';
+  overlay.style.display = 'flex';
+}
+
+function advanceOnboarding() {
+  // Step 0: if no main goal, nudge them to set the suggested one
+  if (onboardStep === 0 && !getMainGoal()) {
+    const s = suggestedMainPreset();
+    if (s) addMainGoalPreset(s.idx);
+  }
+  onboardStep++;
+  if (onboardStep >= ONBOARD_STEPS.length) {
+    finishOnboarding();
+    return;
+  }
+  showOnboardingStep();
+}
+
+function skipOnboarding() {
+  finishOnboarding();
+}
+
+function finishOnboarding() {
+  clearOnboardSpotlight();
+  onboardStep = -1;
+  const overlay = document.getElementById('onboardOverlay');
+  if (overlay) overlay.style.display = 'none';
+  if (playerRSN) localStorage.setItem(onboardStorageKey(), '1');
+}
+
 // ─── TABS ─────────────────────────────────────────────────────────────────────
 function switchTab(tab) {
-  const tabs = ['stats','equipment','quests','bosses','goals','plan'];
+  const tabs = ['stats','equipment','quests','bosses','diaries','ca','goals','plan'];
   document.querySelectorAll('.tab').forEach((t,i) => {
     const active = tabs[i] === tab;
     t.classList.toggle('active', active);
     t.setAttribute('aria-selected', active ? 'true' : 'false');
   });
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('panel-'+tab).classList.add('active');
+  const panel = document.getElementById('panel-'+tab);
+  if (panel) panel.classList.add('active');
   if (tab==='plan') refreshExport();
   if (tab==='bosses') renderBosses();
   if (tab==='equipment') renderSyncedEquipment();
   if (tab==='goals') renderGoals();
+  if (tab==='diaries') renderDiaries();
+  if (tab==='ca') renderCombatAchievements();
 }
 
 // Arrow-key navigation between tabs (WAI-ARIA tabs pattern)

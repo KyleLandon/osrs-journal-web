@@ -1073,3 +1073,105 @@ const NEXT_UP_UNLOCKS = {
   'Big Chompy Bird Hunting':    { w: 30, why: 'Ogre bow and a Recipe for Disaster subquest prerequisite' },
   'Recruitment Drive':          { w: 38, why: 'Proselyte armour — best prayer-bonus body until late game' },
 };
+
+// ─── ACHIEVEMENT DIARIES ─────────────────────────────────────────────────────
+// Region + tier metadata. `skillReqs` are the notable barriers for that tier
+// (highest / most common skill walls), not every task. Completion state comes
+// from the plugin via diary varbits.
+const DIARY_TIERS = ['easy', 'medium', 'hard', 'elite'];
+const ACHIEVEMENT_DIARIES = [
+  { id: 'ardougne',   label: 'Ardougne',   reward: 'Ardougne cloak',
+    tiers: {
+      easy:   { skillReqs: { thieving: 5 } },
+      medium: { skillReqs: { thieving: 38, agility: 39 } },
+      hard:   { skillReqs: { thieving: 72, farming: 70, fishing: 70 } },
+      elite:  { skillReqs: { thieving: 82, crafting: 91, farming: 85 } },
+    }},
+  { id: 'desert',     label: 'Desert',     reward: 'Desert amulet',
+    tiers: {
+      easy:   { skillReqs: { agility: 15 } },
+      medium: { skillReqs: { agility: 40, thieving: 37 } },
+      hard:   { skillReqs: { agility: 70, thieving: 65, slayer: 65 } },
+      elite:  { skillReqs: { agility: 85, thieving: 91, crafting: 80 } },
+    }},
+  { id: 'falador',    label: 'Falador',    reward: 'Falador shield',
+    tiers: {
+      easy:   { skillReqs: { agility: 10 } },
+      medium: { skillReqs: { agility: 42, mining: 40 } },
+      hard:   { skillReqs: { agility: 59, prayer: 70, defence: 50 } },
+      elite:  { skillReqs: { agility: 80, farming: 91, woodcutting: 75 } },
+    }},
+  { id: 'fremennik',  label: 'Fremennik',  reward: 'Fremennik sea boots',
+    tiers: {
+      easy:   { skillReqs: { crafting: 23 } },
+      medium: { skillReqs: { agility: 47, hunter: 35 } },
+      hard:   { skillReqs: { agility: 62, herblore: 66, mining: 70 } },
+      elite:  { skillReqs: { agility: 80, crafting: 80, runecraft: 82 } },
+    }},
+  { id: 'kandarin',   label: 'Kandarin',   reward: 'Kandarin headgear',
+    tiers: {
+      easy:   { skillReqs: { agility: 20 } },
+      medium: { skillReqs: { agility: 36, fishing: 46 } },
+      hard:   { skillReqs: { agility: 60, magic: 70, farming: 70 } },
+      elite:  { skillReqs: { agility: 80, fishing: 76, crafting: 85 } },
+    }},
+  { id: 'karamja',    label: 'Karamja',    reward: 'Karamja gloves',
+    tiers: {
+      easy:   { skillReqs: { agility: 15 } },
+      medium: { skillReqs: { agility: 32, mining: 40 } },
+      hard:   { skillReqs: { agility: 53, farming: 65, runecraft: 44 } },
+      elite:  { skillReqs: { agility: 80, farming: 87, runecraft: 91 } },
+    }},
+  { id: 'kourend',    label: 'Kourend & Kebos', reward: 'Rada\'s blessing',
+    tiers: {
+      easy:   { skillReqs: { farming: 20, mining: 15 } },
+      medium: { skillReqs: { farming: 45, fishing: 43, woodcutting: 50 } },
+      hard:   { skillReqs: { farming: 74, mining: 70, slayer: 70 } },
+      elite:  { skillReqs: { farming: 90, fishing: 87, woodcutting: 90 } },
+    }},
+  { id: 'lumbridge',  label: 'Lumbridge & Draynor', reward: 'Explorer\'s ring',
+    tiers: {
+      easy:   { skillReqs: { runecraft: 5 } },
+      medium: { skillReqs: { woodcutting: 36, firemaking: 30 } },
+      hard:   { skillReqs: { runecraft: 59, woodcutting: 57, agility: 46 } },
+      elite:  { skillReqs: { runecraft: 76, woodcutting: 75, agility: 70 } },
+    }},
+  { id: 'morytania',  label: 'Morytania',  reward: 'Morytania legs',
+    tiers: {
+      easy:   { skillReqs: { crafting: 15, cooking: 12 } },
+      medium: { skillReqs: { agility: 42, slayer: 42 } },
+      hard:   { skillReqs: { agility: 71, farming: 70, woodcutting: 50 } },
+      elite:  { skillReqs: { agility: 80, farming: 91, fishing: 96 } },
+    }},
+  { id: 'varrock',    label: 'Varrock',    reward: 'Varrock armour',
+    tiers: {
+      easy:   { skillReqs: { mining: 15 } },
+      medium: { skillReqs: { agility: 40, farming: 30 } },
+      hard:   { skillReqs: { agility: 51, farming: 68, woodcutting: 60 } },
+      elite:  { skillReqs: { agility: 80, smithing: 89, magic: 86 } },
+    }},
+  { id: 'western',    label: 'Western Provinces', reward: 'Western banner',
+    tiers: {
+      easy:   { skillReqs: { hunter: 9 } },
+      medium: { skillReqs: { hunter: 37, agility: 37 } },
+      hard:   { skillReqs: { hunter: 69, farming: 75, ranged: 70 } },
+      elite:  { skillReqs: { hunter: 92, farming: 91, thieving: 85 } },
+    }},
+  { id: 'wilderness', label: 'Wilderness', reward: 'Wilderness sword',
+    tiers: {
+      easy:   { skillReqs: { agility: 15 } },
+      medium: { skillReqs: { agility: 52, magic: 60 } },
+      hard:   { skillReqs: { agility: 64, magic: 66, slayer: 68 } },
+      elite:  { skillReqs: { agility: 84, magic: 96, slayer: 85 } },
+    }},
+];
+
+// Combat achievement tier totals (wiki, mid-2026). Plugin syncs completed counts.
+const COMBAT_ACHIEVEMENT_TIERS = [
+  { id: 'easy',        label: 'Easy',        total: 33 },
+  { id: 'medium',      label: 'Medium',      total: 43 },
+  { id: 'hard',        label: 'Hard',        total: 61 },
+  { id: 'elite',       label: 'Elite',       total: 66 },
+  { id: 'master',      label: 'Master',      total: 64 },
+  { id: 'grandmaster', label: 'Grandmaster', total: 47 },
+];
