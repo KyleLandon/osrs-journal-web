@@ -2034,7 +2034,7 @@ function authRedirectUrl() {
   return window.location.origin + (window.location.pathname || '/');
 }
 
-/** True when the page loaded as an OAuth / magic-link callback (has ?code= or hash tokens). */
+/** True when the page URL currently looks like an OAuth / magic-link callback. */
 function isAuthCallback() {
   const params = new URLSearchParams(window.location.search);
   if (params.has('code') || params.has('error') || params.has('error_description')) return true;
@@ -2042,6 +2042,25 @@ function isAuthCallback() {
   if (!hash) return false;
   const hp = new URLSearchParams(hash);
   return hp.has('access_token') || hp.has('error') || hp.has('error_description');
+}
+
+const OAUTH_PENDING_KEY = 'osrs_oauth_pending';
+
+/** Mark that we are about to leave for Google/Discord (survives the redirect). */
+function markOAuthPending(provider) {
+  try {
+    sessionStorage.setItem(OAUTH_PENDING_KEY, provider || '1');
+  } catch (_) {}
+}
+
+function consumeOAuthPending() {
+  try {
+    const v = sessionStorage.getItem(OAUTH_PENDING_KEY);
+    if (v) sessionStorage.removeItem(OAUTH_PENDING_KEY);
+    return Boolean(v);
+  } catch (_) {
+    return false;
+  }
 }
 
 /** Remove auth callback params so tokens never linger in the address bar / history. */
@@ -2072,13 +2091,16 @@ function stripAuthCallbackFromUrl() {
 /**
  * Finish an OAuth/magic-link return: establish the session, then always scrub the URL.
  * Handles both PKCE (?code=) and legacy implicit (#access_token=).
+ *
+ * `expectCallback` is true when we snapped the URL *before* createClient() — Supabase
+ * often clears ?code= / #access_token= during initialize, so a late isAuthCallback()
+ * check would miss the return and dump the user on the cold landing page.
  */
-async function consumeAuthCallback() {
+async function consumeAuthCallback(expectCallback = false) {
   if (!supabaseClient) return { session: null, wasCallback: false, error: null };
-  if (!isAuthCallback()) {
-    const { data } = await supabaseClient.auth.getSession();
-    return { session: data.session, wasCallback: false, error: null };
-  }
+
+  const urlIsCallback = isAuthCallback();
+  const wasCallback = expectCallback || urlIsCallback;
 
   let session = null;
   let error = null;
@@ -2093,7 +2115,9 @@ async function consumeAuthCallback() {
       });
       session = result.data.session;
       error = result.error;
-    } else if (hp?.has('error') || new URLSearchParams(window.location.search).has('error')) {
+    } else if (
+      (hp?.has('error') || new URLSearchParams(window.location.search).has('error'))
+    ) {
       error = {
         message:
           hp?.get('error_description') ||
@@ -2101,7 +2125,7 @@ async function consumeAuthCallback() {
           'Sign-in was cancelled or failed.',
       };
     } else {
-      // PKCE: client exchanges ?code= during initialize / getSession.
+      // PKCE or already-consumed callback: session lives in storage after initialize.
       const result = await supabaseClient.auth.getSession();
       session = result.data.session;
       error = result.error;
@@ -2109,20 +2133,22 @@ async function consumeAuthCallback() {
   } catch (e) {
     error = e;
   } finally {
-    stripAuthCallbackFromUrl();
+    if (urlIsCallback) stripAuthCallbackFromUrl();
   }
-  return { session, wasCallback: true, error };
+  return { session, wasCallback, error };
 }
 
 async function signInWithOAuth(provider) {
   const msg = document.getElementById('authMsg');
   if (!supabaseClient) return;
   msg.textContent = 'Redirecting...';
+  markOAuthPending(provider);
   const { error } = await supabaseClient.auth.signInWithOAuth({
     provider,
     options: { redirectTo: authRedirectUrl() },
   });
   if (error) {
+    consumeOAuthPending();
     msg.textContent = error.message;
     msg.className = 'status-msg error';
   }
@@ -2215,10 +2241,12 @@ async function sendMagicLink() {
   const msg = document.getElementById('authMsg');
   if (!email || !supabaseClient) return;
   msg.textContent = 'Sending...';
+  markOAuthPending('magic');
   const { error } = await supabaseClient.auth.signInWithOtp({
     email,
     options: { emailRedirectTo: authRedirectUrl() },
   });
+  if (error) consumeOAuthPending();
   msg.textContent = error ? error.message : 'Check your email for the sign-in link.';
   msg.className = error ? 'status-msg error' : 'status-msg ok';
 }
@@ -5800,6 +5828,12 @@ function startSystemHealthChecks() {
 //   ?local_session (opened from RuneLite) → ?rsn (shared link / plugin fallback)
 //   → signed-in user's linked character → cached last character → landing page.
 (async function init() {
+  // MUST run before createClient(): Supabase initialize() strips ?code= / #access_token=
+  // from the URL, and a late check would miss the OAuth return entirely.
+  const authCallbackFromUrl = isAuthCallback();
+  const authCallbackPending = consumeOAuthPending();
+  const expectAuthCallback = authCallbackFromUrl || authCallbackPending;
+
   await loadQuestReqs();
   renderEquipDoll();
   renderSyncedEquipment();
@@ -5815,9 +5849,6 @@ function startSystemHealthChecks() {
   }
   startSystemHealthChecks();
 
-  // OAuth/magic-link return: must open journal / pairing, not sit on a cold landing.
-  const authCallback = isAuthCallback();
-
   if (supabaseClient) {
     supabaseClient.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_OUT') {
@@ -5832,13 +5863,12 @@ function startSystemHealthChecks() {
         return;
       }
       // INITIAL_SESSION / SIGNED_IN: init (and email handlers) own navigation.
-      // Only keep the in-memory session in sync so JWT headers stay current.
       if (session) authSession = session;
     });
-    const { session, wasCallback, error: sessionErr } = await consumeAuthCallback();
+    const { session, wasCallback, error: sessionErr } = await consumeAuthCallback(expectAuthCallback);
     if (sessionErr) console.warn('auth callback', sessionErr);
 
-    if (wasCallback || authCallback) {
+    if (wasCallback || expectAuthCallback) {
       if (session) {
         await handleSignedIn(session, { interactive: true });
         if (needsPairing()) {
