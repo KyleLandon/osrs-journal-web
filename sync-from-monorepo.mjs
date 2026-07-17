@@ -13,6 +13,7 @@ const copies = [
   [join(root, "osrs-journal.html"), join(here, "index.html")],
   [join(root, "privacy.html"), join(here, "privacy.html")],
   [join(root, "quest-reqs-data.json"), join(here, "quest-reqs-data.json")],
+  [join(root, "game-data.js"), join(here, "game-data.js")],
 ];
 
 for (const [src, dest] of copies) {
