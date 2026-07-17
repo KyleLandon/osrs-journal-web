@@ -177,6 +177,16 @@ body {
 }
 .site-footer a { color: var(--accent); text-decoration: none; }
 .site-footer a:hover { text-decoration: underline; }
+.system-status { display: inline-flex; align-items: center; gap: 6px; cursor: default; }
+.status-dot {
+  display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--text-muted); flex-shrink: 0;
+}
+.status-dot.up { background: var(--green); }
+.status-dot.down { background: var(--red); animation: pulse 1.6s infinite; }
+.status-dot.checking { animation: pulse 1.6s infinite; }
+.system-status .up-text { color: var(--green); }
+.system-status .down-text { color: var(--red); font-weight: 600; }
 .auth-legal { font-size: 11px; color: var(--text-muted); margin-top: 10px; line-height: 1.5; }
 .auth-legal a { color: var(--accent); }
 .btn-secondary {
@@ -4860,6 +4870,45 @@ document.querySelector('.page-tabs').addEventListener('keydown', (e) => {
   next.click();
 });
 
+// ─── SYSTEM STATUS ────────────────────────────────────────────────────────────
+// Footer pill that pings /health (functions + database) so players can tell a
+// backend outage from a problem on their end. Checks every 90s while visible.
+
+async function checkSystemHealth() {
+  const dot = document.getElementById('systemStatusDot');
+  const text = document.getElementById('systemStatusText');
+  const wrap = document.getElementById('systemStatus');
+  if (!wrap || !API_BASE_URL) return;
+  wrap.style.display = '';
+  document.getElementById('systemStatusSep').style.display = '';
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 8000);
+    const started = performance.now();
+    const res = await fetch(`${API_BASE_URL}/health`, { signal: ctrl.signal, cache: 'no-store' });
+    clearTimeout(timer);
+    const ms = Math.round(performance.now() - started);
+    if (res.ok) {
+      dot.className = 'status-dot up';
+      text.className = 'up-text';
+      text.textContent = 'All systems operational';
+      wrap.title = `Sync backend healthy — responded in ${ms}ms (checked ${new Date().toLocaleTimeString()})`;
+      return;
+    }
+    throw new Error(`HTTP ${res.status}`);
+  } catch (e) {
+    dot.className = 'status-dot down';
+    text.className = 'down-text';
+    text.textContent = 'Backend issues — syncs may be delayed';
+    wrap.title = `Health check failed (${e.message}) — your data is safe, syncing will resume automatically`;
+  }
+}
+
+function startSystemHealthChecks() {
+  checkSystemHealth();
+  setInterval(() => { if (!document.hidden) checkSystemHealth(); }, 90000);
+}
+
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 // Boot order matters: quest metadata → Supabase config → auth state → then the
 // first data source that applies, checked from most to least specific:
@@ -4879,6 +4928,7 @@ document.querySelector('.page-tabs').addEventListener('keydown', (e) => {
     msg.className = 'status-msg';
     return;
   }
+  startSystemHealthChecks();
 
   if (supabaseClient) {
     supabaseClient.auth.onAuthStateChange(async (event, session) => {
@@ -5099,7 +5149,10 @@ function startLiveRefresh(localSessionToken) {
 }
 </script>
 <footer class="site-footer">
-  <a href="/privacy.html">Privacy Policy</a>
+  <span class="system-status" id="systemStatus" style="display:none">
+    <span class="status-dot checking" id="systemStatusDot"></span><span id="systemStatusText">Checking status…</span>
+  </span>
+  <span id="systemStatusSep" style="display:none"> · </span><a href="/privacy.html">Privacy Policy</a>
   · OSRS Journal — not affiliated with Jagex or RuneLite
 </footer>
 </body>
