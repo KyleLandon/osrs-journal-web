@@ -1464,6 +1464,11 @@ async function claimPairCode() {
     await refreshAuthUi();
     closeAuthPanel();
     showToast(`${body.rsn} linked! Loading your journal...`, 'ok', 6000);
+    // Clear disclosure at the moment it matters: profiles default to public
+    // (skills/quests only — never bank or gear).
+    setTimeout(() => showToast(
+      'Your skills & quests are public by default (like the hiscores). Toggle "Public profile" under Account to go private.',
+      '', 9000), 1500);
     document.getElementById('rsnInput').value = body.rsn;
     await fetchPlayer(body.rsn);
   } catch (e) {
