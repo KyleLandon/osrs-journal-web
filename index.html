@@ -1674,6 +1674,26 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
   </div>
 </div>
 
+<!-- Capture OAuth tokens the instant the document parses — before any library can touch the URL. -->
+<script>
+(function () {
+  try {
+    var search = location.search || '';
+    var hash = location.hash || '';
+    if (
+      hash.indexOf('access_token=') !== -1 ||
+      search.indexOf('code=') !== -1 ||
+      search.indexOf('error=') !== -1 ||
+      hash.indexOf('error=') !== -1
+    ) {
+      localStorage.setItem(
+        'osrs_auth_callback',
+        JSON.stringify({ search: search, hash: hash, t: Date.now() })
+      );
+    }
+  } catch (e) {}
+})();
+</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
 <script src="game-data.js"></script>
 <script>
@@ -1737,12 +1757,12 @@ function applySupabaseConfig(cfg) {
     ? { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY }
     : {};
   if (SUPABASE_URL && SUPABASE_KEY && window.supabase) {
-    // detectSessionInUrl MUST be false — we snapshot the callback URL ourselves.
-    // If left on with flowType pkce, an implicit #access_token= return throws
-    // "Not a valid PKCE flow url" and GoTrue wipes the session.
+    // This project returns implicit #access_token= redirects (not PKCE ?code=).
+    // We disable detectSessionInUrl and apply the early localStorage snapshot
+    // ourselves so GoTrue never races/clears the hash.
     supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
       auth: {
-        flowType: 'pkce',
+        flowType: 'implicit',
         detectSessionInUrl: false,
         persistSession: true,
         autoRefreshToken: true,
@@ -2037,35 +2057,40 @@ function authRedirectUrl() {
 }
 
 const OAUTH_PENDING_KEY = 'osrs_oauth_pending';
+const AUTH_CALLBACK_KEY = 'osrs_auth_callback';
 
-/** Mark that we are about to leave for Google/Discord (survives the redirect). */
+/** Mark that we are about to leave for Google/Discord (localStorage survives better than sessionStorage). */
 function markOAuthPending(provider) {
   try {
-    sessionStorage.setItem(OAUTH_PENDING_KEY, provider || '1');
+    localStorage.setItem(OAUTH_PENDING_KEY, JSON.stringify({
+      provider: provider || 'oauth',
+      t: Date.now(),
+    }));
   } catch (_) {}
 }
 
 function consumeOAuthPending() {
   try {
-    const v = sessionStorage.getItem(OAUTH_PENDING_KEY);
-    if (v) sessionStorage.removeItem(OAUTH_PENDING_KEY);
-    return Boolean(v);
+    const raw = localStorage.getItem(OAUTH_PENDING_KEY);
+    localStorage.removeItem(OAUTH_PENDING_KEY);
+    if (!raw) return false;
+    const parsed = JSON.parse(raw);
+    // Ignore stale flags older than 15 minutes.
+    if (parsed && parsed.t && Date.now() - parsed.t > 15 * 60 * 1000) return false;
+    return true;
   } catch (_) {
+    try { localStorage.removeItem(OAUTH_PENDING_KEY); } catch (e) {}
     return false;
   }
 }
 
-/**
- * Snapshot OAuth/magic-link params from the URL *before* createClient().
- * Supabase initialize() can clear the hash/query; with PKCE + implicit return it
- * also throws and wipes any existing session.
- */
-function snapshotAuthCallback() {
-  const params = new URLSearchParams(window.location.search);
-  const hash = (window.location.hash || '').replace(/^#/, '');
-  const hp = hash ? new URLSearchParams(hash) : new URLSearchParams();
-  const access_token = hp.get('access_token');
-  const refresh_token = hp.get('refresh_token');
+/** Parse search+hash into token/code fields (from live URL or early head snapshot). */
+function parseAuthCallbackParts(search, hash) {
+  const params = new URLSearchParams((search || '').replace(/^\?/, ''));
+  const hashBody = (hash || '').replace(/^#/, '');
+  const hp = hashBody ? new URLSearchParams(hashBody) : new URLSearchParams();
+  const access_token = hp.get('access_token') || params.get('access_token');
+  const refresh_token = hp.get('refresh_token') || params.get('refresh_token');
   const code = params.get('code');
   const error = params.get('error') || hp.get('error');
   const error_description =
@@ -2076,11 +2101,38 @@ function snapshotAuthCallback() {
   return { isCallback, code, access_token, refresh_token, error, error_description };
 }
 
+/**
+ * Build the auth callback snapshot from (1) current URL and (2) head-script localStorage.
+ * The head script runs before supabase-js can touch location.hash.
+ */
+function snapshotAuthCallback() {
+  let snap = parseAuthCallbackParts(window.location.search, window.location.hash);
+  if (snap.isCallback) return snap;
+  try {
+    const raw = localStorage.getItem(AUTH_CALLBACK_KEY);
+    if (!raw) return snap;
+    const saved = JSON.parse(raw);
+    // Only trust snapshots from the last 15 minutes.
+    if (!saved || !saved.t || Date.now() - saved.t > 15 * 60 * 1000) {
+      localStorage.removeItem(AUTH_CALLBACK_KEY);
+      return snap;
+    }
+    snap = parseAuthCallbackParts(saved.search || '', saved.hash || '');
+  } catch (_) {}
+  return snap;
+}
+
+function clearAuthCallbackStorage() {
+  try { localStorage.removeItem(AUTH_CALLBACK_KEY); } catch (_) {}
+}
+
 /** Remove auth callback params so tokens never linger in the address bar / history. */
 function stripAuthCallbackFromUrl() {
   try {
     const url = new URL(window.location.href);
-    ['code', 'state', 'error', 'error_description', 'error_code'].forEach((k) => url.searchParams.delete(k));
+    ['code', 'state', 'error', 'error_description', 'error_code', 'access_token', 'refresh_token'].forEach((k) => {
+      url.searchParams.delete(k);
+    });
     url.hash = '';
     const clean = url.pathname + (url.searchParams.toString() ? `?${url.searchParams}` : '');
     history.replaceState({}, '', clean || '/');
@@ -2090,7 +2142,7 @@ function stripAuthCallbackFromUrl() {
 }
 
 /**
- * Establish a session from a pre-createClient URL snapshot (PKCE code or implicit tokens).
+ * Establish a session from a pre-createClient URL snapshot (implicit tokens or PKCE code).
  */
 async function establishSessionFromSnapshot(snap) {
   if (!supabaseClient) return { session: null, error: new Error('No auth client') };
@@ -2110,6 +2162,12 @@ async function establishSessionFromSnapshot(snap) {
       });
       return { session: result.data.session, error: result.error };
     }
+    if (snap.access_token && !snap.refresh_token) {
+      return {
+        session: null,
+        error: { message: 'Sign-in response was incomplete (missing refresh token). Try again.' },
+      };
+    }
     if (snap.code) {
       const result = await supabaseClient.auth.exchangeCodeForSession(snap.code);
       return { session: result.data.session, error: result.error };
@@ -2118,6 +2176,8 @@ async function establishSessionFromSnapshot(snap) {
     return { session: result.data.session, error: result.error };
   } catch (e) {
     return { session: null, error: e };
+  } finally {
+    clearAuthCallbackStorage();
   }
 }
 
@@ -2128,7 +2188,10 @@ async function signInWithOAuth(provider) {
   markOAuthPending(provider);
   const { error } = await supabaseClient.auth.signInWithOAuth({
     provider,
-    options: { redirectTo: authRedirectUrl() },
+    options: {
+      redirectTo: authRedirectUrl(),
+      skipBrowserRedirect: false,
+    },
   });
   if (error) {
     consumeOAuthPending();
@@ -2203,20 +2266,30 @@ async function signUpWithEmail() {
  */
 async function handleSignedIn(session, { interactive = false } = {}) {
   if (!session) return;
-  await refreshAuthUi({ session });
-  closeAuthPanel();
-  if (linkedCharacterMeta.length) {
-    pairingPromptShown = false;
-    closePairModal();
-    if (interactive) {
-      showToast('Signed in!', 'ok');
-      await openOwnJournal();
+  try {
+    await refreshAuthUi({ session });
+    closeAuthPanel();
+    if (linkedCharacterMeta.length) {
+      pairingPromptShown = false;
+      closePairModal();
+      if (interactive) {
+        showToast('Signed in!', 'ok');
+        await openOwnJournal();
+      }
+      return;
     }
-    return;
+    // No linked character — pairing is the whole point of signing in.
+    showLanding();
+    personalizeLanding(null);
+    showPairModal();
+    showToast('Signed in — enter your RuneLite pairing code to open your journal.', 'ok', 7000);
+  } catch (e) {
+    console.error('handleSignedIn', e);
+    showToast(e.message || 'Signed in, but opening your journal failed.', 'error', 8000);
+    showLanding();
+    personalizeLanding(linkedCharacterMeta[0]?.rsn || null);
+    if (needsPairing()) showPairModal();
   }
-  showLanding();
-  personalizeLanding(null);
-  showPairModal();
 }
 
 async function sendMagicLink() {
@@ -5811,12 +5884,16 @@ function startSystemHealthChecks() {
 //   ?local_session (opened from RuneLite) → ?rsn (shared link / plugin fallback)
 //   → signed-in user's linked character → cached last character → landing page.
 (async function init() {
-  // Snapshot + scrub BEFORE createClient. An implicit #access_token= return with
-  // flowType pkce makes GoTrue throw and wipe the session if it sees the URL.
+  // Snapshot + scrub BEFORE createClient / any await that could lose the hash.
   const authSnap = snapshotAuthCallback();
   const authCallbackPending = consumeOAuthPending();
   const expectAuthCallback = authSnap.isCallback || authCallbackPending;
-  if (authSnap.isCallback) stripAuthCallbackFromUrl();
+  if (authSnap.isCallback || expectAuthCallback) stripAuthCallbackFromUrl();
+
+  if (expectAuthCallback) {
+    // Visible immediately — statusMsg lives in the nav, easy to miss otherwise.
+    document.body.dataset.authReturn = '1';
+  }
 
   await loadQuestReqs();
   renderEquipDoll();
@@ -5849,33 +5926,38 @@ function startSystemHealthChecks() {
       if (session) authSession = session;
     });
 
-    let session = null;
-    let sessionErr = null;
     if (expectAuthCallback) {
+      msg.textContent = 'Finishing sign-in...';
+      msg.className = 'status-msg';
+      showToast('Finishing sign-in…', '', 4000);
       const established = await establishSessionFromSnapshot(authSnap);
-      session = established.session;
-      sessionErr = established.error;
-      if (sessionErr) console.warn('auth callback', sessionErr);
-      if (session) {
-        await handleSignedIn(session, { interactive: true });
+      if (established.error) console.warn('auth callback', established.error);
+      if (established.session) {
+        await handleSignedIn(established.session, { interactive: true });
         if (needsPairing()) {
           msg.textContent = 'Enter the pairing code from the RuneLite plugin to open your journal.';
           msg.className = 'status-msg';
         }
         return;
       }
-      msg.textContent = sessionErr?.message
+      // Pending click but no tokens — try whatever session storage already has.
+      const fallback = await supabaseClient.auth.getSession();
+      if (fallback.data.session) {
+        await handleSignedIn(fallback.data.session, { interactive: true });
+        return;
+      }
+      const errText = established.error?.message
         || 'Sign-in did not finish — try Google/Discord again, or use email.';
+      msg.textContent = errText;
       msg.className = 'status-msg error';
-      showToast(msg.textContent, 'error', 8000);
+      showToast(errText, 'error', 9000);
       showLanding();
       await refreshAuthUi({ session: null });
       return;
     }
 
     const existing = await supabaseClient.auth.getSession();
-    session = existing.data.session;
-    await refreshAuthUi({ session });
+    await refreshAuthUi({ session: existing.data.session });
   }
 
   const localSession = new URLSearchParams(window.location.search).get('local_session');
@@ -5938,10 +6020,9 @@ function startSystemHealthChecks() {
   const activeRsn = await getActiveRSN(savedRsn || null);
   if (activeRsn) {
     document.getElementById('rsnInput').value = activeRsn;
-    // Warm the journal in the background; stay on home with "Open my journal".
-    await fetchPlayer(activeRsn, { keepView: true });
+    // Signed-in with a linked character → open the journal (don't dump on landing).
+    await fetchPlayer(activeRsn);
     startLiveRefresh();
-    showLanding();
     personalizeLanding(activeRsn);
     return;
   }
