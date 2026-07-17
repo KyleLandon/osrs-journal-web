@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="OSRS Journal — live-synced stats, quests, gear, and AI-ready account exports.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="OSRS Journal">
+<meta property="og:title" content="OSRS Journal">
+<meta property="og:description" content="Live-synced Old School RuneScape stats, quests and gear — straight from RuneLite to one dashboard.">
+<meta property="og:image" content="https://journal.osrsjournal.com/assets/icon.png">
+<meta property="og:url" content="https://journal.osrsjournal.com/">
+<meta name="twitter:card" content="summary">
 <title>OSRS Journal</title>
 <link rel="icon" href="assets/favicon-32.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -369,7 +376,8 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
   border-color: rgba(59, 130, 246, 0.35);
   background: linear-gradient(135deg, var(--card), rgba(29, 78, 216, 0.1));
 }
-.skill-icon { font-size: 22px; width: 30px; text-align: center; flex-shrink: 0; }
+.skill-icon { font-size: 22px; width: 30px; text-align: center; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.skill-icon img { width: 25px; height: 25px; object-fit: contain; image-rendering: pixelated; }
 .skill-info { flex: 1; min-width: 0; }
 .skill-name { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
 .skill-level { font-size: 22px; font-weight: 800; color: var(--text); line-height: 1.1; letter-spacing: -0.5px; }
@@ -584,6 +592,12 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 .boss-status.yes { color: var(--green); }
 .boss-status.close { color: var(--orange); }
 .boss-status.no { color: var(--red); }
+
+/* Screen-reader-only text */
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
 
 /* Misc */
 .hint {
@@ -883,6 +897,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
         </div>
       </div>
       <div class="cb-badge" id="cbBadge" style="display:none">Combat <strong id="cbLevel">--</strong></div>
+      <button class="btn-secondary" type="button" id="shareBtn" onclick="shareProfile()" title="Copy a link to this profile" style="display:none">Share</button>
     </div>
     <div class="profile-stats">
       <div class="stat-box">
@@ -910,17 +925,17 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 </section>
 
 <div class="page-shell">
-  <nav class="page-tabs">
-    <button class="tab active" onclick="switchTab('plan')">Export</button>
-    <button class="tab" onclick="switchTab('stats')">Skills</button>
-    <button class="tab" onclick="switchTab('equipment')">Equipment</button>
-    <button class="tab" onclick="switchTab('quests')">Quests</button>
-    <button class="tab" onclick="switchTab('bosses')">Bosses</button>
+  <nav class="page-tabs" role="tablist" aria-label="Journal sections">
+    <button class="tab active" role="tab" aria-selected="true" aria-controls="panel-stats" onclick="switchTab('stats')">Skills</button>
+    <button class="tab" role="tab" aria-selected="false" aria-controls="panel-equipment" onclick="switchTab('equipment')">Equipment</button>
+    <button class="tab" role="tab" aria-selected="false" aria-controls="panel-quests" onclick="switchTab('quests')">Quests</button>
+    <button class="tab" role="tab" aria-selected="false" aria-controls="panel-bosses" onclick="switchTab('bosses')">Bosses</button>
+    <button class="tab" role="tab" aria-selected="false" aria-controls="panel-plan" onclick="switchTab('plan')">Export</button>
   </nav>
   <div class="page-content">
 
 <!-- ===== STATS ===== -->
-<div class="panel" id="panel-stats">
+<div class="panel active" id="panel-stats" role="tabpanel">
   <div class="skills-section">
     <div class="section-title">Combat Skills</div>
     <div class="skills-grid" id="grid-combat"></div>
@@ -941,7 +956,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 </div>
 
 <!-- ===== EQUIPMENT ===== -->
-<div class="panel" id="panel-equipment">
+<div class="panel" id="panel-equipment" role="tabpanel">
   <div class="equip-sync-section" id="equipSyncSection">
     <div class="section-title">Worn Gear <span class="equip-sync-badge" id="equipSyncBadge" style="display:none">Live sync</span></div>
     <div class="equip-sync-grid" id="equipSyncGrid"></div>
@@ -985,7 +1000,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 </div>
 
 <!-- ===== QUESTS ===== -->
-<div class="panel" id="panel-quests">
+<div class="panel" id="panel-quests" role="tabpanel">
   <div class="quest-banner">
     <div class="qp-stat"><div class="num" id="qpDone">0</div><div class="lbl">Quest Points</div></div>
     <div class="qp-stat"><div class="num" id="questsDone">0</div><div class="lbl">Quests Done</div></div>
@@ -1010,11 +1025,11 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
       <button class="sort-btn" onclick="setQuestSort('diff',this)">Difficulty</button>
     </div>
   </div>
-  <div class="quest-grid" id="questGrid"></div>
+  <div class="quest-grid" id="questGrid" role="list"></div>
 </div>
 
 <!-- ===== EXPORT ===== -->
-<div class="panel active" id="panel-plan">
+<div class="panel" id="panel-plan" role="tabpanel">
   <div class="export-hero">
     <h2>Export Player Data</h2>
     <p>Copy or download your synced OSRS profile and paste it into ChatGPT, Claude, Gemini, or any AI you prefer. Includes worn gear, bank equipment, skills, quests, gold, and boss access. Open your bank in-game before syncing for accurate gear data.</p>
@@ -1033,7 +1048,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 </div>
 
 <!-- ===== BOSS TRACKER ===== -->
-<div class="panel" id="panel-bosses">
+<div class="panel" id="panel-bosses" role="tabpanel">
   <div id="bossContent"><div class="hint">Fetch your stats to see which bosses you can access.</div></div>
 </div>
 
@@ -1316,18 +1331,38 @@ async function sendMagicLink() {
 }
 
 async function updateProfilePrivacy() {
-  const rsn = document.getElementById('rsnInput').value.trim();
-  const isPublic = document.getElementById('privacyToggle').checked;
-  if (!rsn || !authSession) return;
+  const toggle = document.getElementById('privacyToggle');
+  const isPublic = toggle.checked;
+  if (!authSession) return;
+
+  // Target a character the user actually owns — the search box may hold
+  // someone else's name, and a PATCH on that would silently match no rows.
+  const searched = document.getElementById('rsnInput').value.trim().toLowerCase();
+  const target = linkedCharacterMeta.find(c => c.rsn.toLowerCase() === searched)
+    || linkedCharacterMeta[0];
+  if (!target) {
+    showToast('Link a character first to change its privacy.', 'error');
+    toggle.checked = !isPublic;
+    return;
+  }
+
   const headers = await getAuthHeaders();
   headers['Content-Type'] = 'application/json';
-  headers['Prefer'] = 'return=minimal';
-  const q = encodeURIComponent(rsn);
-  await fetch(`${SUPABASE_URL}/rest/v1/user_characters?rsn=eq.${q}`, {
-    method: 'PATCH',
-    headers,
-    body: JSON.stringify({ is_public: isPublic }),
-  });
+  headers['Prefer'] = 'return=representation';
+  const q = encodeURIComponent(target.rsn);
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/user_characters?rsn=eq.${q}&select=rsn,is_public`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({ is_public: isPublic }),
+    });
+    const rows = res.ok ? await res.json() : [];
+    if (!rows.length) throw new Error('update failed');
+    showToast(`${target.rsn} is now ${isPublic ? 'public' : 'private'}.`, 'ok');
+  } catch {
+    showToast('Could not update privacy — try again.', 'error');
+    toggle.checked = !isPublic;
+  }
   linkedCharacterMeta = await getLinkedCharacterMeta();
 }
 
@@ -1336,7 +1371,7 @@ async function signOut() {
   authSession = null;
   // Clear cached character data so nothing lingers on shared machines,
   // then return to a clean home page.
-  ['osrs_rsn', 'osrs_skills', 'osrs_gold', 'osrs_equip'].forEach(k => localStorage.removeItem(k));
+  ['osrs_rsn', 'osrs_skills', 'osrs_gold', 'osrs_equip', 'osrs_quests'].forEach(k => localStorage.removeItem(k));
   window.location.href = window.location.origin + window.location.pathname;
 }
 
@@ -2468,7 +2503,11 @@ async function fetchPublicProfile(rsn) {
   ]);
   if (!sRes.ok) throw new Error(`Could not load profile (${sRes.status})`);
   const skills = await sRes.json();
-  if (!skills.length) throw new Error('No public profile for this player. They may be private or not synced yet.');
+  if (!skills.length) {
+    const err = new Error('No public profile for this player. They may be private or not synced yet.');
+    err.notFound = true;
+    throw err;
+  }
   const quests = qRes.ok ? await qRes.json() : [];
   const players = pRes.ok ? await pRes.json() : [];
   viewingOwnCharacter = false;
@@ -2495,7 +2534,11 @@ async function fetchFromSupabase(rsn) {
   ]);
   if (!sRes.ok) throw new Error(`Could not load character (${sRes.status})`);
   const skills = await sRes.json();
-  if (!skills.length) throw new Error('No data yet — log in with the OSRS Journal plugin running.');
+  if (!skills.length) {
+    const err = new Error('No data yet — log in with the OSRS Journal plugin running.');
+    err.notFound = true;
+    throw err;
+  }
   const quests = await qRes.json();
   const equip = await eRes.json();
   const bank = bRes.ok ? await bRes.json() : [];
@@ -2562,7 +2605,9 @@ async function fetchPlayer(rsnOverride, options = {}) {
         dataSource = 'public';
       }
     } catch(sbErr) {
-      // Not in our DB yet — fall back to WOM (skills only)
+      // Only fall back to WOM when the character genuinely isn't in our DB.
+      // Real errors (network, 5xx) must surface, not silently degrade.
+      if (!sbErr.notFound) throw sbErr;
       msg.textContent = 'Not in database, trying Wise Old Man...';
       await fetchFromWOM(rsn);
       syncedQuestPoints = null;
@@ -2601,6 +2646,24 @@ async function fetchPlayer(rsnOverride, options = {}) {
     }
   }
   btn.disabled = false;
+}
+
+/** Copy a shareable public-profile link for the loaded character. */
+async function shareProfile() {
+  if (!playerRSN) return;
+  const link = `${WEB_APP_URL || window.location.origin}/?rsn=${encodeURIComponent(playerRSN)}`;
+  try {
+    await navigator.clipboard.writeText(link);
+  } catch {
+    window.prompt('Copy this profile link:', link);
+    return;
+  }
+  const ownChar = linkedCharacterMeta.find(c => c.rsn.toLowerCase() === playerRSN.toLowerCase());
+  if (ownChar && !ownChar.is_public) {
+    showToast('Link copied — but your profile is private. Enable "Public profile" under Account so others can view it.', 'error', 7000);
+  } else {
+    showToast('Profile link copied!', 'ok');
+  }
 }
 
 function getCombatLevel() {
@@ -2696,6 +2759,7 @@ function renderDashboard() {
   const { qp, journalDone, journalTotal } = computeQuestStats();
 
   document.getElementById('dashRsn').textContent = playerRSN || '—';
+  document.getElementById('shareBtn').style.display = playerRSN && dataSource !== 'wom' ? '' : 'none';
   const avatar = document.getElementById('profileAvatar');
   if (avatar) avatar.textContent = playerRSN ? playerRSN.charAt(0).toUpperCase() : '?';
   const syncAge = formatSyncAge(lastSynced);
@@ -2729,13 +2793,15 @@ function renderStats() {
     const grid = document.getElementById('grid-'+group);
     grid.innerHTML = skills.map(sk => {
       const def = SKILL_DEFS[sk] || {icon:'📊'};
+      // Wiki icon with emoji fallback if the asset is missing
+      const iconHtml = `<img src="assets/skills/${sk}.png" alt="" width="25" height="25" loading="lazy" onerror="this.outerHTML='${def.icon}'">`;
       const d = playerSkills[sk] || {level:1, xp:0};
       const lvl = sk === 'overall' ? (d.level || 1) : (d.level || 1);
       const xp = d.xp || 0;
       const prog = sk === 'overall' ? Math.round(lvl/2277*100) : levelProgress(xp, lvl);
       const xpStr = xp > 1000000 ? (xp/1000000).toFixed(2)+'m xp' : xp > 1000 ? (xp/1000).toFixed(1)+'k xp' : xp+' xp';
       return `<div class="skill-card${sk === 'overall' ? ' skill-overall' : ''}">
-        <div class="skill-icon">${def.icon}</div>
+        <div class="skill-icon">${iconHtml}</div>
         <div class="skill-info">
           <div class="skill-name">${sk}</div>
           <div class="skill-level">${lvl}</div>
@@ -2967,10 +3033,11 @@ function renderQuestCard(q) {
     showMissing ? 'has-blockers' : '',
   ].filter(Boolean).join(' ');
   const mark = done ? '✓' : (inProg ? '…' : '');
-  return `<div class="quest-item ${cls}">
+  const srStatus = done ? 'Completed' : (inProg ? 'In progress' : 'Not started');
+  return `<div class="quest-item ${cls}" role="listitem">
     <div class="quest-item-main">
       <div class="quest-cb" aria-hidden="true">${mark}</div>
-      <div class="quest-name">${questWikiLink(q.name)}</div>
+      <div class="quest-name"><span class="sr-only">${srStatus}: </span>${questWikiLink(q.name)}</div>
       <div class="quest-meta">
         ${q.qp > 0 ? `<span class="quest-qp">${q.qp}qp</span>` : ''}
         ${q.diff ? `<span class="quest-diff diff-${q.diff}">${q.diff}</span>` : ''}
@@ -3365,8 +3432,12 @@ function renderBosses() {
 
 // ─── TABS ─────────────────────────────────────────────────────────────────────
 function switchTab(tab) {
-  const tabs = ['plan','stats','equipment','quests','bosses'];
-  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', tabs[i]===tab));
+  const tabs = ['stats','equipment','quests','bosses','plan'];
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    const active = tabs[i] === tab;
+    t.classList.toggle('active', active);
+    t.setAttribute('aria-selected', active ? 'true' : 'false');
+  });
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById('panel-'+tab).classList.add('active');
   if (tab==='plan') refreshExport();
@@ -3532,7 +3603,11 @@ function startLiveRefresh(localSessionToken) {
     await fetchPlayer(activeRsn, { silent: true });
   }
 
-  liveRefreshTimer = setInterval(pullLatest, LIVE_REFRESH_MS);
+  // Skip polling while the tab is hidden — the visibility handler below
+  // refreshes immediately when the user comes back.
+  liveRefreshTimer = setInterval(() => {
+    if (!document.hidden) pullLatest();
+  }, LIVE_REFRESH_MS);
   liveRefreshVisibilityHandler = () => {
     if (!document.hidden) pullLatest();
   };
