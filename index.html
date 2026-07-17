@@ -1290,7 +1290,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
     <h2>Get set up in two minutes</h2>
     <ol>
       <li><span class="gs-num">1</span><span>Install the <a href="https://github.com/KyleLandon/osrs-journal-plugin#readme" target="_blank" rel="noopener"><strong>OSRS Journal</strong> plugin</a> (Plugin Hub listing pending — install guide at the link)</span></li>
-      <li><span class="gs-num">2</span><span><a href="#" onclick="toggleAuthPanel();return false">Sign in</a> here with Google, Discord or email</span></li>
+      <li><span class="gs-num">2</span><span><a href="#" data-open-auth onclick="toggleAuthPanel();return false">Sign in</a> here with Google, Discord or email</span></li>
       <li><span class="gs-num">3</span><span>Enter the pairing code shown in the plugin sidebar — that's it</span></li>
     </ol>
   </div>
@@ -1728,26 +1728,28 @@ function closeAuthPanel() {
   document.getElementById('authPanel').classList.add('hidden');
 }
 
-// Dismiss the account panel with Escape or by clicking outside it
+/** True if the click came from a control that opens/toggles the auth panel. */
+function isAuthPanelOpener(el) {
+  return Boolean(el && el.closest && el.closest('#authBtn, #landingCta, #privacyBadge, [data-open-auth]'));
+}
+
+// Dismiss the account panel with Escape or by clicking outside it.
+// Opener buttons are ignored so the same click that opens the panel doesn't
+// immediately close it again (document listener runs after the button onclick).
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') closeAuthPanel();
 });
 document.addEventListener('click', (e) => {
   const panel = document.getElementById('authPanel');
-  if (panel.classList.contains('hidden')) return;
-  if (!panel.contains(e.target) && e.target.id !== 'authBtn') closeAuthPanel();
+  if (!panel || panel.classList.contains('hidden')) return;
+  if (panel.contains(e.target) || isAuthPanelOpener(e.target)) return;
+  closeAuthPanel();
 });
 
-/** Nav brand click — show the landing; if a character is loaded, offer the journal back via search/refresh. */
+/** Nav brand → always the landing/home. Journal is reached via search or "Open my journal". */
 function goHome() {
   closeAuthPanel();
-  if (playerRSN) {
-    // Character loaded: toggle between journal and landing
-    const landingVisible = !document.getElementById('landing').classList.contains('hidden');
-    if (landingVisible) showJournal(); else showLanding();
-  } else {
-    showLanding();
-  }
+  showLanding();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
