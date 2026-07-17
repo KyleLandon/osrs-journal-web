@@ -177,7 +177,13 @@ body {
 }
 .site-footer a { color: var(--accent); text-decoration: none; }
 .site-footer a:hover { text-decoration: underline; }
-.system-status { display: inline-flex; align-items: center; gap: 6px; cursor: default; }
+.system-status {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: inherit; text-decoration: none;
+}
+.system-status:hover { text-decoration: none; }
+.system-status:hover .up-text,
+.system-status:hover .down-text { text-decoration: underline; }
 .status-dot {
   display: inline-block; width: 8px; height: 8px; border-radius: 50%;
   background: var(--text-muted); flex-shrink: 0;
@@ -4902,6 +4908,7 @@ document.querySelector('.page-tabs').addEventListener('keydown', (e) => {
 // ─── SYSTEM STATUS ────────────────────────────────────────────────────────────
 // Footer pill that pings /health (functions + database) so players can tell a
 // backend outage from a problem on their end. Checks every 90s while visible.
+// Clicking through opens the public UptimeRobot status page for history.
 
 async function checkSystemHealth() {
   const dot = document.getElementById('systemStatusDot');
@@ -4921,7 +4928,7 @@ async function checkSystemHealth() {
       dot.className = 'status-dot up';
       text.className = 'up-text';
       text.textContent = 'All systems operational';
-      wrap.title = `Sync backend healthy — responded in ${ms}ms (checked ${new Date().toLocaleTimeString()})`;
+      wrap.title = `Sync backend healthy — responded in ${ms}ms. Click for uptime history.`;
       return;
     }
     throw new Error(`HTTP ${res.status}`);
@@ -4929,7 +4936,7 @@ async function checkSystemHealth() {
     dot.className = 'status-dot down';
     text.className = 'down-text';
     text.textContent = 'Backend issues — syncs may be delayed';
-    wrap.title = `Health check failed (${e.message}) — your data is safe, syncing will resume automatically`;
+    wrap.title = `Health check failed (${e.message}). Click for status history.`;
   }
 }
 
@@ -5178,10 +5185,11 @@ function startLiveRefresh(localSessionToken) {
 }
 </script>
 <footer class="site-footer">
-  <span class="system-status" id="systemStatus" style="display:none">
+  <a class="system-status" id="systemStatus" href="https://stats.uptimerobot.com/aO38xlD5F5" target="_blank" rel="noopener noreferrer" style="display:none" title="Open status page">
     <span class="status-dot checking" id="systemStatusDot"></span><span id="systemStatusText">Checking status…</span>
-  </span>
+  </a>
   <span id="systemStatusSep" style="display:none"> · </span><a href="/privacy.html">Privacy Policy</a>
+  · <a href="https://stats.uptimerobot.com/aO38xlD5F5" target="_blank" rel="noopener noreferrer">Status</a>
   · OSRS Journal — not affiliated with Jagex or RuneLite
 </footer>
 </body>
