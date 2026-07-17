@@ -1580,7 +1580,9 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
       </select>
       <input id="aiBaseUrl" class="advisor-field" placeholder="https://api.example.com/v1" style="display:none" aria-label="API base URL" onchange="advisorSaveSettings()">
       <input id="aiModel" class="advisor-field" placeholder="model (blank = default)" aria-label="Model name" onchange="advisorSaveSettings()">
-      <input id="aiKey" class="advisor-field" type="password" placeholder="API key — stored only in this browser" aria-label="API key" onchange="advisorSaveSettings()">
+      <form class="advisor-key-form" autocomplete="off" onsubmit="return false">
+        <input id="aiKey" class="advisor-field" type="password" placeholder="API key — stored only in this browser" aria-label="API key" autocomplete="off" onchange="advisorSaveSettings()">
+      </form>
     </div>
     <div class="advisor-log" id="advisorLog" aria-live="polite"></div>
     <div class="advisor-input-row">
@@ -2196,28 +2198,38 @@ function sessionFromTokens(access_token, refresh_token) {
 }
 
 /**
- * Persist tokens to localStorage and recreate the client so getSession() picks them up.
- * Used when setSession() hangs (ad blockers / flaky /auth/v1/user).
+ * Apply OAuth tokens without any /auth/v1/user network call.
+ * setSession()/getSession() both hang when an ad blocker hits that endpoint
+ * (ERR_BLOCKED_BY_CLIENT). We persist to storage, inject into the existing
+ * GoTrueClient when possible, and always set our app-level authSession.
  */
 async function applyTokensLocally(access_token, refresh_token) {
   const session = sessionFromTokens(access_token, refresh_token);
-  localStorage.setItem(authStorageKey(), JSON.stringify(session));
-  if (!(SUPABASE_URL && SUPABASE_KEY && window.supabase)) return session;
-  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-    auth: {
-      flowType: 'implicit',
-      detectSessionInUrl: false,
-      persistSession: true,
-      autoRefreshToken: true,
-    },
-  });
-  const { data } = await withTimeout(
-    supabaseClient.auth.getSession(),
-    5000,
-    'Session recovery timed out',
-  );
-  authSession = data.session || session;
-  return authSession;
+  try {
+    localStorage.setItem(authStorageKey(), JSON.stringify(session));
+  } catch (_) {}
+
+  authSession = session;
+
+  const auth = supabaseClient?.auth;
+  if (auth) {
+    try {
+      // Private GoTrue helpers — avoid setSession (it always GETs /user).
+      if (typeof auth._saveSession === 'function') {
+        await auth._saveSession(session);
+      } else if (auth.state && typeof auth.state === 'object') {
+        auth.state.session = session;
+        auth.state.user = session.user;
+      }
+      if (typeof auth._notifyAllSubscribers === 'function') {
+        // Fire-and-forget; don't block sign-in on listeners.
+        Promise.resolve(auth._notifyAllSubscribers('SIGNED_IN', session)).catch(() => {});
+      }
+    } catch (e) {
+      console.warn('inject session into client', e);
+    }
+  }
+  return session;
 }
 
 /**
@@ -2235,22 +2247,7 @@ async function establishSessionFromSnapshot(snap) {
 
   try {
     if (snap.access_token && snap.refresh_token) {
-      // setSession() calls /auth/v1/user — ad blockers often flag this as ERR_BLOCKED_BY_CLIENT
-      // and the promise never settles. Time out and apply tokens locally instead.
-      try {
-        const result = await withTimeout(
-          supabaseClient.auth.setSession({
-            access_token: snap.access_token,
-            refresh_token: snap.refresh_token,
-          }),
-          6000,
-          'Sign-in verification timed out',
-        );
-        if (result.data?.session) return { session: result.data.session, error: null };
-        if (result.error) console.warn('setSession error, trying local apply', result.error);
-      } catch (e) {
-        console.warn('setSession failed/timed out, applying tokens locally', e);
-      }
+      // Skip setSession entirely — it GETs /auth/v1/user and hangs under ad blockers.
       const session = await applyTokensLocally(snap.access_token, snap.refresh_token);
       return session
         ? { session, error: null }
@@ -2270,8 +2267,18 @@ async function establishSessionFromSnapshot(snap) {
       );
       return { session: result.data.session, error: result.error };
     }
-    const result = await supabaseClient.auth.getSession();
-    return { session: result.data.session, error: result.error };
+    // Don't await a hanging getSession — use in-memory authSession if we have one.
+    if (authSession) return { session: authSession, error: null };
+    try {
+      const result = await withTimeout(
+        supabaseClient.auth.getSession(),
+        4000,
+        'getSession timed out',
+      );
+      return { session: result.data.session, error: result.error };
+    } catch (_) {
+      return { session: null, error: null };
+    }
   } catch (e) {
     return { session: null, error: e };
   } finally {
