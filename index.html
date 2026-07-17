@@ -374,6 +374,14 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 }
 .privacy-badge:hover { border-color: var(--accent); }
 
+/* Character switcher (2+ linked characters) */
+.char-switcher {
+  background: var(--surface); border: 1px solid var(--border); color: var(--text);
+  padding: 8px 12px; border-radius: var(--radius); font-size: 13px; font-weight: 600;
+  font-family: inherit; cursor: pointer;
+}
+.char-switcher:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
 /* Page shell + tabs */
 .page-shell {
   border-radius: var(--radius-xl);
@@ -446,6 +454,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 .skill-level { font-size: 22px; font-weight: 800; color: var(--text); line-height: 1.1; letter-spacing: -0.5px; }
 .skill-card.skill-overall .skill-level { color: var(--accent-hover); }
 .skill-xp { font-size: 10px; color: var(--text-dim); margin-top: 1px; }
+.skill-gain { color: var(--green); font-weight: 700; }
 .skill-bar { height: 3px; background: var(--border-subtle); border-radius: 99px; margin-top: 6px; overflow: hidden; }
 .skill-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent-dark), var(--accent-hover)); border-radius: 99px; }
 
@@ -814,6 +823,15 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 .quest-req-tag { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 99px; }
 .quest-req-tag.skill { background: var(--red-soft); color: #f87171; }
 .quest-req-tag.quest { background: var(--orange-soft); color: var(--orange); }
+.quest-req-tag.met { background: var(--green-soft); color: #4ade80; }
+.quest-item { cursor: pointer; }
+.quest-details .quest-detail-row {
+  display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+  font-size: 12px; color: var(--text-dim); padding: 4px 0; line-height: 1.6;
+}
+.quest-details .quest-missing-label { margin-bottom: 0; min-width: 52px; }
+.quest-details a { color: var(--accent-hover); text-decoration: none; }
+.quest-details a:hover { text-decoration: underline; }
 .quest-grid.blocked-view { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
 
 /* Quest banner sync note row */
@@ -961,6 +979,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
           <div class="profile-meta" id="dashSync">Not synced</div>
         </div>
       </div>
+      <select id="charSwitcher" class="char-switcher" style="display:none" onchange="fetchPlayer(this.value)" title="Switch between your linked characters" aria-label="Switch character"></select>
       <div class="cb-badge" id="cbBadge" style="display:none">Combat <strong id="cbLevel">--</strong></div>
       <button class="privacy-badge" type="button" id="privacyBadge" onclick="toggleAuthPanel()" title="Who can see this profile — change under Account" style="display:none">Public</button>
       <button class="btn-secondary" type="button" id="shareBtn" onclick="shareProfile()" title="Copy a link to this profile" style="display:none">Share</button>
@@ -980,6 +999,11 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
         <div class="stat-label">Quest Points</div>
         <div class="stat-value" id="dashQp">—</div>
         <div class="stat-sub" id="dashQuests">—</div>
+      </div>
+      <div class="stat-box" id="gainsBox" style="display:none">
+        <div class="stat-label">XP Today</div>
+        <div class="stat-value" id="dashGains">—</div>
+        <div class="stat-sub" id="dashGainsWeek">—</div>
       </div>
       <div class="stat-box">
         <div class="stat-label">Bank Gold</div>
@@ -1973,6 +1997,146 @@ async function fetchFromLocalhostSession(sessionToken) {
   return count;
 }
 
+// ─── XP GAINS (daily snapshots) ──────────────────────────────────────────────
+// The sync function writes one row per skill per UTC day. Baselines:
+//   today's gain = live XP − last snapshot before today
+//   week's gain  = live XP − oldest snapshot in the 8-day window
+// Gains are progressive enhancement: any failure just hides them.
+
+/** { [skill]: { today, week } } — null until loaded, {} when no history yet. */
+let skillGains = null;
+
+async function loadXpGains(rsn) {
+  skillGains = null;
+  if (!isSupabaseConfigured() || !rsn) return;
+  try {
+    const headers = (HOSTED_MODE && viewingOwnCharacter) ? await getAuthHeaders() : SB_HEADERS;
+    const since = new Date(Date.now() - 8 * 864e5).toISOString().slice(0, 10);
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/player_snapshots?rsn=eq.${encodeURIComponent(rsn)}` +
+        `&snap_date=gte.${since}&select=snap_date,skill,xp&order=snap_date.asc`,
+      { headers }
+    );
+    if (!res.ok) return;
+    const rows = await res.json();
+    const today = new Date().toISOString().slice(0, 10);
+    const dayBaseline = {};   // latest snapshot before today
+    const weekBaseline = {};  // oldest snapshot in window
+    for (const r of rows) {
+      if (r.snap_date >= today) continue;
+      if (weekBaseline[r.skill] === undefined) weekBaseline[r.skill] = r.xp;
+      dayBaseline[r.skill] = r.xp;
+    }
+    const gains = {};
+    for (const [skill, d] of Object.entries(playerSkills)) {
+      if (skill === 'overall') continue;
+      const cur = d.xp || 0;
+      gains[skill] = {
+        today: dayBaseline[skill] != null ? Math.max(0, cur - dayBaseline[skill]) : null,
+        week: weekBaseline[skill] != null ? Math.max(0, cur - weekBaseline[skill]) : null,
+      };
+    }
+    skillGains = gains;
+  } catch (_) { /* gains stay hidden */ }
+}
+
+/** Sum of per-skill gains for 'today' or 'week'; null when no baseline exists yet. */
+function totalXpGain(kind) {
+  if (!skillGains) return null;
+  let sum = 0;
+  let any = false;
+  for (const g of Object.values(skillGains)) {
+    if (g[kind] != null) { sum += g[kind]; any = true; }
+  }
+  return any ? sum : null;
+}
+
+function formatXp(n) {
+  if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+  if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+  return String(n);
+}
+
+// ─── GE PRICES (OSRS wiki real-time prices API) ──────────────────────────────
+// Free, no auth. Both payloads are big (~1MB) so they're fetched lazily, kept
+// in memory, and cached in localStorage (prices 1h, id mapping 24h).
+
+let gePrices = null;   // { [itemId]: gp }
+let geMapping = null;  // { [lowercase item name]: itemId }
+let _gePricesPromise = null;
+let _geMappingPromise = null;
+
+async function loadGePrices() {
+  if (gePrices) return gePrices;
+  if (_gePricesPromise) return _gePricesPromise;
+  _gePricesPromise = (async () => {
+    try {
+      const cached = JSON.parse(localStorage.getItem('osrs_ge_prices') || 'null');
+      if (cached && Date.now() - cached.ts < 60 * 60 * 1000) {
+        gePrices = cached.prices;
+        return gePrices;
+      }
+    } catch (_) {}
+    try {
+      const res = await fetch('https://prices.runescape.wiki/api/v1/osrs/latest');
+      if (!res.ok) return null;
+      const json = await res.json();
+      const prices = {};
+      for (const [id, p] of Object.entries(json.data || {})) {
+        const val = p.high ?? p.low;
+        if (val != null) prices[id] = val;
+      }
+      gePrices = prices;
+      try { localStorage.setItem('osrs_ge_prices', JSON.stringify({ ts: Date.now(), prices })); } catch (_) {}
+      return gePrices;
+    } catch (_) { return null; }
+  })();
+  return _gePricesPromise;
+}
+
+async function loadGeMapping() {
+  if (geMapping) return geMapping;
+  if (_geMappingPromise) return _geMappingPromise;
+  _geMappingPromise = (async () => {
+    try {
+      const cached = JSON.parse(localStorage.getItem('osrs_ge_map') || 'null');
+      if (cached && Date.now() - cached.ts < 24 * 60 * 60 * 1000) {
+        geMapping = cached.map;
+        return geMapping;
+      }
+    } catch (_) {}
+    try {
+      const res = await fetch('https://prices.runescape.wiki/api/v1/osrs/mapping');
+      if (!res.ok) return null;
+      const items = await res.json();
+      const map = {};
+      for (const it of items) map[it.name.toLowerCase()] = it.id;
+      geMapping = map;
+      try { localStorage.setItem('osrs_ge_map', JSON.stringify({ ts: Date.now(), map })); } catch (_) {}
+      return geMapping;
+    } catch (_) { return null; }
+  })();
+  return _geMappingPromise;
+}
+
+/** GE price for an item by name, or null when prices/mapping aren't loaded. */
+function gePriceByName(name) {
+  if (!gePrices || !geMapping) return null;
+  const id = geMapping[name.toLowerCase()];
+  return id != null ? (gePrices[id] ?? null) : null;
+}
+
+/** Total bank value (items at GE price + coins); null until prices load. */
+function bankValueEstimate() {
+  if (!gePrices || !bankSynced) return null;
+  let total = playerGold || 0;
+  for (const r of playerBank) {
+    const p = gePrices[r.item_id];
+    if (p) total += p * (r.quantity || 1);
+  }
+  return total;
+}
+
 /** Public profile — skills & quests only (Wise Old Man style). */
 async function fetchPublicProfile(rsn) {
   if (!isSupabaseConfigured()) throw new Error('Journal not configured.');
@@ -2125,6 +2289,17 @@ async function fetchPlayer(rsnOverride, options = {}) {
     refreshExport();
     document.getElementById('statsHint').style.display = 'none';
     updateProfileUrl(rsn, options);
+
+    // Progressive enhancements — re-render whichever section they feed when ready
+    if (dataSource !== 'wom') {
+      loadXpGains(rsn).then(() => { renderStats(); renderDashboard(); });
+    }
+    if (bankSynced) {
+      loadGePrices().then(p => { if (p) renderDashboard(); });
+    }
+    if (equipSynced) {
+      Promise.all([loadGePrices(), loadGeMapping()]).then(([p, m]) => { if (p && m) renderDashboard(); });
+    }
     // Background refreshes and pre-loads shouldn't yank the user out of the landing view
     if (!options.silent && !options.keepView) showJournal();
     if (!options.silent) {
@@ -2306,8 +2481,38 @@ function renderDashboard() {
   goldInput.value = formatGold(playerGold);
   goldInput.readOnly = bankSynced;
   goldInput.title = bankSynced ? 'Synced from bank — open bank in-game to update' : 'Enter GP manually or open bank in-game to sync';
+  const bankVal = bankValueEstimate();
   document.getElementById('dashGoldNote').textContent = bankSynced
-    ? 'Synced from bank' : (playerGold ? 'Manual entry — click to edit' : 'Click to enter, or open bank in-game');
+    ? (bankVal != null ? `Bank value ~${formatGold(bankVal)} (GE est.)` : 'Synced from bank')
+    : (playerGold ? 'Manual entry — click to edit' : 'Click to enter, or open bank in-game');
+
+  // XP gains — shown once at least one earlier snapshot day exists
+  const gainsBox = document.getElementById('gainsBox');
+  const todayGain = totalXpGain('today');
+  const weekGain = totalXpGain('week');
+  if (todayGain != null) {
+    gainsBox.style.display = '';
+    document.getElementById('dashGains').textContent = '+' + formatXp(todayGain);
+    document.getElementById('dashGainsWeek').textContent =
+      weekGain != null ? `+${formatXp(weekGain)} this week` : 'first tracked day';
+  } else if (skillGains && dataSource !== 'wom') {
+    gainsBox.style.display = '';
+    document.getElementById('dashGains').textContent = '—';
+    document.getElementById('dashGainsWeek').textContent = 'Gains appear after a day of syncing';
+  } else {
+    gainsBox.style.display = 'none';
+  }
+
+  // Character switcher — only for signed-in users with 2+ linked characters
+  const switcher = document.getElementById('charSwitcher');
+  if (linkedCharacterMeta.length > 1) {
+    switcher.style.display = '';
+    switcher.innerHTML = linkedCharacterMeta.map(c =>
+      `<option value="${c.rsn.replace(/"/g, '&quot;')}"${c.rsn.toLowerCase() === (playerRSN || '').toLowerCase() ? ' selected' : ''}>${c.rsn}</option>`
+    ).join('');
+  } else {
+    switcher.style.display = 'none';
+  }
 
   const privacyBadge = document.getElementById('privacyBadge');
   const ownMeta = linkedCharacterMeta.find(c => c.rsn.toLowerCase() === (playerRSN || '').toLowerCase());
@@ -2407,13 +2612,22 @@ function buildNextUpRecommendations() {
 
   // 3. Gear upgrades for the dominant combat style.
   for (const g of buildGearUpgradeRecs()) {
+    let why;
+    if (g.owned) {
+      why = `Better ${g.slot} than what you're wearing — and it's already in your bank`;
+    } else {
+      why = `You meet the requirements for a better ${g.slot} (currently: ${g.from})`;
+      if (g.price != null) {
+        why += g.affordable
+          ? ` — ~${formatGold(g.price)} on the GE, and you can afford it`
+          : ` — ~${formatGold(g.price)} on the GE (save up)`;
+      }
+    }
     recs.push({
       type: 'gear',
-      tag: g.owned ? 'In your bank' : 'Gear upgrade',
+      tag: g.owned ? 'In your bank' : (g.affordable ? 'Buyable upgrade' : 'Gear upgrade'),
       title: g.name,
-      why: g.owned
-        ? `Better ${g.slot} than what you're wearing — and it's already in your bank`
-        : `You meet the requirements for a better ${g.slot} (currently: ${g.from})`,
+      why,
       score: g.score,
       tab: 'equipment',
     });
@@ -2482,12 +2696,28 @@ function buildGearUpgradeRecs() {
     // requirements alone don't mean the item is obtainable (rare drops etc).
     if (!wornName && !owned) continue;
     const jump = pickIdx - wornIdx;
+    let score = (owned ? 78 : 52) + Math.min(jump, 8) * 2;
+
+    // GE affordability (when wiki prices are loaded): a buyable upgrade is a
+    // better suggestion than one the player can't afford yet.
+    let price = null;
+    let affordable = null;
+    if (!owned) {
+      price = gePriceByName(name);
+      if (price != null && playerGold > 0) {
+        affordable = price <= playerGold;
+        score += affordable ? 10 : -14;
+      }
+    }
+
     out.push({
       slot: SLOT_LABELS[slot]?.toLowerCase() || slot,
       name,
       from: wornGear[slot] || 'empty slot',
       owned,
-      score: (owned ? 78 : 52) + Math.min(jump, 8) * 2,
+      price,
+      affordable,
+      score,
     });
   }
 
@@ -2540,12 +2770,14 @@ function renderStats() {
       const tooltip = sk === 'overall'
         ? `${lvl} / 2277 total level`
         : (lvl >= 99 ? 'Maxed' : `${xpToNextLevel(xp, lvl).toLocaleString()} XP to level ${lvl + 1}`);
+      const gain = skillGains?.[sk]?.today;
+      const gainHtml = gain > 0 ? ` <span class="skill-gain">+${formatXp(gain)}</span>` : '';
       return `<div class="skill-card${sk === 'overall' ? ' skill-overall' : ''}" title="${tooltip}">
         <div class="skill-icon">${iconHtml}</div>
         <div class="skill-info">
           <div class="skill-name">${sk}</div>
           <div class="skill-level">${lvl}</div>
-          <div class="skill-xp">${xpStr}</div>
+          <div class="skill-xp">${xpStr}${gainHtml}</div>
           <div class="skill-bar"><div class="skill-bar-fill" style="width:${prog}%"></div></div>
         </div>
       </div>`;
@@ -2691,6 +2923,8 @@ const QUEST_DIFF_ORDER = {
 
 let questFilter = 'all';
 let questSort = 'name';
+/** Quest names whose cards are expanded to show full details. */
+let expandedQuests = new Set();
 
 function setQuestFilter(f, btn) {
   questFilter = f;
@@ -2775,21 +3009,60 @@ function renderQuestMissingHtml(missing) {
   </div>`;
 }
 
+/** Full requirement/reward details shown when a quest card is expanded. */
+function renderQuestDetailsHtml(q) {
+  const d = getQuestDetails(q.name) || q;
+  const rows = [];
+
+  if (d.reward) {
+    rows.push(`<div class="quest-detail-row"><span class="quest-missing-label">Rewards</span>${d.reward}</div>`);
+  }
+
+  const skillReqs = Object.entries(d.skillReqs || {});
+  if (skillReqs.length) {
+    const tags = skillReqs.map(([sk, need]) => {
+      const have = questSkillLevel(sk);
+      return `<span class="quest-req-tag ${have >= need ? 'met' : 'skill'}">${formatSkillName(sk)} ${have}/${need}</span>`;
+    }).join('');
+    rows.push(`<div class="quest-detail-row"><span class="quest-missing-label">Skills</span><span class="quest-missing-tags">${tags}</span></div>`);
+  }
+
+  const questReqs = (d.questReqs || [])
+    .map(r => r.replace(/\s*\(.*\)$/, '').trim())
+    .filter(r => r && !VAGUE_QUEST_REQS.has(r));
+  if (questReqs.length) {
+    const tags = questReqs.map(r =>
+      `<span class="quest-req-tag ${qd(r) ? 'met' : 'quest'}">${questWikiLink(r)}</span>`
+    ).join('');
+    rows.push(`<div class="quest-detail-row"><span class="quest-missing-label">Quests</span><span class="quest-missing-tags">${tags}</span></div>`);
+  }
+
+  if (!rows.length) {
+    rows.push(`<div class="quest-detail-row">No tracked requirements — start it whenever.</div>`);
+  }
+  if (canLinkQuestWiki(q.name)) {
+    rows.push(`<div class="quest-detail-row"><a href="${questWikiUrl(q.name)}" target="_blank" rel="noopener noreferrer">Open wiki guide →</a></div>`);
+  }
+  return `<div class="quest-missing quest-details">${rows.join('')}</div>`;
+}
+
 function renderQuestCard(q) {
   const done = qd(q.name);
   const inProg = qi(q.name);
   const missing = done ? [] : getQuestMissingReqs(q);
   const blocked = missing.length > 0;
-  const showMissing = blocked && (questFilter === 'blocked' || questFilter === 'incomplete');
+  const expanded = expandedQuests.has(q.name);
+  const showMissing = !expanded && blocked && (questFilter === 'blocked' || questFilter === 'incomplete');
   const cls = [
     done ? 'done' : '',
     inProg ? 'in-progress' : '',
     blocked && questFilter === 'blocked' ? 'blocked' : '',
-    showMissing ? 'has-blockers' : '',
+    (showMissing || expanded) ? 'has-blockers' : '',
+    expanded ? 'expanded' : '',
   ].filter(Boolean).join(' ');
   const mark = done ? '✓' : (inProg ? '…' : '');
   const srStatus = done ? 'Completed' : (inProg ? 'In progress' : 'Not started');
-  return `<div class="quest-item ${cls}" role="listitem" title="Quest progress is synced automatically from RuneLite">
+  return `<div class="quest-item ${cls}" role="listitem" data-quest="${q.name.replace(/"/g, '&quot;')}" title="Click for details — progress syncs from RuneLite">
     <div class="quest-item-main">
       <div class="quest-cb" aria-hidden="true">${mark}</div>
       <div class="quest-name"><span class="sr-only">${srStatus}: </span>${questWikiLink(q.name)}</div>
@@ -2798,9 +3071,21 @@ function renderQuestCard(q) {
         ${q.diff ? `<span class="quest-diff diff-${q.diff}">${q.diff}</span>` : ''}
       </div>
     </div>
+    ${expanded ? renderQuestDetailsHtml(q) : ''}
     ${showMissing ? renderQuestMissingHtml(missing) : ''}
   </div>`;
 }
+
+// Click a quest card to expand its details; clicks on links pass through.
+document.getElementById('questGrid').addEventListener('click', (e) => {
+  if (e.target.closest('a')) return;
+  const item = e.target.closest('.quest-item');
+  if (!item || !item.dataset.quest) return;
+  const name = item.dataset.quest;
+  if (expandedQuests.has(name)) expandedQuests.delete(name);
+  else expandedQuests.add(name);
+  renderQuests();
+});
 
 function renderQuests() {
   const grid = document.getElementById('questGrid');
@@ -3273,6 +3558,10 @@ document.querySelector('.page-tabs').addEventListener('keydown', (e) => {
       msg.textContent = `✓ Live from RuneLite plugin`;
       msg.className = 'status-msg ok';
       showJournal();
+      document.title = `${playerRSN} — OSRS Journal`;
+      loadXpGains(playerRSN).then(() => { renderStats(); renderDashboard(); });
+      if (bankSynced) loadGePrices().then(p => { if (p) renderDashboard(); });
+      if (equipSynced) Promise.all([loadGePrices(), loadGeMapping()]).then(([p, m]) => { if (p && m) renderDashboard(); });
       startLiveRefresh(localSession);
       return;
     } catch (e) {
