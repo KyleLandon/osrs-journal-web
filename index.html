@@ -1690,14 +1690,15 @@ function xpToLevel(xp) {
 }
 function xpToNextLevel(xp, level) {
   if (level >= 99) return 0;
-  const needed = XP_TABLE[level] - xp;
-  return Math.max(0, needed);
+  // XP_TABLE[L] is the XP where level L starts, so the next level is L+1
+  return Math.max(0, XP_TABLE[level + 1] - xp);
 }
 function levelProgress(xp, level) {
   if (level >= 99) return 100;
-  const curr = XP_TABLE[level - 1] || 0;
-  const next = XP_TABLE[level] || XP_TABLE[99];
-  return Math.round(((xp - curr) / (next - curr)) * 100);
+  const curr = XP_TABLE[level] || 0;
+  const next = XP_TABLE[level + 1] || XP_TABLE[99];
+  // Clamp: synced level and xp can briefly disagree mid-refresh
+  return Math.min(100, Math.max(0, Math.round(((xp - curr) / (next - curr)) * 100)));
 }
 
 
