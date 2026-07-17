@@ -1971,6 +1971,9 @@ const QUEST_ALIASES = {
   "Rune Mysteries (done)": "Rune Mysteries",
   "Alfred Grimhand's Barcrawl (miniquest)": "Alfred Grimhand's Barcrawl",
   "Bear your Soul (miniquest)": "Bear Your Soul",
+  "Eagle's Peak": "Eagles' Peak",
+  "Recipe for Disaster/Freeing_King_Awowogei": "Recipe for Disaster - King Awowogei",
+  "Recipe for Disaster/Freeing King Awowogei": "Recipe for Disaster - King Awowogei",
 };
 
 function normalizeQuestName(name) {
@@ -2005,8 +2008,11 @@ function questWikiLink(name) {
   return `<a href="${url}" target="_blank" rel="noopener noreferrer">${name}</a>`;
 }
 
-/** OSRS quest journal total (per wiki). */
-const JOURNAL_QUEST_TOTAL = 180;
+/** OSRS quest journal total (per wiki, July 2026: 181 quests / 339 QP). */
+const JOURNAL_QUEST_TOTAL = 181;
+
+/** Max total level — 99 in every skill (SKILL_DEFS minus the 'overall' meta-entry). */
+const MAX_TOTAL_LEVEL = (Object.keys(SKILL_DEFS).length - 1) * 99;
 
 
 let syncedQuestPoints = null;
@@ -2200,12 +2206,29 @@ function resolveQuestKey(name) {
   return QUEST_DETAILS_ALIASES[n] || n;
 }
 
+/** True if a requirement string names a quest we know about (or an accepted vague marker). */
+function isKnownQuestReq(req) {
+  const stripped = req.replace(/\s*\(.*\)$/, '').trim();
+  if (!stripped || VAGUE_QUEST_REQS.has(stripped)) return true;
+  const key = resolveQuestKey(stripped);
+  return QUEST_QP[key] != null || QUEST_DETAILS[key] != null;
+}
+
 async function loadQuestReqs() {
   try {
     const res = await fetch('quest-reqs-data.json');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     QUEST_REQS = data.quests || {};
+    // The wiki scraper occasionally picks up item requirements ("Spade",
+    // "Tinderbox") or subpage links as quest reqs — map known aliases and
+    // drop anything that isn't a real quest so dependency chains stay clean.
+    for (const d of Object.values(QUEST_REQS)) {
+      if (!d.questReqs?.length) continue;
+      d.questReqs = d.questReqs
+        .map(r => normalizeQuestName(r))
+        .filter(isKnownQuestReq);
+    }
     questReqsLoaded = true;
     _journalQuestCache = null;
   } catch (e) {
@@ -2239,7 +2262,7 @@ function getQuestDetails(name) {
   return legacy || null;
 }
 
-/** All ~180 journal quests merged with hand-maintained metadata where available. */
+/** All 181 journal quests merged with hand-maintained metadata where available. */
 function getJournalQuestList() {
   if (_journalQuestCache) return _journalQuestCache;
   const names = new Set();
@@ -3395,7 +3418,13 @@ function buildGearUpgradeRecs() {
       if (wornName && (wornName === lower || wornName.includes(lower))) wornIdx = Math.max(wornIdx, i);
 
       const inBank = bankNames.has(lower);
-      const defReq = it[13], atkReq = it[14], rngReq = it[15], magReq = it[16], questReq = it[17], slayReq = it[18] || 0;
+      const rngReq = it[15], magReq = it[16], questReq = it[17], slayReq = it[18] || 0;
+      // Weapons have no defence requirement in OSRS; melee weapon rows store
+      // the attack requirement in the def column (sometimes both), so read
+      // the weapon slot's columns as attack-only.
+      const isWeapon = slot === 'weapon';
+      const defReq = isWeapon ? 1 : it[13];
+      const atkReq = isWeapon ? Math.max(it[13], it[14]) : it[14];
       if ((playerSkills.defence?.level || 1) < defReq) return;
       if ((playerSkills.attack?.level || 1) < atkReq) return;
       if ((playerSkills.ranged?.level || 1) < rngReq) return;
@@ -3490,11 +3519,11 @@ function renderStats() {
       const d = playerSkills[sk] || {level:1, xp:0};
       const lvl = sk === 'overall' ? (d.level || 1) : (d.level || 1);
       const xp = d.xp || 0;
-      const prog = sk === 'overall' ? Math.round(lvl/2277*100) : levelProgress(xp, lvl);
+      const prog = sk === 'overall' ? Math.round(lvl/MAX_TOTAL_LEVEL*100) : levelProgress(xp, lvl);
       const xpStr = xp > 1000000 ? (xp/1000000).toFixed(2)+'m xp' : xp > 1000 ? (xp/1000).toFixed(1)+'k xp' : xp+' xp';
       const train = sk !== 'overall' && lvl < 99 ? trainingHint(sk, lvl) : '';
       const tooltip = sk === 'overall'
-        ? `${lvl} / 2277 total level`
+        ? `${lvl} / ${MAX_TOTAL_LEVEL} total level`
         : (lvl >= 99 ? 'Maxed' : `${xpToNextLevel(xp, lvl).toLocaleString()} XP to level ${lvl + 1}${train ? ` — Train: ${train}` : ''}`);
       const gain = skillGains?.[sk]?.today;
       const gainHtml = gain > 0 ? ` <span class="skill-gain">+${formatXp(gain)}</span>` : '';
