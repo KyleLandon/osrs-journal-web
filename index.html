@@ -285,7 +285,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.6px;
-  color: var(--text-muted);
+  color: var(--text-dim);
   margin-bottom: 6px;
 }
 /* Next Up recommendation cards */
@@ -351,6 +351,28 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 }
 .gold-input:focus { outline: none; }
 .gold-input:read-only { opacity: 0.9; cursor: default; }
+/* Editable state needs to look editable — dashed underline as the affordance */
+.gold-input:not(:read-only) {
+  border-bottom: 1px dashed var(--text-muted);
+  border-radius: 0;
+  cursor: text;
+}
+.gold-input:not(:read-only):hover { border-bottom-color: var(--accent); }
+
+/* Dashboard skeleton while a player is being fetched */
+#dashboard.skeleton-load .profile-card { animation: skeletonPulse 1.1s ease-in-out infinite; }
+@keyframes skeletonPulse { 50% { opacity: 0.45; } }
+
+/* Public/Private state badge next to Share */
+.privacy-badge {
+  font-size: 11px; font-weight: 700; padding: 5px 12px; border-radius: 99px;
+  background: var(--green-soft); color: var(--green); border: 1px solid rgba(34, 197, 94, 0.3);
+  cursor: pointer;
+}
+.privacy-badge.is-private {
+  background: var(--surface); color: var(--text-dim); border-color: var(--border);
+}
+.privacy-badge:hover { border-color: var(--accent); }
 
 /* Page shell + tabs */
 .page-shell {
@@ -420,7 +442,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 .skill-icon { font-size: 22px; width: 30px; text-align: center; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
 .skill-icon img { width: 25px; height: 25px; object-fit: contain; image-rendering: pixelated; }
 .skill-info { flex: 1; min-width: 0; }
-.skill-name { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.skill-name { font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
 .skill-level { font-size: 22px; font-weight: 800; color: var(--text); line-height: 1.1; letter-spacing: -0.5px; }
 .skill-card.skill-overall .skill-level { color: var(--accent-hover); }
 .skill-xp { font-size: 10px; color: var(--text-dim); margin-top: 1px; }
@@ -806,6 +828,8 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 @media (max-width: 768px) {
   .nav-container { gap: 12px; }
   .nav-search { max-width: none; }
+  /* Feedback goes through toasts on mobile — the inline status has no room */
+  .nav-actions .status-msg { display: none; }
   .profile-top { padding: 16px; }
   .profile-name { font-size: 1.25rem; }
   .equip-layout { grid-template-columns: 1fr; }
@@ -916,7 +940,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
   <div class="landing-steps">
     <h2>Get set up in two minutes</h2>
     <ol>
-      <li><span class="gs-num">1</span><span>Install the <strong>OSRS Journal</strong> plugin from the RuneLite Plugin Hub</span></li>
+      <li><span class="gs-num">1</span><span>Install the <a href="https://github.com/KyleLandon/osrs-journal-plugin#readme" target="_blank" rel="noopener"><strong>OSRS Journal</strong> plugin</a> (Plugin Hub listing pending — install guide at the link)</span></li>
       <li><span class="gs-num">2</span><span><a href="#" onclick="toggleAuthPanel();return false">Sign in</a> here with Google, Discord or email</span></li>
       <li><span class="gs-num">3</span><span>Enter the pairing code shown in the plugin sidebar — that's it</span></li>
     </ol>
@@ -938,6 +962,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
         </div>
       </div>
       <div class="cb-badge" id="cbBadge" style="display:none">Combat <strong id="cbLevel">--</strong></div>
+      <button class="privacy-badge" type="button" id="privacyBadge" onclick="toggleAuthPanel()" title="Who can see this profile — change under Account" style="display:none">Public</button>
       <button class="btn-secondary" type="button" id="shareBtn" onclick="shareProfile()" title="Copy a link to this profile" style="display:none">Share</button>
     </div>
     <div class="profile-stats">
@@ -979,7 +1004,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
     <button class="tab" role="tab" aria-selected="false" aria-controls="panel-equipment" onclick="switchTab('equipment')">Equipment</button>
     <button class="tab" role="tab" aria-selected="false" aria-controls="panel-quests" onclick="switchTab('quests')">Quests</button>
     <button class="tab" role="tab" aria-selected="false" aria-controls="panel-bosses" onclick="switchTab('bosses')">Bosses</button>
-    <button class="tab" role="tab" aria-selected="false" aria-controls="panel-plan" onclick="switchTab('plan')">Export</button>
+    <button class="tab" role="tab" aria-selected="false" aria-controls="panel-plan" onclick="switchTab('plan')">AI Export</button>
   </nav>
   <div class="page-content">
 
@@ -1082,6 +1107,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
   <div class="export-hero">
     <h2>Export Player Data</h2>
     <p>Copy or download your synced OSRS profile and paste it into ChatGPT, Claude, Gemini, or any AI you prefer. Includes worn gear, bank equipment, skills, quests, gold, and boss access. Open your bank in-game before syncing for accurate gear data.</p>
+    <p style="margin-top:8px;color:var(--text-dim);font-size:13px">Try pasting it with: <em style="color:var(--text)">&ldquo;Here's my OSRS account — build me a plan for what to do next.&rdquo;</em></p>
     <div class="export-meta" id="exportMeta"></div>
   </div>
   <div class="export-toolbar">
@@ -1249,12 +1275,14 @@ function personalizeLanding(rsn) {
 function showLanding() {
   document.getElementById('landing').classList.remove('hidden');
   document.getElementById('journalMain').style.display = 'none';
+  document.title = 'OSRS Journal';
 }
 
 /** Show the journal dashboard view. */
 function showJournal() {
   document.getElementById('landing').classList.add('hidden');
   document.getElementById('journalMain').style.display = '';
+  if (playerRSN) document.title = `${playerRSN} — OSRS Journal`;
 }
 
 /** Search handler for the landing hero input. */
@@ -1272,6 +1300,8 @@ function showToast(text, kind = '', durationMs = 4000) {
     wrap = document.createElement('div');
     wrap.id = 'toastWrap';
     wrap.className = 'toast-wrap';
+    wrap.setAttribute('role', 'status');
+    wrap.setAttribute('aria-live', 'polite');
     document.body.appendChild(wrap);
   }
   const toast = document.createElement('div');
@@ -1321,6 +1351,8 @@ async function refreshAuthUi() {
         document.getElementById('privacyToggle').checked = linkedCharacterMeta[0].is_public;
       }
     }
+    // Dashboard privacy badge depends on linkedCharacterMeta
+    renderDashboard();
   } else {
     signedOut.style.display = '';
     signedIn.style.display = 'none';
@@ -1442,6 +1474,7 @@ async function updateProfilePrivacy() {
     toggle.checked = !isPublic;
   }
   linkedCharacterMeta = await getLinkedCharacterMeta();
+  renderDashboard();
 }
 
 async function signOut() {
@@ -2047,6 +2080,8 @@ async function fetchPlayer(rsnOverride, options = {}) {
   if (!options.silent) {
     msg.textContent = 'Fetching...';
     msg.className = 'status-msg';
+    btn.textContent = 'Searching…';
+    document.getElementById('dashboard').classList.add('skeleton-load');
   }
 
   try {
@@ -2089,6 +2124,7 @@ async function fetchPlayer(rsnOverride, options = {}) {
     updateCombatLevel();
     refreshExport();
     document.getElementById('statsHint').style.display = 'none';
+    updateProfileUrl(rsn, options);
     // Background refreshes and pre-loads shouldn't yank the user out of the landing view
     if (!options.silent && !options.keepView) showJournal();
     if (!options.silent) {
@@ -2099,10 +2135,48 @@ async function fetchPlayer(rsnOverride, options = {}) {
     if (!options.silent) {
       msg.textContent = e.message;
       msg.className = 'status-msg error';
+      showToast(e.message || 'Could not load that player.', 'error');
     }
   }
   btn.disabled = false;
+  if (!options.silent) {
+    btn.textContent = 'Search';
+    document.getElementById('dashboard').classList.remove('skeleton-load');
+  }
 }
+
+/**
+ * Keep the address bar and tab title in sync with the loaded character, so
+ * refresh/back/bookmarks work. Background refreshes replace instead of pushing
+ * to avoid flooding history; plugin localhost sessions keep their own URL.
+ */
+function updateProfileUrl(rsn, options = {}) {
+  document.title = `${rsn} — OSRS Journal`;
+  if (window.location.search.includes('local_session')) return;
+  try {
+    const url = new URL(window.location);
+    if ((url.searchParams.get('rsn') || '').toLowerCase() === rsn.toLowerCase()) return;
+    url.searchParams.set('rsn', rsn);
+    if (options.silent || options.keepView) {
+      history.replaceState({ rsn }, '', url);
+    } else {
+      history.pushState({ rsn }, '', url);
+    }
+  } catch (_) {}
+}
+
+// Back/forward between viewed profiles (and back to the landing page)
+window.addEventListener('popstate', () => {
+  const rsn = new URLSearchParams(window.location.search).get('rsn');
+  if (rsn) {
+    document.getElementById('rsnInput').value = rsn;
+    showJournal();
+    fetchPlayer(rsn);
+  } else {
+    document.title = 'OSRS Journal';
+    if (!playerRSN) showLanding();
+  }
+});
 
 /** Copy a shareable public-profile link for the loaded character. */
 async function shareProfile() {
@@ -2233,7 +2307,20 @@ function renderDashboard() {
   goldInput.readOnly = bankSynced;
   goldInput.title = bankSynced ? 'Synced from bank — open bank in-game to update' : 'Enter GP manually or open bank in-game to sync';
   document.getElementById('dashGoldNote').textContent = bankSynced
-    ? 'Synced from bank' : (playerGold ? 'Manual entry' : 'Open bank in-game to sync');
+    ? 'Synced from bank' : (playerGold ? 'Manual entry — click to edit' : 'Click to enter, or open bank in-game');
+
+  const privacyBadge = document.getElementById('privacyBadge');
+  const ownMeta = linkedCharacterMeta.find(c => c.rsn.toLowerCase() === (playerRSN || '').toLowerCase());
+  if (ownMeta) {
+    privacyBadge.style.display = '';
+    privacyBadge.textContent = ownMeta.is_public ? 'Public' : 'Private';
+    privacyBadge.classList.toggle('is-private', !ownMeta.is_public);
+    privacyBadge.title = ownMeta.is_public
+      ? 'Anyone with the link can see your skills and quests — change under Account'
+      : 'Only you can see this profile — make it public under Account';
+  } else {
+    privacyBadge.style.display = 'none';
+  }
 
   renderNextUp();
 }
@@ -2450,7 +2537,10 @@ function renderStats() {
       const xp = d.xp || 0;
       const prog = sk === 'overall' ? Math.round(lvl/2277*100) : levelProgress(xp, lvl);
       const xpStr = xp > 1000000 ? (xp/1000000).toFixed(2)+'m xp' : xp > 1000 ? (xp/1000).toFixed(1)+'k xp' : xp+' xp';
-      return `<div class="skill-card${sk === 'overall' ? ' skill-overall' : ''}">
+      const tooltip = sk === 'overall'
+        ? `${lvl} / 2277 total level`
+        : (lvl >= 99 ? 'Maxed' : `${xpToNextLevel(xp, lvl).toLocaleString()} XP to level ${lvl + 1}`);
+      return `<div class="skill-card${sk === 'overall' ? ' skill-overall' : ''}" title="${tooltip}">
         <div class="skill-icon">${iconHtml}</div>
         <div class="skill-info">
           <div class="skill-name">${sk}</div>
@@ -2464,12 +2554,26 @@ function renderStats() {
 }
 
 // ─── EQUIPMENT ────────────────────────────────────────────────────────────────
+/** Empty-state copy depends on whose profile this is — a visitor can't "fix" private gear. */
+function equipEmptyHint(kind) {
+  if (dataSource === 'public') {
+    return `This player's ${kind} is private — only they can see it when signed in.`;
+  }
+  if (dataSource === 'wom') {
+    return `${kind === 'bank' ? 'Bank' : 'Equipment'} data requires the RuneLite OSRS Journal plugin.`;
+  }
+  return kind === 'bank'
+    ? 'Open your bank in-game with the RuneLite plugin to sync equipment items.'
+    : 'Log in with the RuneLite plugin to sync worn items.';
+}
+
 function renderSyncedEquipment() {
   const grid = document.getElementById('equipSyncGrid');
   const hint = document.getElementById('equipSyncHint');
   const badge = document.getElementById('equipSyncBadge');
   if (!equipSynced || !Object.keys(wornGear).length) {
     grid.innerHTML = '';
+    hint.textContent = equipEmptyHint('gear');
     hint.style.display = '';
     badge.style.display = 'none';
   } else {
@@ -2493,6 +2597,7 @@ function renderBankGear() {
   const badge = document.getElementById('bankGearBadge');
   if (!bankSynced) {
     list.innerHTML = '';
+    hint.textContent = equipEmptyHint('bank');
     hint.style.display = '';
     badge.style.display = 'none';
     return;
@@ -2684,7 +2789,7 @@ function renderQuestCard(q) {
   ].filter(Boolean).join(' ');
   const mark = done ? '✓' : (inProg ? '…' : '');
   const srStatus = done ? 'Completed' : (inProg ? 'In progress' : 'Not started');
-  return `<div class="quest-item ${cls}" role="listitem">
+  return `<div class="quest-item ${cls}" role="listitem" title="Quest progress is synced automatically from RuneLite">
     <div class="quest-item-main">
       <div class="quest-cb" aria-hidden="true">${mark}</div>
       <div class="quest-name"><span class="sr-only">${srStatus}: </span>${questWikiLink(q.name)}</div>
@@ -3094,6 +3199,18 @@ function switchTab(tab) {
   if (tab==='bosses') renderBosses();
   if (tab==='equipment') renderSyncedEquipment();
 }
+
+// Arrow-key navigation between tabs (WAI-ARIA tabs pattern)
+document.querySelector('.page-tabs').addEventListener('keydown', (e) => {
+  if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+  const tabs = [...document.querySelectorAll('.page-tabs .tab')];
+  const idx = tabs.indexOf(document.activeElement);
+  if (idx === -1) return;
+  e.preventDefault();
+  const next = tabs[(idx + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
+  next.focus();
+  next.click();
+});
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 // Boot order matters: quest metadata → Supabase config → auth state → then the
