@@ -995,12 +995,25 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
   background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg);
   padding: 12px 14px; cursor: pointer; color: var(--text); font-family: inherit;
   transition: border-color 0.15s, transform 0.15s;
+  /* Buttons default to white-space: nowrap — that was spilling desc text across cards. */
+  white-space: normal;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
 }
 .goal-main-card:hover { border-color: var(--accent); transform: translateY(-1px); }
 .goal-main-card.selected { border-color: var(--gold); background: linear-gradient(135deg, var(--card), rgba(251, 191, 36, 0.06)); }
-.goal-main-card-label { font-size: 13px; font-weight: 700; }
+.goal-main-card-label {
+  font-size: 13px; font-weight: 700;
+  min-width: 0; overflow-wrap: break-word;
+}
 .goal-main-star { color: var(--gold); }
-.goal-main-card-desc { font-size: 11px; color: var(--text-dim); line-height: 1.45; }
+.goal-main-card-desc {
+  font-size: 11px; color: var(--text-dim); line-height: 1.45;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
 .goal-star {
   background: none; border: none; font-size: 16px; cursor: pointer;
   color: var(--text-muted); padding: 0 4px; line-height: 1;
@@ -1085,7 +1098,12 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
   font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;
   color: var(--green); background: var(--green-soft); padding: 2px 7px; border-radius: 99px; margin-left: 6px;
 }
-.roadmap-picker { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
+.roadmap-picker {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 10px;
+}
+.roadmap-picker > .goal-main-card,
+.goal-main-picker > .goal-main-card { min-width: 0; }
 
 /* Ordered goal path */
 .goal-detail-row.column { flex-direction: column; align-items: stretch; gap: 6px; }
