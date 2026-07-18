@@ -3743,38 +3743,103 @@ function gePriceByName(name) {
 
 /**
  * Item icons from RuneLite's public cache CDN (same sprites as the OSRS Wiki).
- * Prefer a numeric item_id from sync; fall back to wiki GE name→id mapping.
+ *
+ * Resolution order matters: bank sync often stores *noted* item IDs, and the
+ * CDN 404s many of those — but the wiki GE map has the unnoted ID. Untradeables
+ * (Fire cape, Barrows gloves, etc.) are absent from the GE map entirely.
  */
 const ITEM_ICON_CDN = 'https://static.runelite.net/cache/item/icon';
 
-function resolveItemId(nameOrId) {
-  if (nameOrId == null || nameOrId === '') return null;
-  if (typeof nameOrId === 'number' && Number.isFinite(nameOrId)) return nameOrId;
-  const asNum = Number(nameOrId);
-  if (Number.isFinite(asNum) && String(nameOrId).trim() !== '' && !String(nameOrId).includes(' ')) {
-    return asNum;
-  }
-  if (!geMapping || !nameOrId) return null;
-  const key = String(nameOrId).toLowerCase().trim();
-  if (geMapping[key] != null) return geMapping[key];
-  // Strip charged / noted / locked suffixes common in game names
-  const stripped = key.replace(/\s*\([^)]*\)\s*/g, ' ').replace(/\s+/g, ' ').trim();
-  return geMapping[stripped] ?? null;
+/** Common untradeables / imbued variants missing from the wiki GE mapping. */
+const ITEM_ICON_FALLBACKS = {
+  'fire cape': 6570,
+  'infernal cape': 21295,
+  'barrows gloves': 7462,
+  'avernic defender': 22322,
+  'dragon defender': 12954,
+  'rune defender': 8850,
+  'fighter torso': 10551,
+  'fire max cape': 13329,
+  'infernal max cape': 21285,
+  'assembler max cape': 21898,
+  "ava's assembler": 22109,
+  "ava's accumulator": 10499,
+  'berserker ring (i)': 11773,
+  'warrior ring (i)': 11772,
+  'seers ring (i)': 11770,
+  'archers ring (i)': 11771,
+  'tyrannical ring (i)': 12691,
+  'treasonous ring (i)': 12692,
+  'ring of suffering (i)': 19710,
+  'ring of suffering (ri)': 20655,
+  'slayer helmet (i)': 11865,
+  'black mask (i)': 11774,
+  'salve amulet (i)': 12017,
+  'salve amulet (ei)': 12018,
+  'holy blessing': 20220,
+  'book of the dead': 25818,
+};
+
+function normalizeItemKey(name) {
+  return String(name)
+    .toLowerCase()
+    .replace(/[\u2018\u2019\u02bc]/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
-function itemIconUrl(nameOrId) {
-  const id = resolveItemId(nameOrId);
+function lookupMappedItemId(name) {
+  if (!name) return null;
+  const key = normalizeItemKey(name);
+  if (ITEM_ICON_FALLBACKS[key] != null) return ITEM_ICON_FALLBACKS[key];
+  if (geMapping) {
+    if (geMapping[key] != null) return geMapping[key];
+    // Strip charged / locked / (or) suffixes — but not imbued "(i)", which has its own id
+    if (!/\((?:e?i|ri)\)$/i.test(key)) {
+      const stripped = key.replace(/\s*\([^)]*\)\s*/g, ' ').replace(/\s+/g, ' ').trim();
+      if (stripped !== key) {
+        if (ITEM_ICON_FALLBACKS[stripped] != null) return ITEM_ICON_FALLBACKS[stripped];
+        if (geMapping[stripped] != null) return geMapping[stripped];
+      }
+    }
+  }
+  return null;
+}
+
+function resolveItemId(nameOrId, nameHint) {
+  // Prefer name → unnoted GE / fallback id (noted synced ids often 404 on the CDN)
+  const fromName = lookupMappedItemId(nameHint) ?? lookupMappedItemId(
+    typeof nameOrId === 'string' ? nameOrId : null
+  );
+  if (fromName != null) return fromName;
+
+  if (nameOrId == null || nameOrId === '') return null;
+  if (typeof nameOrId === 'number' && Number.isFinite(nameOrId) && nameOrId > 0) return nameOrId;
+  const asNum = Number(nameOrId);
+  if (Number.isFinite(asNum) && asNum > 0 && String(nameOrId).trim() !== '' && !String(nameOrId).includes(' ')) {
+    return asNum;
+  }
+  return null;
+}
+
+function itemIconUrl(nameOrId, nameHint) {
+  const id = resolveItemId(nameOrId, nameHint);
   return id != null ? `${ITEM_ICON_CDN}/${id}.png` : null;
 }
 
 /** Lazy <img> for an item; empty string when id can't be resolved. */
-function itemIconHtml(nameOrId, { size = '', alt } = {}) {
-  const url = itemIconUrl(nameOrId);
+function itemIconHtml(nameOrId, { size = '', alt, name } = {}) {
+  const hint = name || alt || (typeof nameOrId === 'string' ? nameOrId : null);
+  const url = itemIconUrl(nameOrId, hint);
   if (!url) return '';
-  const label = (alt != null ? alt : (typeof nameOrId === 'string' ? nameOrId : 'Item'))
-    .replace(/"/g, '&quot;');
+  const label = (alt != null ? alt : (hint || 'Item')).replace(/"/g, '&quot;');
   const cls = size ? `item-icon ${size}` : 'item-icon';
-  return `<img class="${cls}" src="${url}" alt="${label}" width="28" height="28" loading="lazy" decoding="async" onerror="this.style.visibility='hidden'">`;
+  // If the primary URL 404s (stale noted id), one-shot retry via name mapping
+  const fallback = hint ? itemIconUrl(hint, hint) : null;
+  const onerr = fallback && fallback !== url
+    ? `this.onerror=null;this.src='${fallback}'`
+    : `this.style.visibility='hidden'`;
+  return `<img class="${cls}" src="${url}" alt="${label}" width="28" height="28" loading="lazy" decoding="async" onerror="${onerr}">`;
 }
 
 /** Ensure wiki name→id map is warm so name-based icons resolve. */
@@ -4753,7 +4818,7 @@ function renderSyncedEquipment() {
     grid.innerHTML = SLOT_ORDER.map(slot => {
       const item = wornGear[slot];
       const empty = !item;
-      const icon = empty ? '' : itemIconHtml(wornGearIds[slot] ?? item, { alt: item });
+      const icon = empty ? '' : itemIconHtml(wornGearIds[slot] ?? item, { alt: item, name: item });
       return `<div class="equip-sync-slot ${empty ? 'empty' : ''}">
         ${icon || '<span class="item-icon" style="visibility:hidden" aria-hidden="true"></span>'}
         <div class="equip-slot-text">
@@ -4788,7 +4853,7 @@ function renderBankGear() {
   hint.style.display = 'none';
   badge.style.display = '';
   list.innerHTML = gear.map(g =>
-    `<span class="bank-gear-chip">${itemIconHtml(g.item_id ?? g.name, { size: 'sm', alt: g.name })}<span>${g.name}${g.quantity > 1 ? `<span class="qty">x${g.quantity}</span>` : ''}${g.worn ? '<span class="qty">· worn</span>' : ''}</span></span>`
+    `<span class="bank-gear-chip">${itemIconHtml(g.item_id ?? g.name, { size: 'sm', alt: g.name, name: g.name })}<span>${g.name}${g.quantity > 1 ? `<span class="qty">x${g.quantity}</span>` : ''}${g.worn ? '<span class="qty">· worn</span>' : ''}</span></span>`
   ).join('');
 }
 
