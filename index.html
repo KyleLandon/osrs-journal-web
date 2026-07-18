@@ -4365,8 +4365,8 @@ function suggestedMainPreset() {
 // already on the page (skills, quests, bosses, worn gear, bank). Candidates
 // come from four sources and compete on a shared 0–120ish score scale:
 //   quests you can start now (weighted by NEXT_UP_UNLOCKS), skill levels that
-//   unblock the most quests/bosses, gear upgrades for your main combat style,
-//   and quests that are the last thing between you and a boss.
+//   unblock the most quests/bosses, GE gear buys for your main combat style
+//   (not banked pieces), and quests that are the last thing between you and a boss.
 
 const NEXT_UP_MAX_CARDS = 5;
 /** Only suggest skill targets within this many levels of the player. */
@@ -4493,26 +4493,22 @@ function buildNextUpRecommendations() {
     });
   }
 
-  // 3. Gear upgrades for the dominant combat style.
+  // 3. Gear upgrades for the dominant combat style (GE buys only — never
+  // nag about banked pieces; worn loadouts are often intentional).
   for (const g of buildGearUpgradeRecs()) {
-    let why;
-    if (g.owned) {
-      why = `Better ${g.slot} than what you're wearing — and it's already in your bank`;
-    } else {
-      why = `You meet the requirements for a better ${g.slot} (currently: ${g.from})`;
-      if (g.price != null) {
-        if (g.affordable) {
-          why += ` — ~${formatGold(g.price)} on the GE, and you can afford it`;
-        } else {
-          why += ` — ~${formatGold(g.price)} on the GE`;
-          const earn = moneyMakerReport().available[0];
-          why += earn ? `. Earn it: ${earn.name} (~${formatGold(earn.gpHr)}/hr)` : ' (save up)';
-        }
+    let why = `You meet the requirements for a better ${g.slot} (currently: ${g.from})`;
+    if (g.price != null) {
+      if (g.affordable) {
+        why += ` — ~${formatGold(g.price)} on the GE, and you can afford it`;
+      } else {
+        why += ` — ~${formatGold(g.price)} on the GE`;
+        const earn = moneyMakerReport().available[0];
+        why += earn ? `. Earn it: ${earn.name} (~${formatGold(earn.gpHr)}/hr)` : ' (save up)';
       }
     }
     recs.push({
       type: 'gear',
-      tag: g.owned ? 'In your bank' : (g.affordable ? 'Buyable upgrade' : 'Gear upgrade'),
+      tag: g.affordable ? 'Buyable upgrade' : 'Gear upgrade',
       title: g.name,
       why,
       score: g.score,
@@ -4533,9 +4529,8 @@ function buildNextUpRecommendations() {
 /**
  * Compare worn gear against the equipment-tab catalog for the player's main
  * style. Catalog lists are ordered weakest → strongest, so list position is
- * the power ranking. Only fires when RuneLite has synced worn equipment, and
- * stays quiet for slots where the worn item isn't in the catalog (can't rank
- * what we can't find).
+ * the power ranking. Only suggests GE buys for items not already owned —
+ * banked upgrades are skipped (players often wear lower gear on purpose).
  */
 function buildGearUpgradeRecs() {
   if (!equipSynced || dataSource !== 'supabase') return [];
@@ -4550,17 +4545,18 @@ function buildGearUpgradeRecs() {
 
   for (const [slot, items] of Object.entries(gearSet)) {
     const wornName = (wornGear[slot] || '').toLowerCase();
+    if (!wornName) continue;
 
     let wornIdx = -1;
     let bestIdx = -1;
-    let bestOwnedIdx = -1;
     items.forEach((it, i) => {
       const name = it[0];
       if (name === 'None' || name === 'Unarmed') return;
       const lower = name.toLowerCase();
-      if (wornName && (wornName === lower || wornName.includes(lower))) wornIdx = Math.max(wornIdx, i);
+      if (wornName === lower || wornName.includes(lower)) wornIdx = Math.max(wornIdx, i);
+      // Already owned — don't recommend buying or "equip from bank".
+      if (bankNames.has(lower)) return;
 
-      const inBank = bankNames.has(lower);
       const rngReq = it[15], magReq = it[16], questReq = it[17], slayReq = it[18] || 0;
       // Weapons have no defence requirement in OSRS; melee weapon rows store
       // the attack requirement in the def column (sometimes both), so read
@@ -4572,46 +4568,28 @@ function buildGearUpgradeRecs() {
       if ((playerSkills.attack?.level || 1) < atkReq) return;
       if ((playerSkills.ranged?.level || 1) < rngReq) return;
       if ((playerSkills.magic?.level || 1) < magReq) return;
-      // Slayer is an acquisition requirement (e.g. whip drops from 85 Slayer
-      // demons), not a wield requirement — waive it for items already banked.
-      if ((playerSkills.slayer?.level || 1) < slayReq && !inBank) return;
+      if ((playerSkills.slayer?.level || 1) < slayReq) return;
       if (questReq && !qd(questReq)) return;
       bestIdx = i;
-      if (inBank) bestOwnedIdx = i;
     });
 
-    // Worn item not in the catalog: only suggest for a truly empty slot.
-    if (wornName && wornIdx === -1) continue;
-    // An owned upgrade sitting in the bank beats a slightly better item the
-    // player would still have to go get.
-    const pickIdx = bestOwnedIdx > wornIdx ? bestOwnedIdx : bestIdx;
-    if (pickIdx <= wornIdx || pickIdx <= 0) continue;
+    if (wornIdx === -1 || bestIdx <= wornIdx || bestIdx <= 0) continue;
 
-    const name = items[pickIdx][0];
-    const owned = pickIdx === bestOwnedIdx;
-    // For an empty slot, only suggest items already in the bank — stat/quest
-    // requirements alone don't mean the item is obtainable (rare drops etc).
-    if (!wornName && !owned) continue;
-    const jump = pickIdx - wornIdx;
-    let score = (owned ? 78 : 52) + Math.min(jump, 8) * 2;
+    const name = items[bestIdx][0];
+    const jump = bestIdx - wornIdx;
+    let score = 52 + Math.min(jump, 8) * 2;
 
-    // GE affordability (when wiki prices are loaded): a buyable upgrade is a
-    // better suggestion than one the player can't afford yet.
-    let price = null;
+    let price = gePriceByName(name);
     let affordable = null;
-    if (!owned) {
-      price = gePriceByName(name);
-      if (price != null && playerGold > 0) {
-        affordable = price <= playerGold;
-        score += affordable ? 10 : -14;
-      }
+    if (price != null && playerGold > 0) {
+      affordable = price <= playerGold;
+      score += affordable ? 10 : -14;
     }
 
     out.push({
       slot: SLOT_LABELS[slot]?.toLowerCase() || slot,
       name,
       from: wornGear[slot] || 'empty slot',
-      owned,
       price,
       affordable,
       score,
