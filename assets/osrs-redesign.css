@@ -198,12 +198,12 @@ body.app-active .app-shell {
   border-bottom: 1px solid var(--border-muted);
   text-decoration: none; color: var(--text);
 }
-.sb-logo-img {
-  height: 28px; width: auto; display: block; flex-shrink: 0;
+.sb-logo-img, .brand-icon {
+  width: 28px; height: 28px; display: block; flex-shrink: 0;
   object-fit: contain;
 }
-.app-sidebar.collapsed .sb-logo-img { height: 26px; }
-.sb-brand-text { font-weight: 800; font-size: 15px; letter-spacing: -0.01em; }
+.app-sidebar.collapsed .sb-logo-img { width: 26px; height: 26px; }
+.sb-brand-text { font-weight: 800; font-size: 15px; letter-spacing: -0.01em; color: var(--text); }
 .sb-brand-text span { color: var(--accent); }
 
 .sb-char {
@@ -412,9 +412,6 @@ body.app-active .app-shell {
 .landing-nav-brand {
   display: flex; align-items: center; gap: 8px;
   text-decoration: none; color: var(--text); font-weight: 800; font-size: 15px;
-}
-.landing-nav-brand .brand-logo {
-  height: 32px; width: auto; display: block;
 }
 .landing-nav-spacer { flex: 1; }
 .landing-nav-actions { display: flex; align-items: center; gap: 8px; }
