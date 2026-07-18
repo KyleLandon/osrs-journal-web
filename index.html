@@ -5848,6 +5848,27 @@ function setBreakpointStatusFilter(status) {
   renderBreakpoints();
 }
 
+/** True if any needle matches a worn or bank item name (case-insensitive substring). */
+function playerOwnsAnyItem(needles) {
+  if (!Array.isArray(needles) || !needles.length) return false;
+  const names = [];
+  if (wornGear && typeof wornGear === 'object') {
+    for (const v of Object.values(wornGear)) {
+      if (v) names.push(String(v).toLowerCase());
+    }
+  }
+  if (Array.isArray(playerBank)) {
+    for (const row of playerBank) {
+      if (row?.item_name) names.push(String(row.item_name).toLowerCase());
+    }
+  }
+  if (!names.length) return false;
+  return needles.some((needle) => {
+    const n = String(needle).toLowerCase();
+    return names.some((have) => have === n || have.includes(n));
+  });
+}
+
 /** Evaluate a breakpoint against the live synced account. */
 function evaluateBreakpoint(bp) {
   if (!bp || typeof ACCOUNT_BREAKPOINTS === 'undefined') {
@@ -5856,6 +5877,7 @@ function evaluateBreakpoint(bp) {
   const parts = [];
   let done = true;
   let ready = true;
+  let itemOwned = null;
 
   const checkQuest = (name, partial) => {
     if (!name) return;
@@ -5911,6 +5933,16 @@ function evaluateBreakpoint(bp) {
     }
   }
 
+  if (Array.isArray(bp.ownsAny) && bp.ownsAny.length) {
+    itemOwned = playerOwnsAnyItem(bp.ownsAny);
+    if (itemOwned) {
+      parts.push('Owned ✓');
+    } else {
+      done = false;
+      parts.push('Not in worn gear/bank');
+    }
+  }
+
   if (bp.skillFloor) {
     for (const [sk, need] of Object.entries(bp.skillFloor)) {
       const have = questSkillLevel(sk);
@@ -5925,8 +5957,10 @@ function evaluateBreakpoint(bp) {
         }
       }
     }
-    // PvM completion is not auto-detected from sync.
-    if (bp.type === 'pvm') done = false;
+    // PvM: skill floors alone never prove completion — ownsAny does when set.
+    if (bp.type === 'pvm') {
+      done = itemOwned === true;
+    }
   }
 
   if (done) ready = false;

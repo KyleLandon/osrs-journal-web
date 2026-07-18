@@ -1183,7 +1183,8 @@ const COMBAT_ACHIEVEMENT_TIERS = [
 //   quest (+ optional questPartial) — complete / in-progress from plugin sync
 //   skill + level — skill level met
 //   skills — all listed skill floors met
-//   pvm + skillFloor — readiness only (completion not auto-detected)
+//   ownsAny — done if any listed item name matches worn gear or bank (substring)
+//   pvm + skillFloor — readiness by stats; done only when ownsAny matches
 const BREAKPOINT_STAGES = [
   'Foundation', 'Transportation', 'Combat', 'Questing', 'Slayer',
   'Construction', 'Skilling', 'PvM',
@@ -1344,6 +1345,7 @@ const ACCOUNT_BREAKPOINTS = [
     why: 'Early bossing and prayer-movement learning step.' },
   { id: 'pvm-fight-caves', stage: 'PvM', category: 'Boss', priority: 'Essential', type: 'pvm',
     label: 'Fight Caves (Fire Cape)', skillFloor: { ranged: 60 },
+    ownsAny: ['fire cape', 'infernal cape', 'fire max cape', 'infernal max cape'],
     why: 'First major endurance PvM challenge — earns the Fire Cape.' },
   { id: 'pvm-vorkath', stage: 'PvM', category: 'Boss', priority: 'High', type: 'pvm',
     label: 'Vorkath', quest: 'Dragon Slayer II', skillFloor: { ranged: 75 },
