@@ -156,7 +156,10 @@ body {
 
 /* ── Hide legacy top nav when app shell is active ────────────────────────── */
 body.app-active .top-nav { display: none; }
-body.app-active .site-footer { display: none; }
+/* Desktop app: credit lives in the sidebar foot; hide the page footer there. */
+@media (min-width: 769px) {
+  body.app-active .site-footer { display: none; }
+}
 body.landing-active .app-shell { display: none !important; }
 
 /* ── App shell ───────────────────────────────────────────────────────────── */
@@ -271,13 +274,18 @@ body.app-active .app-shell {
 
 .sb-foot {
   border-top: 1px solid var(--border-muted);
-  padding: 8px 12px;
-  display: flex; justify-content: flex-end;
+  padding: 10px 12px;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
 }
+.sb-foot .built-by { min-width: 0; }
+.sb-foot .built-by-logo { width: 32px; height: 32px; }
+.app-sidebar.collapsed .sb-foot { flex-direction: column; justify-content: center; gap: 6px; }
+.app-sidebar.collapsed .built-by-label { display: none; }
+.app-sidebar.collapsed .built-by-logo { width: 28px; height: 28px; }
 .sb-collapse-btn {
   background: transparent; border: none; color: var(--text-dim);
   cursor: pointer; padding: 6px; border-radius: 6px;
-  font-size: 14px; line-height: 1;
+  font-size: 14px; line-height: 1; flex-shrink: 0;
 }
 .sb-collapse-btn:hover { color: var(--text); background: rgba(255,255,255,0.04); }
 
@@ -811,6 +819,7 @@ body.landing-active .toast-wrap {
   .app-topbar-search { width: 140px; }
   .app-topbar-desc { display: none; }
   .app-content { padding: 14px 12px 96px; }
+  body.app-active .site-footer { padding-bottom: 96px; }
   .landing-nav-actions .btn-secondary { display: none; }
   #panel-overview .profile-stats { grid-template-columns: 1fr 1fr; gap: 8px; }
   .landing-cta-row { flex-direction: column; align-items: stretch; }

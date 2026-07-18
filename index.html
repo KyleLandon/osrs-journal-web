@@ -212,9 +212,23 @@ body {
 .site-footer {
   text-align: center; padding: 24px 16px 32px; font-size: 12px; color: var(--text-muted);
   border-top: 1px solid var(--border-subtle); margin-top: 24px;
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
 }
 .site-footer a { color: var(--accent); text-decoration: none; }
 .site-footer a:hover { text-decoration: underline; }
+.site-footer .built-by { color: var(--text-muted); }
+.site-footer .built-by:hover { color: var(--text); text-decoration: none; }
+.built-by {
+  display: inline-flex; align-items: center; gap: 8px;
+  text-decoration: none; color: var(--text-muted);
+  font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.built-by:hover { color: var(--text); }
+.built-by-logo {
+  width: 36px; height: 36px; object-fit: contain;
+  border-radius: 4px; display: block; flex-shrink: 0;
+}
 .system-status {
   display: inline-flex; align-items: center; gap: 6px;
   color: inherit; text-decoration: none;
@@ -1557,6 +1571,10 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
       <button type="button" class="sb-nav-btn" data-tab="plan" onclick="switchTab('plan')"><span class="sb-icon">✦</span><span class="sb-label">AI Tools</span></button>
     </nav>
     <div class="sb-foot">
+      <a class="built-by" href="https://landonco.co/" target="_blank" rel="noopener noreferrer" title="Landon & Co.">
+        <span class="built-by-label">Built by</span>
+        <img src="assets/landon-co-logo.png" alt="Landon & Co." class="built-by-logo" width="72" height="72">
+      </a>
       <button type="button" class="sb-collapse-btn" id="sidebarCollapseBtn" onclick="toggleSidebarCollapsed()" title="Collapse sidebar" aria-label="Collapse sidebar">‹</button>
     </div>
   </aside>
@@ -7237,12 +7255,18 @@ function startLiveRefresh(localSessionToken) {
 }
 </script>
 <footer class="site-footer">
-  <a class="system-status" id="systemStatus" href="https://stats.uptimerobot.com/aO38xlD5F5" target="_blank" rel="noopener noreferrer" style="display:none" title="Open status page">
-    <span class="status-dot checking" id="systemStatusDot"></span><span id="systemStatusText">Checking status…</span>
+  <a class="built-by site-built-by" href="https://landonco.co/" target="_blank" rel="noopener noreferrer" title="Landon & Co.">
+    <span class="built-by-label">Built by</span>
+    <img src="assets/landon-co-logo.png" alt="Landon & Co." class="built-by-logo" width="72" height="72">
   </a>
-  <span id="systemStatusSep" style="display:none"> · </span><a href="/privacy.html">Privacy Policy</a>
-  · <a href="https://stats.uptimerobot.com/aO38xlD5F5" target="_blank" rel="noopener noreferrer">Status</a>
-  · OSRS Journal — not affiliated with Jagex or RuneLite
+  <div class="site-footer-links">
+    <a class="system-status" id="systemStatus" href="https://stats.uptimerobot.com/aO38xlD5F5" target="_blank" rel="noopener noreferrer" style="display:none" title="Open status page">
+      <span class="status-dot checking" id="systemStatusDot"></span><span id="systemStatusText">Checking status…</span>
+    </a>
+    <span id="systemStatusSep" style="display:none"> · </span><a href="/privacy.html">Privacy Policy</a>
+    · <a href="https://stats.uptimerobot.com/aO38xlD5F5" target="_blank" rel="noopener noreferrer">Status</a>
+    · OSRS Journal — not affiliated with Jagex or RuneLite
+  </div>
 </footer>
 </body>
 </html>
