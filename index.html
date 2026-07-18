@@ -522,7 +522,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 }
 .equip-doll { display: grid; gap: 8px; }
 .equip-row { display: flex; gap: 8px; justify-content: center; }
-.equip-slot { flex: 1; max-width: 160px; }
+.equip-slot { flex: 1; max-width: 200px; }
 .equip-slot.spacer { visibility: hidden; }
 .slot-label { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
 .slot-select {
@@ -834,53 +834,26 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
   text-transform: uppercase;
   letter-spacing: 0.4px;
 }
-/* Worn loadout — OSRS paper-doll layout */
-.worn-doll {
-  display: flex; flex-direction: column; align-items: center; gap: 8px;
-  margin: 18px auto 0; max-width: 360px;
-  padding: 18px 16px;
-  background: rgba(0, 0, 0, 0.28);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+.equip-sync-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; margin-top: 14px; }
+.equip-sync-slot {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  display: flex; align-items: center; gap: 10px;
 }
-.worn-doll-row {
-  display: flex; gap: 10px; justify-content: center; align-items: flex-start;
-  width: 100%;
-}
-.worn-slot {
-  width: 88px;
-  display: flex; flex-direction: column; align-items: center; gap: 5px;
-}
-.worn-slot.spacer { visibility: hidden; pointer-events: none; }
-.worn-slot-box {
-  width: 52px; height: 52px;
-  display: flex; align-items: center; justify-content: center;
-  background: linear-gradient(160deg, #3a3f4a 0%, #2a2f3a 55%, #1e222c 100%);
-  border: 1px solid #555b68;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 2px 6px rgba(0,0,0,0.35);
-  border-radius: 4px;
-}
-.worn-slot.empty .worn-slot-box {
-  background: linear-gradient(160deg, #2e333d 0%, #222730 100%);
-  border-color: #3d4452;
-}
-.worn-slot-box .item-icon {
-  width: 36px; height: 36px;
-  background: transparent; border-radius: 0;
-}
-.worn-slot-name {
-  font-size: 10px; font-weight: 600; line-height: 1.25;
-  color: var(--text); text-align: center;
-  max-width: 88px;
-  overflow: hidden; display: -webkit-box;
-  -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-}
-.worn-slot.empty .worn-slot-name { color: var(--text-dim); font-weight: 500; }
-.worn-slot-type {
-  font-size: 9px; font-weight: 700; letter-spacing: 0.04em;
-  text-transform: uppercase; color: var(--text-dim); text-align: center;
-}
+.equip-sync-slot .equip-slot-text { min-width: 0; flex: 1; }
+.equip-sync-slot .item-name { font-size: 12px; color: var(--text); font-weight: 600; }
+.equip-sync-slot.empty .item-name { color: var(--text-muted); font-style: italic; font-weight: 400; }
 .equip-sync-hint { font-size: 12px; color: var(--text-muted); margin-top: 12px; }
+.slot-select-row { display: flex; align-items: center; gap: 8px; }
+.slot-select-row .slot-icon {
+  width: 36px; height: 36px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.25); border-radius: 4px; border: 1px solid var(--border);
+}
+.slot-select-row .slot-icon .item-icon { width: 28px; height: 28px; background: transparent; border-radius: 0; }
+.slot-select-row .slot-select { flex: 1; min-width: 0; }
 .bank-gear-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
 .bank-gear-chip {
   display: inline-flex; align-items: center; gap: 6px;
@@ -1758,7 +1731,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 <div class="panel" id="panel-equipment" role="tabpanel">
   <div class="equip-sync-section" id="equipSyncSection">
     <div class="section-title">Worn Equipment <span class="equip-sync-badge" id="equipSyncBadge" style="display:none">Live sync</span><span class="gear-live-label" id="equipLiveLabel" style="display:none">Synced from RuneLite</span></div>
-    <div class="worn-doll" id="equipSyncGrid"></div>
+    <div class="equip-sync-grid" id="equipSyncGrid"></div>
     <p class="equip-sync-hint" id="equipSyncHint">Log in with the RuneLite plugin to sync worn items.</p>
   </div>
   <div class="equip-sync-section" id="bankGearSection">
@@ -3809,6 +3782,7 @@ function ensureItemIcons() {
   loadGeMapping().then((map) => {
     if (map) {
       renderSyncedEquipment();
+      renderEquipDoll();
       renderNextUp();
     }
   });
@@ -4783,34 +4757,11 @@ function equipEmptyHint(kind) {
     : 'Log in with the RuneLite plugin to sync worn items.';
 }
 
-function renderWornSlot(slot) {
-  if (!slot) return `<div class="worn-slot spacer" aria-hidden="true"></div>`;
-  const item = wornGear[slot];
-  const empty = !item;
-  const icon = empty
-    ? ''
-    : itemIconHtml(wornGearIds[slot] ?? item, { size: 'lg', alt: item });
-  const name = empty ? 'Empty' : item;
-  return `<div class="worn-slot ${empty ? 'empty' : ''}" title="${(SLOT_LABELS[slot] || slot).replace(/"/g, '&quot;')}${empty ? '' : ': ' + String(item).replace(/"/g, '&quot;')}">
-    <div class="worn-slot-box">${icon || ''}</div>
-    <div class="worn-slot-type">${SLOT_LABELS[slot] || slot}</div>
-    <div class="worn-slot-name">${name}</div>
-  </div>`;
-}
-
 function renderSyncedEquipment() {
   const grid = document.getElementById('equipSyncGrid');
   const hint = document.getElementById('equipSyncHint');
   const badge = document.getElementById('equipSyncBadge');
   const live = document.getElementById('equipLiveLabel');
-  // Classic OSRS equipment layout (head / cape-neck-ammo / weapon-body-shield / legs / gloves-boots-ring)
-  const rows = [
-    [null, 'head', null],
-    ['cape', 'neck', 'ammo'],
-    ['weapon', 'body', 'shield'],
-    [null, 'legs', null],
-    ['gloves', 'boots', 'ring'],
-  ];
   if (!equipSynced || !Object.keys(wornGear).length) {
     grid.innerHTML = '';
     hint.textContent = equipEmptyHint('gear');
@@ -4821,9 +4772,18 @@ function renderSyncedEquipment() {
     hint.style.display = 'none';
     badge.style.display = '';
     if (live) live.style.display = '';
-    grid.innerHTML = rows.map((row) =>
-      `<div class="worn-doll-row">${row.map(renderWornSlot).join('')}</div>`
-    ).join('');
+    grid.innerHTML = SLOT_ORDER.map(slot => {
+      const item = wornGear[slot];
+      const empty = !item;
+      const icon = empty ? '' : itemIconHtml(wornGearIds[slot] ?? item, { alt: item });
+      return `<div class="equip-sync-slot ${empty ? 'empty' : ''}">
+        ${icon || '<span class="item-icon" style="visibility:hidden" aria-hidden="true"></span>'}
+        <div class="equip-slot-text">
+          <div class="slot-label">${SLOT_LABELS[slot] || slot}</div>
+          <div class="item-name">${empty ? 'Empty' : item}</div>
+        </div>
+      </div>`;
+    }).join('');
   }
   renderBankGear();
 }
@@ -4878,11 +4838,18 @@ function renderEquipDoll() {
         const key = equipStyle+'_'+slot;
         const cur = equipment[key] || '0';
         const items = gearSet[slot];
+        const selected = items[parseInt(cur, 10)] || items[0];
+        const name = selected ? selected[0] : '';
+        const showIcon = name && name !== 'None' && name !== 'Unarmed';
+        const icon = showIcon ? itemIconHtml(name, { alt: name }) : '';
         return `<div class="equip-slot">
           <div class="slot-label">${SLOT_LABELS[slot]||slot}</div>
-          <select class="slot-select" onchange="saveEquip('${key}',this.value)">
-            ${items.map((it,i)=>`<option value="${i}" ${i==cur?'selected':''}>${it[0]}</option>`).join('')}
-          </select>
+          <div class="slot-select-row">
+            <span class="slot-icon" data-equip-icon="${key}">${icon || ''}</span>
+            <select class="slot-select" onchange="saveEquip('${key}',this.value)">
+              ${items.map((it,i)=>`<option value="${i}" ${i==cur?'selected':''}>${it[0]}</option>`).join('')}
+            </select>
+          </div>
         </div>`;
       }).join('')}
     </div>
@@ -4893,6 +4860,12 @@ function renderEquipDoll() {
 function saveEquip(key, val) {
   equipment[key] = val;
   localStorage.setItem('osrs_equip', JSON.stringify(equipment));
+  const slot = key.slice(equipStyle.length + 1);
+  const item = GEAR[equipStyle]?.[slot]?.[parseInt(val, 10)];
+  const name = item ? item[0] : '';
+  const showIcon = name && name !== 'None' && name !== 'Unarmed';
+  const iconEl = document.querySelector(`[data-equip-icon="${key}"]`);
+  if (iconEl) iconEl.innerHTML = showIcon ? itemIconHtml(name, { alt: name }) : '';
   updateEquipStats();
 }
 
