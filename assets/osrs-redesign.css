@@ -275,17 +275,22 @@ body.app-active .app-shell {
 .sb-foot {
   border-top: 1px solid var(--border-muted);
   padding: 10px 12px;
-  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  position: relative;
 }
-.sb-foot .built-by { min-width: 0; }
+.sb-foot .built-by { min-width: 0; justify-content: center; }
 .sb-foot .built-by-logo { width: 48px; height: 48px; }
-.app-sidebar.collapsed .sb-foot { flex-direction: column; justify-content: center; gap: 6px; }
+.app-sidebar.collapsed .sb-foot { gap: 6px; }
 .app-sidebar.collapsed .built-by-label { display: none; }
 .app-sidebar.collapsed .built-by-logo { width: 42px; height: 42px; }
 .sb-collapse-btn {
   background: transparent; border: none; color: var(--text-dim);
   cursor: pointer; padding: 6px; border-radius: 6px;
   font-size: 14px; line-height: 1; flex-shrink: 0;
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+}
+.app-sidebar.collapsed .sb-collapse-btn {
+  position: static; transform: none;
 }
 .sb-collapse-btn:hover { color: var(--text); background: rgba(255,255,255,0.04); }
 
