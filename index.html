@@ -840,21 +840,32 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius);
   padding: 10px 12px;
+  display: flex; align-items: center; gap: 10px;
 }
+.equip-sync-slot .equip-slot-text { min-width: 0; flex: 1; }
 .equip-sync-slot .item-name { font-size: 12px; color: var(--text); font-weight: 600; }
 .equip-sync-slot.empty .item-name { color: var(--text-muted); font-style: italic; font-weight: 400; }
 .equip-sync-hint { font-size: 12px; color: var(--text-muted); margin-top: 12px; }
 .bank-gear-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
 .bank-gear-chip {
+  display: inline-flex; align-items: center; gap: 6px;
   font-size: 11px;
   font-weight: 600;
-  padding: 5px 11px;
+  padding: 5px 11px 5px 6px;
   border-radius: 99px;
   background: var(--bg-subtle);
   border: 1px solid var(--border);
   color: var(--text);
 }
-.bank-gear-chip .qty { color: var(--text-muted); margin-left: 4px; font-weight: 400; }
+.bank-gear-chip .qty { color: var(--text-muted); margin-left: 2px; font-weight: 400; }
+.item-icon {
+  width: 28px; height: 28px; object-fit: contain;
+  image-rendering: pixelated; flex-shrink: 0;
+  background: rgba(0,0,0,0.25); border-radius: 4px;
+}
+.item-icon.sm { width: 22px; height: 22px; }
+.item-icon.lg { width: 36px; height: 36px; }
+.next-up-card .item-icon { float: right; margin: 0 0 4px 8px; }
 .equip-simulator-title {
   font-size: 11px;
   font-weight: 700;
@@ -3023,6 +3034,8 @@ let bankSynced = false;
 let playerBank = [];
 let equipSynced = false;
 let wornGear = {};
+/** Parallel map of equipment slot → item_id (when synced from RuneLite). */
+let wornGearIds = {};
 let lastSynced = null;
 let exportFormat = 'markdown';
 
@@ -3110,6 +3123,7 @@ function buildOwnedGearReport() {
     const key = item.toLowerCase();
     byName.set(key, {
       name: item,
+      item_id: wornGearIds[slot] ?? null,
       worn: true,
       in_bank: false,
       quantity: 1,
@@ -3124,9 +3138,11 @@ function buildOwnedGearReport() {
     if (existing) {
       existing.in_bank = true;
       existing.quantity += row.quantity || 1;
+      if (existing.item_id == null && row.item_id != null) existing.item_id = row.item_id;
     } else {
       byName.set(key, {
         name: row.item_name,
+        item_id: row.item_id ?? null,
         worn: false,
         in_bank: true,
         quantity: row.quantity || 1,
@@ -3293,9 +3309,13 @@ function applyPlayerPayload(rsn, skills, quests, equip, bank, playerRow) {
   }
 
   wornGear = {};
+  wornGearIds = {};
   equipSynced = equip.length > 0;
   if (equip.length) {
-    for (const row of equip) wornGear[row.slot_name] = row.item_name;
+    for (const row of equip) {
+      wornGear[row.slot_name] = row.item_name;
+      if (row.item_id != null) wornGearIds[row.slot_name] = row.item_id;
+    }
     populateEquipmentFromDB(equip);
   }
 
@@ -3713,6 +3733,52 @@ function gePriceByName(name) {
   return id != null ? (gePrices[id] ?? null) : null;
 }
 
+/**
+ * Item icons from RuneLite's public cache CDN (same sprites as the OSRS Wiki).
+ * Prefer a numeric item_id from sync; fall back to wiki GE name→id mapping.
+ */
+const ITEM_ICON_CDN = 'https://static.runelite.net/cache/item/icon';
+
+function resolveItemId(nameOrId) {
+  if (nameOrId == null || nameOrId === '') return null;
+  if (typeof nameOrId === 'number' && Number.isFinite(nameOrId)) return nameOrId;
+  const asNum = Number(nameOrId);
+  if (Number.isFinite(asNum) && String(nameOrId).trim() !== '' && !String(nameOrId).includes(' ')) {
+    return asNum;
+  }
+  if (!geMapping || !nameOrId) return null;
+  const key = String(nameOrId).toLowerCase().trim();
+  if (geMapping[key] != null) return geMapping[key];
+  // Strip charged / noted / locked suffixes common in game names
+  const stripped = key.replace(/\s*\([^)]*\)\s*/g, ' ').replace(/\s+/g, ' ').trim();
+  return geMapping[stripped] ?? null;
+}
+
+function itemIconUrl(nameOrId) {
+  const id = resolveItemId(nameOrId);
+  return id != null ? `${ITEM_ICON_CDN}/${id}.png` : null;
+}
+
+/** Lazy <img> for an item; empty string when id can't be resolved. */
+function itemIconHtml(nameOrId, { size = '', alt } = {}) {
+  const url = itemIconUrl(nameOrId);
+  if (!url) return '';
+  const label = (alt != null ? alt : (typeof nameOrId === 'string' ? nameOrId : 'Item'))
+    .replace(/"/g, '&quot;');
+  const cls = size ? `item-icon ${size}` : 'item-icon';
+  return `<img class="${cls}" src="${url}" alt="${label}" width="28" height="28" loading="lazy" decoding="async" onerror="this.style.visibility='hidden'">`;
+}
+
+/** Ensure wiki name→id map is warm so name-based icons resolve. */
+function ensureItemIcons() {
+  loadGeMapping().then((map) => {
+    if (map) {
+      renderSyncedEquipment();
+      renderNextUp();
+    }
+  });
+}
+
 /** Total bank value (items at GE price + coins); null until prices load. */
 function bankValueEstimate() {
   if (!gePrices || !bankSynced) return null;
@@ -3856,6 +3922,7 @@ async function fetchPlayer(rsnOverride, options = {}) {
       lastSynced = null;
       equipSynced = false;
       wornGear = {};
+      wornGearIds = {};
       playerBank = [];
       bankSynced = false;
       questsInProgress = new Set();
@@ -4560,12 +4627,16 @@ function renderNextUp() {
     return;
   }
   box.style.display = '';
-  grid.innerHTML = recs.map(r => `
+  grid.innerHTML = recs.map(r => {
+    const icon = r.type === 'gear' ? itemIconHtml(r.title, { size: 'lg', alt: r.title }) : '';
+    return `
     <div class="next-up-card" role="listitem" onclick="switchTab('${r.tab}')" title="Open the ${r.tab === 'stats' ? 'skills' : r.tab} tab">
+      ${icon}
       <div class="next-up-tag ${r.type}">${r.tag}</div>
       <div class="next-up-title">${r.title}</div>
       <div class="next-up-why">${r.why}</div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 // ─── STATS RENDER ─────────────────────────────────────────────────────────────
@@ -4692,9 +4763,13 @@ function renderSyncedEquipment() {
     grid.innerHTML = SLOT_ORDER.map(slot => {
       const item = wornGear[slot];
       const empty = !item;
+      const icon = empty ? '' : itemIconHtml(wornGearIds[slot] ?? item, { alt: item });
       return `<div class="equip-sync-slot ${empty ? 'empty' : ''}">
-        <div class="slot-label">${SLOT_LABELS[slot] || slot}</div>
-        <div class="item-name">${empty ? 'Empty' : item}</div>
+        ${icon || '<span class="item-icon" style="visibility:hidden" aria-hidden="true"></span>'}
+        <div class="equip-slot-text">
+          <div class="slot-label">${SLOT_LABELS[slot] || slot}</div>
+          <div class="item-name">${empty ? 'Empty' : item}</div>
+        </div>
       </div>`;
     }).join('');
   }
@@ -4723,7 +4798,7 @@ function renderBankGear() {
   hint.style.display = 'none';
   badge.style.display = '';
   list.innerHTML = gear.map(g =>
-    `<span class="bank-gear-chip">${g.name}${g.quantity > 1 ? `<span class="qty">x${g.quantity}</span>` : ''}${g.worn ? '<span class="qty">· worn</span>' : ''}</span>`
+    `<span class="bank-gear-chip">${itemIconHtml(g.item_id ?? g.name, { size: 'sm', alt: g.name })}<span>${g.name}${g.quantity > 1 ? `<span class="qty">x${g.quantity}</span>` : ''}${g.worn ? '<span class="qty">· worn</span>' : ''}</span></span>`
   ).join('');
 }
 
@@ -6911,7 +6986,14 @@ function startSystemHealthChecks() {
         renderDashboard();
         recordNetWorth().then(() => loadNetWorth(playerRSN)).then(() => renderDashboard());
       });
-      if (equipSynced) Promise.all([loadGePrices(), loadGeMapping()]).then(([p, m]) => { if (p && m) renderDashboard(); });
+      if (equipSynced || bankSynced) {
+        Promise.all([loadGePrices(), loadGeMapping()]).then(([p, m]) => {
+          if (p && m) renderDashboard();
+          if (m) { renderSyncedEquipment(); renderNextUp(); }
+        });
+      } else {
+        ensureItemIcons();
+      }
       startLiveRefresh(localSession);
       return;
     } catch (e) {
