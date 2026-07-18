@@ -3077,6 +3077,8 @@ let dataSource = 'none'; // 'supabase' | 'wom' | 'none'
 let playerGold = parseInt(localStorage.getItem('osrs_gold') || '0', 10) || 0;
 let bankSynced = false;
 let playerBank = [];
+/** Allowlisted inventory items from plugin (Marks of grace, Graceful pieces). */
+let playerInventory = [];
 let equipSynced = false;
 let wornGear = {};
 /** Parallel map of equipment slot → item_id (when synced from RuneLite). */
@@ -3347,10 +3349,14 @@ function applyPlayerPayload(rsn, skills, quests, equip, bank, playerRow) {
 
   syncedQuestPoints = null;
   lastSynced = null;
+  playerInventory = [];
   if (playerRow) {
     const qp = playerRow.quest_points;
     if (qp != null && !Number.isNaN(Number(qp))) syncedQuestPoints = Number(qp);
     if (playerRow.last_synced) lastSynced = playerRow.last_synced;
+    if (Array.isArray(playerRow.inventory_tracked)) {
+      playerInventory = playerRow.inventory_tracked;
+    }
   }
 
   wornGear = {};
@@ -3940,7 +3946,7 @@ async function fetchFromSupabase(rsn) {
     fetch(`${SUPABASE_URL}/rest/v1/player_quests?rsn=eq.${q}&select=quest_name,state`, {headers}),
     fetch(`${SUPABASE_URL}/rest/v1/player_equipment?rsn=eq.${q}&select=slot_id,slot_name,item_id,item_name`, {headers}),
     fetch(`${SUPABASE_URL}/rest/v1/player_bank?rsn=eq.${q}&select=item_id,item_name,quantity`, {headers}),
-    fetch(`${SUPABASE_URL}/rest/v1/players?rsn=eq.${q}&select=quest_points,last_synced`, {headers}),
+    fetch(`${SUPABASE_URL}/rest/v1/players?rsn=eq.${q}&select=quest_points,last_synced,inventory_tracked`, {headers}),
   ]);
   if (!sRes.ok) throw new Error(`Could not load character (${sRes.status})`);
   const skills = await sRes.json();
@@ -4035,6 +4041,7 @@ async function fetchPlayer(rsnOverride, options = {}) {
       wornGear = {};
       wornGearIds = {};
       playerBank = [];
+      playerInventory = [];
       bankSynced = false;
       questsInProgress = new Set();
       playerDiaries = [];
@@ -5324,7 +5331,9 @@ function buildMainGoalExport() {
       steps_total: plan.totalSteps,
       pieces_owned: g.piecesOwned,
       pieces_total: g.piecesTotal,
-      marks_banked: g.marks,
+      marks_owned: g.marks,
+      marks_in_bank: g.marksBank,
+      marks_in_inventory: g.marksInv,
       marks_still_needed: g.remaining,
       missing_pieces: g.missing.map(p => `${p.name} (${p.cost} marks)`),
       quests_remaining: [],
@@ -6129,7 +6138,7 @@ function renderGoals() {
       const plan = computeGoalPlan(goal);
       const complete = plan.doneSteps >= plan.totalSteps && plan.totalSteps > 0;
       const sub = goal.roadmap ? 'Guided roadmap'
-        : goal.set === 'graceful' ? 'Marks of grace · bank sync'
+        : goal.set === 'graceful' ? 'Marks of grace · bank & inventory'
         : (goal.all ? 'All journal quests' : (goal.quest !== goal.label ? goal.quest : ''));
       const body = complete ? ''
         : goal.set === 'graceful' ? renderGracefulGoalBody(plan)
@@ -6280,7 +6289,7 @@ function setBreakpointStatusFilter(status) {
   renderBreakpoints();
 }
 
-/** True if any needle matches a worn or bank item name (case-insensitive substring). */
+/** True if any needle matches a worn, bank, or tracked-inventory item name. */
 function playerOwnsAnyItem(needles) {
   if (!Array.isArray(needles) || !needles.length) return false;
   const names = [];
@@ -6289,10 +6298,8 @@ function playerOwnsAnyItem(needles) {
       if (v) names.push(String(v).toLowerCase());
     }
   }
-  if (Array.isArray(playerBank)) {
-    for (const row of playerBank) {
-      if (row?.item_name) names.push(String(row.item_name).toLowerCase());
-    }
+  for (const row of [...(playerBank || []), ...(playerInventory || [])]) {
+    if (row?.item_name) names.push(String(row.item_name).toLowerCase());
   }
   if (!names.length) return false;
   return needles.some((needle) => {
@@ -6301,16 +6308,32 @@ function playerOwnsAnyItem(needles) {
   });
 }
 
-/** Sum quantity of bank items matching a name (exact or substring). */
+/** Sum quantity matching a name across bank + tracked inventory. */
 function bankItemQty(needle) {
   const n = String(needle || '').toLowerCase();
-  if (!n || !Array.isArray(playerBank)) return 0;
+  if (!n) return 0;
   let qty = 0;
-  for (const row of playerBank) {
+  for (const row of [...(playerBank || []), ...(playerInventory || [])]) {
     const name = String(row?.item_name || '').toLowerCase();
     if (name === n || name.includes(n)) qty += row.quantity || 0;
   }
   return qty;
+}
+
+/** Marks of grace broken out by container (for Graceful progress UI). */
+function marksOfGraceBreakdown() {
+  const n = 'mark of grace';
+  let bank = 0;
+  let inv = 0;
+  for (const row of playerBank || []) {
+    const name = String(row?.item_name || '').toLowerCase();
+    if (name === n || name.includes(n)) bank += row.quantity || 0;
+  }
+  for (const row of playerInventory || []) {
+    const name = String(row?.item_name || '').toLowerCase();
+    if (name === n || name.includes(n)) inv += row.quantity || 0;
+  }
+  return { bank, inv, total: bank + inv };
 }
 
 /**
@@ -6331,7 +6354,8 @@ function computeGracefulProgress() {
       missing.push(p);
     }
   }
-  const marks = bankItemQty('mark of grace');
+  const markParts = marksOfGraceBreakdown();
+  const marks = markParts.total;
   const remaining = Math.max(0, totalMarks - credited - marks);
   const done = pieces.length > 0 && owned.length === pieces.length;
   const effective = Math.min(totalMarks, credited + marks);
@@ -6340,7 +6364,8 @@ function computeGracefulProgress() {
     owned, missing,
     piecesOwned: owned.length,
     piecesTotal: pieces.length,
-    marks, credited, remaining, totalMarks,
+    marks, marksBank: markParts.bank, marksInv: markParts.inv,
+    credited, remaining, totalMarks,
     done, pct,
     bankSynced: !!bankSynced,
   };
@@ -6374,10 +6399,15 @@ function renderGracefulGoalBody(plan) {
     const have = g.owned.some(o => o.key === p.key);
     return `<li class="${have ? 'path-done' : ''}"><span class="path-mark">${have ? '✓' : '○'}</span> ${p.name}<span class="path-meta">${p.cost} marks</span></li>`;
   }).join('');
+  const marksLabel = g.marksInv > 0 && g.marksBank > 0
+    ? `${g.marks} marks (${g.marksBank} bank · ${g.marksInv} inv)`
+    : g.marksInv > 0
+      ? `${g.marks} marks in inventory`
+      : `${g.marks} marks in bank`;
   return `<div class="goal-path graceful-progress">
     <div class="graceful-stats">
       <span><strong>${g.piecesOwned}/${g.piecesTotal}</strong> pieces owned</span>
-      <span><strong>${g.marks}</strong> marks banked</span>
+      <span><strong>${marksLabel}</strong></span>
       <span>${g.done ? '<strong>Set complete</strong>' : `<strong>${g.remaining}</strong> marks still needed`}</span>
     </div>
     <ol class="goal-path-list">${rows}</ol>
