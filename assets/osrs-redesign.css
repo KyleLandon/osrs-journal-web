@@ -278,10 +278,10 @@ body.app-active .app-shell {
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
 }
 .sb-foot .built-by { min-width: 0; }
-.sb-foot .built-by-logo { width: 32px; height: 32px; }
+.sb-foot .built-by-logo { width: 48px; height: 48px; }
 .app-sidebar.collapsed .sb-foot { flex-direction: column; justify-content: center; gap: 6px; }
 .app-sidebar.collapsed .built-by-label { display: none; }
-.app-sidebar.collapsed .built-by-logo { width: 28px; height: 28px; }
+.app-sidebar.collapsed .built-by-logo { width: 42px; height: 42px; }
 .sb-collapse-btn {
   background: transparent; border: none; color: var(--text-dim);
   cursor: pointer; padding: 6px; border-radius: 6px;
