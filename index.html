@@ -1105,6 +1105,37 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 .roadmap-picker > .goal-main-card,
 .goal-main-picker > .goal-main-card { min-width: 0; }
 
+.bp-filters { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
+.bp-filter {
+  font-size: 11px; font-weight: 700; font-family: inherit;
+  padding: 5px 10px; border-radius: 99px; cursor: pointer;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text-dim);
+}
+.bp-filter:hover { border-color: var(--accent); color: var(--accent-hover); }
+.bp-filter.active { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-hover); }
+.bp-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 10px; margin-bottom: 8px;
+}
+.bp-card {
+  display: flex; flex-direction: column; gap: 4px; text-align: left;
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  padding: 12px 14px; color: var(--text); font-family: inherit;
+  white-space: normal; min-width: 0; overflow: hidden;
+}
+.bp-card.done { border-color: rgba(34, 197, 94, 0.4); opacity: 0.72; }
+.bp-card.ready { border-color: rgba(59, 130, 246, 0.45); }
+.bp-card-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.bp-card-label { font-size: 13px; font-weight: 700; min-width: 0; overflow-wrap: break-word; }
+.bp-card-status { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px; flex-shrink: 0; }
+.bp-card.done .bp-card-status { color: var(--green); }
+.bp-card.ready .bp-card-status { color: var(--accent-hover); }
+.bp-card.locked .bp-card-status { color: var(--text-muted); }
+.bp-card-meta { font-size: 10px; color: var(--text-muted); font-weight: 700; }
+.bp-card-why { font-size: 11px; color: var(--text-dim); line-height: 1.45; overflow-wrap: break-word; }
+.bp-card-actions { margin-top: 6px; }
+.bp-card-actions .btn-secondary { font-size: 11px; padding: 4px 10px; }
+
 /* Ordered goal path */
 .goal-detail-row.column { flex-direction: column; align-items: stretch; gap: 6px; }
 .goal-path { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 5px; }
@@ -1662,6 +1693,9 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
   <div class="roadmap-picker" id="roadmapPicker"></div>
   <div class="goal-section-title">Account milestones <span class="section-note">pick one as your main goal</span></div>
   <div class="goal-main-picker" id="goalMainPicker"></div>
+  <div class="goal-section-title">Account breakpoints <span class="section-note">Essential &amp; High power spikes — live from your sync</span></div>
+  <div class="bp-filters" id="breakpointFilters"></div>
+  <div class="bp-grid" id="breakpointGrid"></div>
   <div class="goal-toolbar">
     <span class="goal-toolbar-label">Add a goal</span>
     <span class="goal-presets" id="goalPresetChips"></span>
@@ -4089,6 +4123,23 @@ function buildNextUpRecommendations() {
     });
   }
 
+  // 2b. Account breakpoints (Essential/High power spikes ready now).
+  for (const row of rankedReadyBreakpoints().slice(0, 4)) {
+    const { bp, state, score } = row;
+    let title = bp.label;
+    if (bp.skill && bp.level && questSkillLevel(bp.skill) < bp.level) {
+      title = `${formatSkillName(bp.skill)} → ${bp.level}`;
+    }
+    recs.push({
+      type: 'breakpoint',
+      tag: `${bp.priority} breakpoint`,
+      title,
+      why: bp.why + (state.progress ? ` (${state.progress})` : ''),
+      score: score + 5,
+      tab: bp.skill && !bp.quest ? 'stats' : 'goals',
+    });
+  }
+
   // 3. Gear upgrades for the dominant combat style.
   for (const g of buildGearUpgradeRecs()) {
     let why;
@@ -4119,7 +4170,11 @@ function buildNextUpRecommendations() {
   recs.sort((a, b) => b.score - a.score);
   // At most 2 cards per category so one strong category doesn't fill the row.
   const seen = {};
-  return recs.filter(r => (seen[r.type] = (seen[r.type] || 0) + 1) <= 2).slice(0, NEXT_UP_MAX_CARDS);
+  const perType = { breakpoint: 2, quest: 2, skill: 2, gear: 2, boss: 2 };
+  return recs.filter(r => {
+    const cap = perType[r.type] ?? 2;
+    return (seen[r.type] = (seen[r.type] || 0) + 1) <= cap;
+  }).slice(0, NEXT_UP_MAX_CARDS);
 }
 
 /**
@@ -5543,6 +5598,8 @@ function renderGoals() {
     }).join('');
   }
 
+  renderBreakpoints();
+
   // Preset chips + quest datalist, populated once
   const chips = document.getElementById('goalPresetChips');
   if (chips && !chips.childElementCount && typeof GOAL_PRESETS !== 'undefined') {
@@ -5665,16 +5722,254 @@ function renderMoneyMakers() {
     almost.slice(0, 3).map(m => card(m, true)).join('');
 }
 
+// ─── ACCOUNT BREAKPOINTS ──────────────────────────────────────────────────────
+let breakpointFilterStage = 'All';
+
+function setBreakpointFilter(stage) {
+  breakpointFilterStage = stage || 'All';
+  renderBreakpoints();
+}
+
+/** Evaluate a breakpoint against the live synced account. */
+function evaluateBreakpoint(bp) {
+  if (!bp || typeof ACCOUNT_BREAKPOINTS === 'undefined') {
+    return { done: false, ready: false, locked: true, progress: '', detail: '' };
+  }
+  const parts = [];
+  let done = true;
+  let ready = true;
+
+  const checkQuest = (name, partial) => {
+    if (!name) return;
+    if (partial) {
+      const ok = qd(name) || qi(name);
+      if (!ok) { done = false; }
+      const journal = getJournalQuestList().find(j => j.name === normalizeQuestName(name));
+      if (!ok && journal && isQuestBlocked(journal)) ready = false;
+      else if (!ok && journal && !canDoQuest(journal) && !qi(name)) {
+        // Unknown block state — still suggest if no hard missing reqs
+        if (getQuestMissingReqs(journal).length) ready = false;
+      }
+      parts.push(ok ? `${name} ✓` : name);
+      return;
+    }
+    const ok = qd(name);
+    if (!ok) {
+      done = false;
+      const journal = getJournalQuestList().find(j => j.name === normalizeQuestName(name));
+      if (journal) {
+        if (isQuestBlocked(journal) || (!canDoQuest(journal) && !qi(name) && getQuestMissingReqs(journal).length)) {
+          ready = false;
+        }
+      }
+    }
+    parts.push(ok ? `${name} ✓` : name);
+  };
+
+  if (bp.quest) checkQuest(bp.quest, bp.questPartial);
+  if (Array.isArray(bp.quests)) {
+    for (const q of bp.quests) checkQuest(q, false);
+  }
+
+  if (bp.skill && bp.level) {
+    const have = questSkillLevel(bp.skill);
+    const ok = have >= bp.level;
+    if (!ok) {
+      done = false;
+      if (have < bp.level - 20) ready = false;
+    }
+    parts.push(`${formatSkillName(bp.skill)} ${have}/${bp.level}`);
+  }
+
+  if (bp.skills) {
+    for (const [sk, need] of Object.entries(bp.skills)) {
+      const have = questSkillLevel(sk);
+      const ok = have >= need;
+      if (!ok) {
+        done = false;
+        if (have < need - 15) ready = false;
+      }
+      parts.push(`${formatSkillName(sk)} ${have}/${need}`);
+    }
+  }
+
+  if (bp.skillFloor) {
+    for (const [sk, need] of Object.entries(bp.skillFloor)) {
+      const have = questSkillLevel(sk);
+      parts.push(`${formatSkillName(sk)} ${have}/${need}`);
+      if (have < need) {
+        if (bp.type === 'pvm') {
+          // PvM entries: skill floors gate readiness, not "done"
+          ready = false;
+        } else {
+          done = false;
+          if (have < need - 15) ready = false;
+        }
+      }
+    }
+    // PvM completion is not auto-detected from sync.
+    if (bp.type === 'pvm') done = false;
+  }
+
+  if (done) ready = false;
+  const locked = !done && !ready;
+  return {
+    done,
+    ready,
+    locked,
+    progress: parts.join(' · '),
+    detail: bp.why || '',
+  };
+}
+
+function breakpointScore(bp, state) {
+  if (state.done || state.locked) return -1;
+  let score = bp.priority === 'Essential' ? 100 : 70;
+  if (bp.stage === 'Transportation' || bp.stage === 'Foundation') score += 12;
+  if (bp.stage === 'Combat' || bp.stage === 'Questing') score += 8;
+  if (bp.skill && bp.level) {
+    const gap = bp.level - questSkillLevel(bp.skill);
+    if (gap <= 5) score += 15;
+    else if (gap <= 12) score += 8;
+  }
+  if (bp.quest && !bp.skill) score += 6;
+  return score;
+}
+
+/** Ranked incomplete breakpoints that are actionable now (Essential/High). */
+function rankedReadyBreakpoints() {
+  if (typeof ACCOUNT_BREAKPOINTS === 'undefined' || !playerSkills.attack) return [];
+  return ACCOUNT_BREAKPOINTS
+    .map(bp => ({ bp, state: evaluateBreakpoint(bp), score: 0 }))
+    .map(row => ({ ...row, score: breakpointScore(row.bp, row.state) }))
+    .filter(row => row.score > 0)
+    .sort((a, b) => b.score - a.score);
+}
+
+function pickNextBreakpoint() {
+  return rankedReadyBreakpoints()[0] || null;
+}
+
+function breakpointToSession(row) {
+  const { bp, state } = row;
+  let title = bp.label;
+  let kind = 'step';
+  let tab = 'goals';
+  let hint = '';
+  let wiki = null;
+  let mins = '30–60 min';
+
+  if (bp.skill && bp.level && questSkillLevel(bp.skill) < bp.level) {
+    kind = 'skill';
+    tab = 'stats';
+    const have = questSkillLevel(bp.skill);
+    title = `${formatSkillName(bp.skill)} ${have} → ${bp.level}`;
+    hint = trainingHint(bp.skill, have) || '';
+    const gap = bp.level - have;
+    mins = gap <= 5 ? '30–60 min' : 'a few sessions';
+  } else if (bp.quest) {
+    kind = 'quest';
+    title = bp.quest;
+    wiki = canLinkQuestWiki(bp.quest) ? questWikiUrl(bp.quest) : null;
+  } else if (bp.type === 'pvm') {
+    kind = 'pvm';
+    tab = 'bosses';
+  }
+
+  return {
+    kind,
+    title,
+    why: `${bp.priority} · ${bp.stage}: ${bp.why}`,
+    mins,
+    hint,
+    wiki,
+    tab,
+    breakpointId: bp.id,
+  };
+}
+
+function addBreakpointGoal(id) {
+  const bp = (typeof ACCOUNT_BREAKPOINTS !== 'undefined' ? ACCOUNT_BREAKPOINTS : [])
+    .find(b => b.id === id);
+  if (!bp) return;
+  if (bp.quest) {
+    addGoal({ label: bp.label, quest: bp.quest });
+    showToast(`Added “${bp.label}” to your goals.`, 'ok');
+    return;
+  }
+  if (bp.skill && bp.level) {
+    showToast(`Train ${formatSkillName(bp.skill)} to ${bp.level} — see Skills for methods.`, 'ok');
+    switchTab('stats');
+    return;
+  }
+  if (bp.type === 'pvm') {
+    showToast(`${bp.label}: ${bp.why}`, 'ok', 6000);
+    switchTab('bosses');
+  }
+}
+
+function renderBreakpoints() {
+  const grid = document.getElementById('breakpointGrid');
+  const filters = document.getElementById('breakpointFilters');
+  if (!grid || typeof ACCOUNT_BREAKPOINTS === 'undefined') return;
+
+  const stages = ['All', ...(typeof BREAKPOINT_STAGES !== 'undefined' ? BREAKPOINT_STAGES : [])];
+  if (filters) {
+    filters.innerHTML = stages.map(s =>
+      `<button type="button" class="bp-filter${breakpointFilterStage === s ? ' active' : ''}"
+        onclick="setBreakpointFilter('${s}')">${s}</button>`
+    ).join('');
+  }
+
+  if (!playerSkills.attack) {
+    grid.innerHTML = `<div class="hint">Sync a character to see which breakpoints you already have.</div>`;
+    return;
+  }
+
+  const rows = ACCOUNT_BREAKPOINTS
+    .filter(bp => breakpointFilterStage === 'All' || bp.stage === breakpointFilterStage)
+    .map(bp => ({ bp, state: evaluateBreakpoint(bp) }));
+
+  // Ready first, then locked, then done — within each, Essential before High.
+  const rank = (row) => {
+    const pri = row.bp.priority === 'Essential' ? 0 : 1;
+    if (row.state.ready) return 0 + pri;
+    if (row.state.locked) return 10 + pri;
+    return 20 + pri;
+  };
+  rows.sort((a, b) => rank(a) - rank(b));
+
+  grid.innerHTML = rows.map(({ bp, state }) => {
+    const cls = state.done ? 'done' : state.ready ? 'ready' : 'locked';
+    const status = state.done ? 'Done' : state.ready ? 'Ready' : 'Locked';
+    const action = state.done ? '' : `
+      <div class="bp-card-actions">
+        <button type="button" class="btn-secondary" onclick="addBreakpointGoal('${bp.id}')">
+          ${bp.quest ? 'Add as goal' : 'Open skills'}
+        </button>
+      </div>`;
+    return `<div class="bp-card ${cls}">
+      <div class="bp-card-top">
+        <span class="bp-card-label">${bp.label}</span>
+        <span class="bp-card-status">${status}</span>
+      </div>
+      <div class="bp-card-meta">${bp.priority} · ${bp.stage} · ${bp.category}</div>
+      <div class="bp-card-why">${bp.why}</div>
+      ${state.progress ? `<div class="bp-card-meta">${state.progress}</div>` : ''}
+      ${action}
+    </div>`;
+  }).join('');
+}
+
 // ─── NEXT SESSION ─────────────────────────────────────────────────────────────
-/** One concrete 30–60 min action pulled from the main goal path. */
-function computeNextSession() {
+/** One concrete action from the main goal path, else best ready breakpoint. */
+function computeNextSessionFromMainGoal() {
   const main = getMainGoal();
-  if (!main || dataSource === 'wom') return null;
+  if (!main) return null;
   const plan = computeGoalPlan(main.goal);
   if (!plan.totalSteps || plan.doneSteps >= plan.totalSteps) return null;
   const goalLabel = main.goal.label || main.goal.quest || 'your main goal';
 
-  // Prefer an ordered quest step that is ready now
   const readyQuest = (plan.order || []).find(s => s.ready);
   if (readyQuest) {
     return {
@@ -5688,7 +5983,6 @@ function computeNextSession() {
     };
   }
 
-  // Roadmap: first incomplete counted step
   if (plan.stages) {
     for (const st of plan.stages) {
       const step = (st.steps || []).find(s => s.counted && !s.done);
@@ -5719,7 +6013,6 @@ function computeNextSession() {
     }
   }
 
-  // Next skill wall on a quest goal
   const skillWall = (plan.skills || []).find(s => !s.met);
   if (skillWall) {
     const hint = trainingHint(skillWall.sk, skillWall.have);
@@ -5750,6 +6043,15 @@ function computeNextSession() {
   return null;
 }
 
+function computeNextSession() {
+  if (dataSource === 'wom' || !playerSkills.attack) return null;
+  const fromGoal = computeNextSessionFromMainGoal();
+  if (fromGoal) return fromGoal;
+  const bp = pickNextBreakpoint();
+  if (bp) return breakpointToSession(bp);
+  return null;
+}
+
 function renderNextSession() {
   const el = document.getElementById('nextSessionSection');
   if (!el) return;
@@ -5766,7 +6068,12 @@ function renderNextSession() {
     <div class="next-session-why">${s.why}${s.hint ? ` Train: ${s.hint}` : ''}</div>
     <div class="next-session-meta">${wiki}</div>
     <div class="next-session-actions">
-      <button class="btn-primary" type="button" onclick="switchTab('${s.tab}')">Open ${s.tab === 'goals' ? 'goal path' : s.tab === 'stats' ? 'skills' : s.tab}</button>
+      <button class="btn-primary" type="button" onclick="switchTab('${s.tab}')">Open ${
+        s.tab === 'goals' ? (s.breakpointId ? 'breakpoints' : 'goal path')
+          : s.tab === 'stats' ? 'skills'
+          : s.tab === 'bosses' ? 'bosses'
+          : s.tab
+      }</button>
     </div>`;
 }
 
