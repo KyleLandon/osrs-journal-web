@@ -912,10 +912,10 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 
 /* Goal planner */
 .goal-intro h2 { font-size: 1.25rem; margin-bottom: 6px; }
-.goal-intro p { font-size: 13px; color: var(--text-dim); max-width: 640px; }
+.goal-intro p { font-size: 13px; color: var(--text-dim); max-width: 560px; line-height: 1.5; }
 .goal-toolbar {
   display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
-  margin: 16px 0;
+  margin: 0 0 16px;
   background: var(--card); border: 1px solid var(--border);
   border-radius: var(--radius-lg); padding: 12px 14px;
 }
@@ -1092,6 +1092,29 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
   border-radius: var(--radius-lg); position: relative; z-index: 201;
 }
 .goal-section-title { font-size: 13px; font-weight: 800; margin: 18px 0 10px; }
+.goal-pane-lead {
+  font-size: 13px; color: var(--text-dim); line-height: 1.5;
+  margin: 0 0 14px; max-width: 640px;
+}
+.goal-subnav {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin: 16px 0 18px; padding: 4px;
+  background: var(--surface); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+.goal-subnav-btn {
+  flex: 1 1 auto; min-width: 0;
+  font-size: 12px; font-weight: 700; font-family: inherit;
+  padding: 8px 12px; border: none; border-radius: var(--radius);
+  background: transparent; color: var(--text-dim); cursor: pointer;
+}
+.goal-subnav-btn:hover { color: var(--text); background: var(--card); }
+.goal-subnav-btn.active {
+  background: var(--card); color: var(--text);
+  box-shadow: 0 0 0 1px var(--border);
+}
+.goal-pane[hidden] { display: none !important; }
+.goal-pane { margin-top: 2px; }
 .goal-main-card-pct { font-size: 11px; font-weight: 800; color: var(--accent-hover); margin-left: 6px; }
 .goal-main-card.roadmap.selected { border-color: var(--accent); background: linear-gradient(135deg, var(--card), var(--accent-soft)); }
 .goal-suggest-badge {
@@ -1102,10 +1125,19 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
   display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 10px;
 }
+.goal-main-picker { margin: 0 0 8px; }
 .roadmap-picker > .goal-main-card,
 .goal-main-picker > .goal-main-card { min-width: 0; }
 
-.bp-filters { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
+.bp-summary {
+  display: flex; flex-wrap: wrap; gap: 10px 16px;
+  font-size: 12px; color: var(--text-dim); margin: 0 0 12px;
+}
+.bp-summary strong { color: var(--text); font-weight: 800; }
+.bp-summary .ready-n { color: var(--accent-hover); }
+.bp-summary .done-n { color: var(--green); }
+.bp-toolbar { display: flex; flex-direction: column; gap: 8px; margin: 0 0 12px; }
+.bp-filters { display: flex; flex-wrap: wrap; gap: 6px; }
 .bp-filter {
   font-size: 11px; font-weight: 700; font-family: inherit;
   padding: 5px 10px; border-radius: 99px; cursor: pointer;
@@ -1113,6 +1145,8 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 }
 .bp-filter:hover { border-color: var(--accent); color: var(--accent-hover); }
 .bp-filter.active { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-hover); }
+.bp-filter.status-ready.active { border-color: rgba(59, 130, 246, 0.55); }
+.bp-filter.status-done.active { border-color: rgba(34, 197, 94, 0.55); color: var(--green); }
 .bp-grid {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 10px; margin-bottom: 8px;
@@ -1123,7 +1157,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
   padding: 12px 14px; color: var(--text); font-family: inherit;
   white-space: normal; min-width: 0; overflow: hidden;
 }
-.bp-card.done { border-color: rgba(34, 197, 94, 0.4); opacity: 0.72; }
+.bp-card.done { border-color: rgba(34, 197, 94, 0.35); }
 .bp-card.ready { border-color: rgba(59, 130, 246, 0.45); }
 .bp-card-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .bp-card-label { font-size: 13px; font-weight: 700; min-width: 0; overflow-wrap: break-word; }
@@ -1135,6 +1169,14 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 .bp-card-why { font-size: 11px; color: var(--text-dim); line-height: 1.45; overflow-wrap: break-word; }
 .bp-card-actions { margin-top: 6px; }
 .bp-card-actions .btn-secondary { font-size: 11px; padding: 4px 10px; }
+.bp-empty {
+  grid-column: 1 / -1; font-size: 13px; color: var(--text-dim);
+  padding: 20px 14px; text-align: center; border: 1px dashed var(--border);
+  border-radius: var(--radius-lg); background: var(--surface);
+}
+@media (max-width: 640px) {
+  .goal-subnav-btn { flex: 1 1 calc(50% - 6px); }
+}
 
 /* Ordered goal path */
 .goal-detail-row.column { flex-direction: column; align-items: stretch; gap: 6px; }
@@ -1687,29 +1729,55 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 <div class="panel" id="panel-goals" role="tabpanel" data-tour="goals-panel">
   <div class="goal-intro">
     <h2>Goal Planner</h2>
-    <p>Pick a main goal — the milestone your account is working toward — and the planner walks the full quest dependency tree, merges every skill requirement, and tracks your progress live as you play. Your main goal is featured on the dashboard and boosts related recommendations. Goals sync to your account when signed in.</p>
+    <p>Track what you’re working on, pick a main milestone, or browse breakpoints your account is ready for. Your main goal drives the dashboard and “Do this next session”.</p>
   </div>
-  <div class="goal-section-title">Guided roadmaps <span class="section-note">step-by-step journeys for learning players</span></div>
-  <div class="roadmap-picker" id="roadmapPicker"></div>
-  <div class="goal-section-title">Account milestones <span class="section-note">pick one as your main goal</span></div>
-  <div class="goal-main-picker" id="goalMainPicker"></div>
-  <div class="goal-section-title">Account breakpoints <span class="section-note">Essential &amp; High power spikes — live from your sync</span></div>
-  <div class="bp-filters" id="breakpointFilters"></div>
-  <div class="bp-grid" id="breakpointGrid"></div>
-  <div class="goal-toolbar">
-    <span class="goal-toolbar-label">Add a goal</span>
-    <span class="goal-presets" id="goalPresetChips"></span>
-    <span class="goal-custom">
-      <input list="goalQuestOptions" id="goalQuestInput" class="goal-input" placeholder="…or any quest by name">
-      <datalist id="goalQuestOptions"></datalist>
-      <button class="btn-secondary" type="button" onclick="addGoalFromInput()">Add</button>
-    </span>
+
+  <div class="goal-subnav" role="tablist" aria-label="Goal planner sections">
+    <button type="button" class="goal-subnav-btn active" data-goals-tab="my" onclick="setGoalsTab('my')" role="tab" aria-selected="true">My goals</button>
+    <button type="button" class="goal-subnav-btn" data-goals-tab="pick" onclick="setGoalsTab('pick')" role="tab" aria-selected="false">Pick a goal</button>
+    <button type="button" class="goal-subnav-btn" data-goals-tab="breakpoints" onclick="setGoalsTab('breakpoints')" role="tab" aria-selected="false">Breakpoints</button>
+    <button type="button" class="goal-subnav-btn" data-goals-tab="money" onclick="setGoalsTab('money')" role="tab" aria-selected="false">Money</button>
   </div>
-  <div class="goal-list" id="goalList" role="list"></div>
-  <div class="hint" id="goalHint" style="display:none"></div>
-  <div class="money-section" id="moneySection" style="display:none">
-    <div class="goal-section-title">Money makers for your account <span class="section-note">gated by your actual stats &amp; quests</span></div>
-    <div class="money-grid" id="moneyGrid" role="list"></div>
+
+  <div class="goal-pane active" id="goalsPaneMy" data-goals-pane="my" role="tabpanel">
+    <div class="goal-toolbar">
+      <span class="goal-toolbar-label">Quick add</span>
+      <span class="goal-presets" id="goalPresetChips"></span>
+      <span class="goal-custom">
+        <input list="goalQuestOptions" id="goalQuestInput" class="goal-input" placeholder="Any quest by name…"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();addGoalFromInput();}">
+        <datalist id="goalQuestOptions"></datalist>
+        <button class="btn-secondary" type="button" onclick="addGoalFromInput()">Add</button>
+      </span>
+    </div>
+    <div class="goal-list" id="goalList" role="list"></div>
+    <div class="hint" id="goalHint" style="display:none"></div>
+  </div>
+
+  <div class="goal-pane" id="goalsPanePick" data-goals-pane="pick" role="tabpanel" hidden>
+    <p class="goal-pane-lead">Choose one main milestone (★) — or start a guided roadmap. This becomes what the dashboard optimizes for.</p>
+    <div class="goal-section-title">Big milestones</div>
+    <div class="goal-main-picker" id="goalMainPicker"></div>
+    <div class="goal-section-title">Guided roadmaps <span class="section-note">best if you’re newer</span></div>
+    <div class="roadmap-picker" id="roadmapPicker"></div>
+  </div>
+
+  <div class="goal-pane" id="goalsPaneBreakpoints" data-goals-pane="breakpoints" role="tabpanel" hidden>
+    <p class="goal-pane-lead">Power spikes from the progression checklist — live against your synced stats. Start with <strong>Ready</strong>.</p>
+    <div class="bp-summary" id="breakpointSummary"></div>
+    <div class="bp-toolbar">
+      <div class="bp-filters" id="breakpointStatusFilters" aria-label="Breakpoint status"></div>
+      <div class="bp-filters" id="breakpointFilters" aria-label="Breakpoint stage"></div>
+    </div>
+    <div class="bp-grid" id="breakpointGrid"></div>
+  </div>
+
+  <div class="goal-pane" id="goalsPaneMoney" data-goals-pane="money" role="tabpanel" hidden>
+    <p class="goal-pane-lead">Money makers gated by your actual stats and quests.</p>
+    <div class="money-section" id="moneySection" style="display:none">
+      <div class="money-grid" id="moneyGrid" role="list"></div>
+    </div>
+    <div class="hint" id="moneyHint" style="display:none">Sync a character to see money makers for your account.</div>
   </div>
 </div>
 
@@ -5507,16 +5575,19 @@ function addGoal(goal) {
   const goals = getPlayerGoals();
   const existing = goals.findIndex(g => goalKey(g) === goalKey(goal));
   if (existing !== -1) {
-    if (goal.main) { setMainGoal(existing); return; }
+    if (goal.main) { setMainGoal(existing); setGoalsTab('my'); return; }
     showToast('That goal is already on your list.', 'error');
+    setGoalsTab('my');
     return;
   }
   if (!goals.length) goal.main = true; // first goal becomes the main goal
   if (goal.main) goals.forEach(g => { g.main = false; });
   goals.push(goal);
   savePlayerGoals(goals);
+  setGoalsTab('my');
   renderGoals();
   renderDashboard();
+  showToast(`Tracking “${goal.label || goal.quest}”`, 'ok');
 }
 
 function addGoalPreset(i) {
@@ -5567,7 +5638,7 @@ function renderGoals() {
 
   const activeKeys = new Set(getPlayerGoals().map(goalKey));
 
-  // Guided roadmap cards with live progress
+  // Pick-tab pickers (milestones + roadmaps)
   const roadmapPicker = document.getElementById('roadmapPicker');
   if (roadmapPicker && typeof ROADMAPS !== 'undefined') {
     roadmapPicker.innerHTML = ROADMAPS.map((rm, i) => {
@@ -5581,7 +5652,6 @@ function renderGoals() {
     }).join('');
   }
 
-  // Main-goal milestone cards — re-rendered each time to reflect the current pick
   const mainPicker = document.getElementById('goalMainPicker');
   if (mainPicker && typeof GOAL_MAIN_PRESETS !== 'undefined') {
     const currentMainKey = getMainGoal() ? goalKey(getMainGoal().goal) : null;
@@ -5592,13 +5662,11 @@ function renderGoals() {
       const isSuggested = suggested?.idx === i;
       return `<button class="goal-main-card${isMain ? ' selected' : ''}" type="button" onclick="addMainGoalPreset(${i})"
         title="${isMain ? 'This is your main goal' : 'Set as your main goal'}">
-        <span class="goal-main-card-label">${p.label}${isMain ? ' <span class="goal-main-star">★</span>' : ''}${isSuggested ? ' <span class="goal-suggest-badge">Closest milestone</span>' : ''}</span>
+        <span class="goal-main-card-label">${p.label}${isMain ? ' <span class="goal-main-star">★</span>' : ''}${isSuggested ? ' <span class="goal-suggest-badge">Closest</span>' : ''}</span>
         <span class="goal-main-card-desc">${p.desc}</span>
       </button>`;
     }).join('');
   }
-
-  renderBreakpoints();
 
   // Preset chips + quest datalist, populated once
   const chips = document.getElementById('goalPresetChips');
@@ -5614,42 +5682,50 @@ function renderGoals() {
 
   if (!playerSkills.attack) {
     list.innerHTML = '';
-    hint.style.display = '';
-    hint.textContent = 'Search or sync a character first — goals track live quest and skill progress.';
+    if (hint) {
+      hint.style.display = '';
+      hint.textContent = 'Search or sync a character first — goals track live quest and skill progress.';
+    }
+    if (goalsTab === 'breakpoints') renderBreakpoints();
+    if (goalsTab === 'money') renderMoneyMakers();
     return;
   }
 
   const goals = getPlayerGoals();
   if (!goals.length) {
     list.innerHTML = '';
-    hint.style.display = '';
-    hint.textContent = 'No goals yet — pick a preset above or add any quest to build its full requirement tree.';
-    return;
+    if (hint) {
+      hint.style.display = '';
+      hint.innerHTML = `No goals yet.
+        <button type="button" class="btn-primary" style="margin-left:8px" onclick="setGoalsTab('pick')">Pick a milestone</button>
+        <button type="button" class="btn-secondary" style="margin-left:6px" onclick="setGoalsTab('breakpoints')">Browse ready breakpoints</button>`;
+    }
+  } else {
+    if (hint) hint.style.display = 'none';
+    list.innerHTML = goals.map((goal, idx) => {
+      const plan = computeGoalPlan(goal);
+      const complete = plan.doneSteps >= plan.totalSteps && plan.totalSteps > 0;
+      const sub = goal.roadmap ? 'Guided roadmap' : (goal.all ? 'All journal quests' : (goal.quest !== goal.label ? goal.quest : ''));
+      const body = complete ? '' : (goal.roadmap ? renderRoadmapBody(plan) : renderGoalPathBody(plan));
+      return `<div class="goal-card${complete ? ' complete' : ''}${goal.main ? ' is-main' : ''}" role="listitem">
+        <div class="goal-card-head">
+          <div class="goal-title">${goal.label || goal.quest}${sub ? ` <span class="goal-sub">${sub}</span>` : ''}</div>
+          <button class="goal-star${goal.main ? ' active' : ''}" type="button" onclick="setMainGoal(${idx})"
+            aria-label="${goal.main ? 'This is your main goal' : 'Set as main goal'}"
+            title="${goal.main ? 'Main goal — featured on your dashboard' : 'Set as main goal'}">${goal.main ? '★' : '☆'}</button>
+          <button class="goal-remove" type="button" onclick="removeGoal(${idx})" aria-label="Remove goal" title="Remove goal">×</button>
+        </div>
+        <div class="goal-progress" role="progressbar" aria-valuenow="${plan.pct}" aria-valuemin="0" aria-valuemax="100">
+          <div class="goal-progress-fill" style="width:${plan.pct}%"></div>
+        </div>
+        <div class="goal-progress-label">${complete ? 'Goal complete!' : `${plan.doneSteps} of ${plan.totalSteps} steps done · ${plan.pct}%`}</div>
+        ${body}
+      </div>`;
+    }).join('');
   }
-  hint.style.display = 'none';
 
-  list.innerHTML = goals.map((goal, idx) => {
-    const plan = computeGoalPlan(goal);
-    const complete = plan.doneSteps >= plan.totalSteps && plan.totalSteps > 0;
-    const sub = goal.roadmap ? 'Guided roadmap' : (goal.all ? 'All journal quests' : (goal.quest !== goal.label ? goal.quest : ''));
-    const body = complete ? '' : (goal.roadmap ? renderRoadmapBody(plan) : renderGoalPathBody(plan));
-    return `<div class="goal-card${complete ? ' complete' : ''}${goal.main ? ' is-main' : ''}" role="listitem">
-      <div class="goal-card-head">
-        <div class="goal-title">${goal.label || goal.quest}${sub ? ` <span class="goal-sub">${sub}</span>` : ''}</div>
-        <button class="goal-star${goal.main ? ' active' : ''}" type="button" onclick="setMainGoal(${idx})"
-          aria-label="${goal.main ? 'This is your main goal' : 'Set as main goal'}"
-          title="${goal.main ? 'Main goal — featured on your dashboard' : 'Set as main goal'}">${goal.main ? '★' : '☆'}</button>
-        <button class="goal-remove" type="button" onclick="removeGoal(${idx})" aria-label="Remove goal" title="Remove goal">×</button>
-      </div>
-      <div class="goal-progress" role="progressbar" aria-valuenow="${plan.pct}" aria-valuemin="0" aria-valuemax="100">
-        <div class="goal-progress-fill" style="width:${plan.pct}%"></div>
-      </div>
-      <div class="goal-progress-label">${complete ? 'Goal complete!' : `${plan.doneSteps} of ${plan.totalSteps} steps done · ${plan.pct}%`}</div>
-      ${body}
-    </div>`;
-  }).join('');
-
-  renderMoneyMakers();
+  if (goalsTab === 'breakpoints') renderBreakpoints();
+  if (goalsTab === 'money') renderMoneyMakers();
 }
 
 /** Numbered do-this-next walkthrough for quest-shaped goals. */
@@ -5704,13 +5780,29 @@ function renderRoadmapBody(plan) {
   }).join('');
 }
 
-/** "What can I do for gp right now" — bottom of the Goals tab. */
+/** Money makers pane (Goals → Money). */
 function renderMoneyMakers() {
   const section = document.getElementById('moneySection');
+  const hint = document.getElementById('moneyHint');
   if (!section) return;
-  if (!playerSkills.attack || dataSource === 'wom') { section.style.display = 'none'; return; }
+  if (!playerSkills.attack || dataSource === 'wom') {
+    section.style.display = 'none';
+    if (hint) {
+      hint.style.display = '';
+      hint.textContent = 'Sync a character to see money makers for your account.';
+    }
+    return;
+  }
   const { available, almost } = moneyMakerReport();
-  if (!available.length && !almost.length) { section.style.display = 'none'; return; }
+  if (!available.length && !almost.length) {
+    section.style.display = 'none';
+    if (hint) {
+      hint.style.display = '';
+      hint.textContent = 'No strong money makers matched your current stats yet — keep training and questing.';
+    }
+    return;
+  }
+  if (hint) hint.style.display = 'none';
   section.style.display = '';
   const card = (m, locked) => `<div class="money-card${locked ? ' locked' : ''}" role="listitem">
     <div class="money-head"><span class="money-name">${m.name}</span><span class="money-gp">~${formatGold(m.gpHr)}/hr</span></div>
@@ -5718,15 +5810,41 @@ function renderMoneyMakers() {
     ${locked ? `<div class="money-missing">${m.missing.map(x => `<span class="quest-req-tag ${x.type === 'skill' ? 'skill' : 'quest'}">${x.label}</span>`).join('')}</div>` : ''}
   </div>`;
   document.getElementById('moneyGrid').innerHTML =
-    available.slice(0, 6).map(m => card(m, false)).join('') +
-    almost.slice(0, 3).map(m => card(m, true)).join('');
+    available.slice(0, 8).map(m => card(m, false)).join('') +
+    almost.slice(0, 4).map(m => card(m, true)).join('');
 }
 
-// ─── ACCOUNT BREAKPOINTS ──────────────────────────────────────────────────────
+// ─── ACCOUNT BREAKPOINTS / GOALS TABS ─────────────────────────────────────────
+let goalsTab = 'my';
 let breakpointFilterStage = 'All';
+/** ready | locked | done | all — default Ready so the page isn't a wall of cards. */
+let breakpointFilterStatus = 'ready';
+
+function setGoalsTab(tab) {
+  goalsTab = tab || 'my';
+  document.querySelectorAll('.goal-subnav-btn').forEach((btn) => {
+    const on = btn.getAttribute('data-goals-tab') === goalsTab;
+    btn.classList.toggle('active', on);
+    btn.setAttribute('aria-selected', on ? 'true' : 'false');
+  });
+  document.querySelectorAll('.goal-pane').forEach((pane) => {
+    const on = pane.getAttribute('data-goals-pane') === goalsTab;
+    pane.classList.toggle('active', on);
+    if (on) pane.removeAttribute('hidden');
+    else pane.setAttribute('hidden', '');
+  });
+  if (goalsTab === 'breakpoints') renderBreakpoints();
+  if (goalsTab === 'money') renderMoneyMakers();
+  if (goalsTab === 'pick' || goalsTab === 'my') renderGoals();
+}
 
 function setBreakpointFilter(stage) {
   breakpointFilterStage = stage || 'All';
+  renderBreakpoints();
+}
+
+function setBreakpointStatusFilter(status) {
+  breakpointFilterStatus = status || 'ready';
   renderBreakpoints();
 }
 
@@ -5894,7 +6012,6 @@ function addBreakpointGoal(id) {
   if (!bp) return;
   if (bp.quest) {
     addGoal({ label: bp.label, quest: bp.quest });
-    showToast(`Added “${bp.label}” to your goals.`, 'ok');
     return;
   }
   if (bp.skill && bp.level) {
@@ -5910,27 +6027,62 @@ function addBreakpointGoal(id) {
 
 function renderBreakpoints() {
   const grid = document.getElementById('breakpointGrid');
-  const filters = document.getElementById('breakpointFilters');
+  const stageFilters = document.getElementById('breakpointFilters');
+  const statusFilters = document.getElementById('breakpointStatusFilters');
+  const summary = document.getElementById('breakpointSummary');
   if (!grid || typeof ACCOUNT_BREAKPOINTS === 'undefined') return;
 
+  if (!playerSkills.attack) {
+    if (summary) summary.innerHTML = '';
+    if (statusFilters) statusFilters.innerHTML = '';
+    if (stageFilters) stageFilters.innerHTML = '';
+    grid.innerHTML = `<div class="bp-empty">Sync a character to see which breakpoints you already have.</div>`;
+    return;
+  }
+
+  const evaluated = ACCOUNT_BREAKPOINTS.map(bp => ({ bp, state: evaluateBreakpoint(bp) }));
+  const counts = {
+    ready: evaluated.filter(r => r.state.ready).length,
+    locked: evaluated.filter(r => r.state.locked).length,
+    done: evaluated.filter(r => r.state.done).length,
+    all: evaluated.length,
+  };
+  if (summary) {
+    summary.innerHTML = `
+      <span><strong class="ready-n">${counts.ready}</strong> ready now</span>
+      <span><strong>${counts.locked}</strong> locked</span>
+      <span><strong class="done-n">${counts.done}</strong> done</span>`;
+  }
+
+  const statuses = [
+    { id: 'ready', label: `Ready (${counts.ready})` },
+    { id: 'locked', label: `Locked (${counts.locked})` },
+    { id: 'done', label: `Done (${counts.done})` },
+    { id: 'all', label: `All (${counts.all})` },
+  ];
+  if (statusFilters) {
+    statusFilters.innerHTML = statuses.map(s =>
+      `<button type="button" class="bp-filter status-${s.id}${breakpointFilterStatus === s.id ? ' active' : ''}"
+        onclick="setBreakpointStatusFilter('${s.id}')">${s.label}</button>`
+    ).join('');
+  }
+
   const stages = ['All', ...(typeof BREAKPOINT_STAGES !== 'undefined' ? BREAKPOINT_STAGES : [])];
-  if (filters) {
-    filters.innerHTML = stages.map(s =>
+  if (stageFilters) {
+    stageFilters.innerHTML = stages.map(s =>
       `<button type="button" class="bp-filter${breakpointFilterStage === s ? ' active' : ''}"
         onclick="setBreakpointFilter('${s}')">${s}</button>`
     ).join('');
   }
 
-  if (!playerSkills.attack) {
-    grid.innerHTML = `<div class="hint">Sync a character to see which breakpoints you already have.</div>`;
-    return;
-  }
+  let rows = evaluated.filter(row => {
+    if (breakpointFilterStage !== 'All' && row.bp.stage !== breakpointFilterStage) return false;
+    if (breakpointFilterStatus === 'ready') return row.state.ready;
+    if (breakpointFilterStatus === 'locked') return row.state.locked;
+    if (breakpointFilterStatus === 'done') return row.state.done;
+    return true;
+  });
 
-  const rows = ACCOUNT_BREAKPOINTS
-    .filter(bp => breakpointFilterStage === 'All' || bp.stage === breakpointFilterStage)
-    .map(bp => ({ bp, state: evaluateBreakpoint(bp) }));
-
-  // Ready first, then locked, then done — within each, Essential before High.
   const rank = (row) => {
     const pri = row.bp.priority === 'Essential' ? 0 : 1;
     if (row.state.ready) return 0 + pri;
@@ -5939,21 +6091,31 @@ function renderBreakpoints() {
   };
   rows.sort((a, b) => rank(a) - rank(b));
 
+  if (!rows.length) {
+    grid.innerHTML = `<div class="bp-empty">Nothing in this filter.
+      <button type="button" class="btn-secondary" style="margin-left:8px" onclick="setBreakpointStatusFilter('all')">Show all</button>
+    </div>`;
+    return;
+  }
+
   grid.innerHTML = rows.map(({ bp, state }) => {
     const cls = state.done ? 'done' : state.ready ? 'ready' : 'locked';
     const status = state.done ? 'Done' : state.ready ? 'Ready' : 'Locked';
+    const cta = state.done
+      ? ''
+      : state.ready
+        ? (bp.quest ? 'Add as goal' : bp.type === 'pvm' ? 'View bosses' : 'Train this')
+        : (bp.quest ? 'View path' : 'See skills');
     const action = state.done ? '' : `
       <div class="bp-card-actions">
-        <button type="button" class="btn-secondary" onclick="addBreakpointGoal('${bp.id}')">
-          ${bp.quest ? 'Add as goal' : 'Open skills'}
-        </button>
+        <button type="button" class="btn-secondary" onclick="addBreakpointGoal('${bp.id}')">${cta}</button>
       </div>`;
     return `<div class="bp-card ${cls}">
       <div class="bp-card-top">
         <span class="bp-card-label">${bp.label}</span>
         <span class="bp-card-status">${status}</span>
       </div>
-      <div class="bp-card-meta">${bp.priority} · ${bp.stage} · ${bp.category}</div>
+      <div class="bp-card-meta">${bp.priority} · ${bp.stage}</div>
       <div class="bp-card-why">${bp.why}</div>
       ${state.progress ? `<div class="bp-card-meta">${state.progress}</div>` : ''}
       ${action}
