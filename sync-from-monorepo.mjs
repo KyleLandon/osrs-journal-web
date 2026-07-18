@@ -30,6 +30,8 @@ const assetsDest = join(here, "assets");
 if (existsSync(assetsSrc)) {
   mkdirSync(assetsDest, { recursive: true });
   for (const name of readdirSync(assetsSrc)) {
+    // Skip Figma Make prototype (large; not part of the live site).
+    if (name === "Redesign OSRS Journal UI") continue;
     cpSync(join(assetsSrc, name), join(assetsDest, name), { recursive: true });
   }
   console.log("Copied assets/");

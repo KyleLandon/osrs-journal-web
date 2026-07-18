@@ -113,6 +113,7 @@ export default {
       path === '/index.html' ||
       path.endsWith('/game-data.js') ||
       path === '/game-data.js' ||
+      path.endsWith('/osrs-redesign.css') ||
       path.endsWith('.js');
     if (isAppShell && assetRes.status === 200) {
       const headers = new Headers(assetRes.headers);
