@@ -834,17 +834,52 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
   text-transform: uppercase;
   letter-spacing: 0.4px;
 }
-.equip-sync-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; margin-top: 14px; }
-.equip-sync-slot {
-  background: var(--bg-subtle);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius);
-  padding: 10px 12px;
-  display: flex; align-items: center; gap: 10px;
+/* Worn loadout — OSRS paper-doll layout */
+.worn-doll {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  margin: 18px auto 0; max-width: 360px;
+  padding: 18px 16px;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
 }
-.equip-sync-slot .equip-slot-text { min-width: 0; flex: 1; }
-.equip-sync-slot .item-name { font-size: 12px; color: var(--text); font-weight: 600; }
-.equip-sync-slot.empty .item-name { color: var(--text-muted); font-style: italic; font-weight: 400; }
+.worn-doll-row {
+  display: flex; gap: 10px; justify-content: center; align-items: flex-start;
+  width: 100%;
+}
+.worn-slot {
+  width: 88px;
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+}
+.worn-slot.spacer { visibility: hidden; pointer-events: none; }
+.worn-slot-box {
+  width: 52px; height: 52px;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(160deg, #3a3f4a 0%, #2a2f3a 55%, #1e222c 100%);
+  border: 1px solid #555b68;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 2px 6px rgba(0,0,0,0.35);
+  border-radius: 4px;
+}
+.worn-slot.empty .worn-slot-box {
+  background: linear-gradient(160deg, #2e333d 0%, #222730 100%);
+  border-color: #3d4452;
+}
+.worn-slot-box .item-icon {
+  width: 36px; height: 36px;
+  background: transparent; border-radius: 0;
+}
+.worn-slot-name {
+  font-size: 10px; font-weight: 600; line-height: 1.25;
+  color: var(--text); text-align: center;
+  max-width: 88px;
+  overflow: hidden; display: -webkit-box;
+  -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.worn-slot.empty .worn-slot-name { color: var(--text-dim); font-weight: 500; }
+.worn-slot-type {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.04em;
+  text-transform: uppercase; color: var(--text-dim); text-align: center;
+}
 .equip-sync-hint { font-size: 12px; color: var(--text-muted); margin-top: 12px; }
 .bank-gear-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
 .bank-gear-chip {
@@ -1722,7 +1757,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 <div class="panel" id="panel-equipment" role="tabpanel">
   <div class="equip-sync-section" id="equipSyncSection">
     <div class="section-title">Worn Equipment <span class="equip-sync-badge" id="equipSyncBadge" style="display:none">Live sync</span><span class="gear-live-label" id="equipLiveLabel" style="display:none">Synced from RuneLite</span></div>
-    <div class="equip-sync-grid" id="equipSyncGrid"></div>
+    <div class="worn-doll" id="equipSyncGrid"></div>
     <p class="equip-sync-hint" id="equipSyncHint">Log in with the RuneLite plugin to sync worn items.</p>
   </div>
   <div class="equip-sync-section" id="bankGearSection">
@@ -4747,30 +4782,47 @@ function equipEmptyHint(kind) {
     : 'Log in with the RuneLite plugin to sync worn items.';
 }
 
+function renderWornSlot(slot) {
+  if (!slot) return `<div class="worn-slot spacer" aria-hidden="true"></div>`;
+  const item = wornGear[slot];
+  const empty = !item;
+  const icon = empty
+    ? ''
+    : itemIconHtml(wornGearIds[slot] ?? item, { size: 'lg', alt: item });
+  const name = empty ? 'Empty' : item;
+  return `<div class="worn-slot ${empty ? 'empty' : ''}" title="${(SLOT_LABELS[slot] || slot).replace(/"/g, '&quot;')}${empty ? '' : ': ' + String(item).replace(/"/g, '&quot;')}">
+    <div class="worn-slot-box">${icon || ''}</div>
+    <div class="worn-slot-type">${SLOT_LABELS[slot] || slot}</div>
+    <div class="worn-slot-name">${name}</div>
+  </div>`;
+}
+
 function renderSyncedEquipment() {
   const grid = document.getElementById('equipSyncGrid');
   const hint = document.getElementById('equipSyncHint');
   const badge = document.getElementById('equipSyncBadge');
+  const live = document.getElementById('equipLiveLabel');
+  // Classic OSRS equipment layout (head / cape-neck-ammo / weapon-body-shield / legs / gloves-boots-ring)
+  const rows = [
+    [null, 'head', null],
+    ['cape', 'neck', 'ammo'],
+    ['weapon', 'body', 'shield'],
+    [null, 'legs', null],
+    ['gloves', 'boots', 'ring'],
+  ];
   if (!equipSynced || !Object.keys(wornGear).length) {
     grid.innerHTML = '';
     hint.textContent = equipEmptyHint('gear');
     hint.style.display = '';
     badge.style.display = 'none';
+    if (live) live.style.display = 'none';
   } else {
     hint.style.display = 'none';
     badge.style.display = '';
-    grid.innerHTML = SLOT_ORDER.map(slot => {
-      const item = wornGear[slot];
-      const empty = !item;
-      const icon = empty ? '' : itemIconHtml(wornGearIds[slot] ?? item, { alt: item });
-      return `<div class="equip-sync-slot ${empty ? 'empty' : ''}">
-        ${icon || '<span class="item-icon" style="visibility:hidden" aria-hidden="true"></span>'}
-        <div class="equip-slot-text">
-          <div class="slot-label">${SLOT_LABELS[slot] || slot}</div>
-          <div class="item-name">${empty ? 'Empty' : item}</div>
-        </div>
-      </div>`;
-    }).join('');
+    if (live) live.style.display = '';
+    grid.innerHTML = rows.map((row) =>
+      `<div class="worn-doll-row">${row.map(renderWornSlot).join('')}</div>`
+    ).join('');
   }
   renderBankGear();
 }
