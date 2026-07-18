@@ -103,16 +103,18 @@ export default {
     }
 
     const assetRes = await env.ASSETS.fetch(request);
-    // HTML is the app shell (auth callback logic lives here) — never let the CDN
-    // keep a stale copy after deploy, or OAuth returns look "broken" for minutes.
+    // App shell (HTML + game-data.js) must not linger on the CDN after deploys.
     const ct = assetRes.headers.get('content-type') || '';
     const path = url.pathname;
-    const isHtml =
+    const isAppShell =
       ct.includes('text/html') ||
       path === '/' ||
       path.endsWith('.html') ||
-      path === '/index.html';
-    if (isHtml && assetRes.status === 200) {
+      path === '/index.html' ||
+      path.endsWith('/game-data.js') ||
+      path === '/game-data.js' ||
+      path.endsWith('.js');
+    if (isAppShell && assetRes.status === 200) {
       const headers = new Headers(assetRes.headers);
       headers.set('Cache-Control', 'no-store, max-age=0');
       return new Response(assetRes.body, {
