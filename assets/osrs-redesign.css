@@ -198,13 +198,11 @@ body.app-active .app-shell {
   border-bottom: 1px solid var(--border-muted);
   text-decoration: none; color: var(--text);
 }
-.sb-logo-mark {
-  width: 28px; height: 28px; border-radius: 6px; flex-shrink: 0;
-  background: linear-gradient(135deg, var(--accent-dark), var(--accent));
-  display: flex; align-items: center; justify-content: center;
-  overflow: hidden;
+.sb-logo-img {
+  height: 28px; width: auto; display: block; flex-shrink: 0;
+  object-fit: contain;
 }
-.sb-logo-mark img { width: 18px; height: 18px; object-fit: contain; }
+.app-sidebar.collapsed .sb-logo-img { height: 26px; }
 .sb-brand-text { font-weight: 800; font-size: 15px; letter-spacing: -0.01em; }
 .sb-brand-text span { color: var(--accent); }
 
@@ -415,7 +413,9 @@ body.app-active .app-shell {
   display: flex; align-items: center; gap: 8px;
   text-decoration: none; color: var(--text); font-weight: 800; font-size: 15px;
 }
-.landing-nav-brand span { color: var(--accent); }
+.landing-nav-brand .brand-logo {
+  height: 32px; width: auto; display: block;
+}
 .landing-nav-spacer { flex: 1; }
 .landing-nav-actions { display: flex; align-items: center; gap: 8px; }
 
