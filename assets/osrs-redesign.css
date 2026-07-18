@@ -685,10 +685,6 @@ body.app-active .app-shell {
   padding: 16px;
   margin-bottom: 14px;
 }
-.worn-doll {
-  background: rgba(0, 0, 0, 0.35) !important;
-  border-color: var(--border) !important;
-}
 .equip-simulator-title {
   font-size: 12px; font-weight: 700; color: var(--text-muted);
   text-transform: uppercase; letter-spacing: 0.08em;
