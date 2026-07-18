@@ -1772,9 +1772,9 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
     <p class="equip-sync-hint" id="equipSyncHint">Log in with the RuneLite plugin to sync worn items.</p>
   </div>
   <div class="equip-sync-section" id="bankGearSection">
-    <div class="section-title">Bank Equipment <span class="equip-sync-badge" id="bankGearBadge" style="display:none">Live sync</span></div>
+    <div class="section-title">Bank &amp; Inventory Gear <span class="equip-sync-badge" id="bankGearBadge" style="display:none">Live sync</span></div>
     <div class="bank-gear-list" id="bankGearList"></div>
-    <p class="equip-sync-hint" id="bankGearHint">Open your bank in-game with the RuneLite plugin to sync equipment items.</p>
+    <p class="equip-sync-hint" id="bankGearHint">Open your bank or update inventory with Sync Bank &amp; Inventory enabled.</p>
   </div>
   <div class="equip-simulator-title">Loadout simulator · separate from live synced gear</div>
   <div class="equip-layout">
@@ -3077,8 +3077,18 @@ let dataSource = 'none'; // 'supabase' | 'wom' | 'none'
 let playerGold = parseInt(localStorage.getItem('osrs_gold') || '0', 10) || 0;
 let bankSynced = false;
 let playerBank = [];
-/** Allowlisted inventory items from plugin (Marks of grace, Graceful pieces). */
+/** Inventory snapshot from plugin (Sync Bank & Inventory) — counted with bank. */
 let playerInventory = [];
+
+/** Bank + inventory rows for ownership / quantity checks. */
+function ownedItemRows() {
+  return [...(playerBank || []), ...(playerInventory || [])];
+}
+
+/** True when bank and/or inventory has been synced. */
+function hasSyncedItems() {
+  return !!bankSynced || !!(playerInventory && playerInventory.length);
+}
 let equipSynced = false;
 let wornGear = {};
 /** Parallel map of equipment slot → item_id (when synced from RuneLite). */
@@ -3161,7 +3171,7 @@ function isGearItemName(name) {
   return GEAR_KEYWORDS.some(kw => lower.includes(kw));
 }
 
-/** Merge worn + bank into owned gear list for export. */
+/** Merge worn + bank + inventory into owned gear list for export / Gear tab. */
 function buildOwnedGearReport() {
   const byName = new Map();
 
@@ -3173,30 +3183,36 @@ function buildOwnedGearReport() {
       item_id: wornGearIds[slot] ?? null,
       worn: true,
       in_bank: false,
+      in_inventory: false,
       quantity: 1,
       worn_slots: [slot],
     });
   }
 
-  for (const row of playerBank) {
-    if (!isGearItemName(row.item_name)) continue;
-    const key = row.item_name.toLowerCase();
-    const existing = byName.get(key);
-    if (existing) {
-      existing.in_bank = true;
-      existing.quantity += row.quantity || 1;
-      if (existing.item_id == null && row.item_id != null) existing.item_id = row.item_id;
-    } else {
-      byName.set(key, {
-        name: row.item_name,
-        item_id: row.item_id ?? null,
-        worn: false,
-        in_bank: true,
-        quantity: row.quantity || 1,
-        worn_slots: [],
-      });
+  const addContainerRows = (rows, flag) => {
+    for (const row of rows || []) {
+      if (!isGearItemName(row.item_name)) continue;
+      const key = row.item_name.toLowerCase();
+      const existing = byName.get(key);
+      if (existing) {
+        existing[flag] = true;
+        existing.quantity += row.quantity || 1;
+        if (existing.item_id == null && row.item_id != null) existing.item_id = row.item_id;
+      } else {
+        byName.set(key, {
+          name: row.item_name,
+          item_id: row.item_id ?? null,
+          worn: false,
+          in_bank: flag === 'in_bank',
+          in_inventory: flag === 'in_inventory',
+          quantity: row.quantity || 1,
+          worn_slots: [],
+        });
+      }
     }
-  }
+  };
+  addContainerRows(playerBank, 'in_bank');
+  addContainerRows(playerInventory, 'in_inventory');
 
   return [...byName.values()].sort((a, b) => a.name.localeCompare(b.name));
 }
@@ -3204,7 +3220,11 @@ function buildOwnedGearReport() {
 function formatGearLocation(item) {
   const parts = [];
   if (item.worn) parts.push('worn' + (item.worn_slots.length ? ' (' + item.worn_slots.join(', ') + ')' : ''));
-  if (item.in_bank) parts.push('bank' + (item.quantity > 1 ? ' x' + item.quantity : ''));
+  if (item.in_bank) parts.push('bank');
+  if (item.in_inventory) parts.push('inventory');
+  if ((item.in_bank || item.in_inventory) && item.quantity > 1) {
+    parts[parts.length - 1] += ' x' + item.quantity;
+  }
   return parts.join(' + ') || 'owned';
 }
 
@@ -3676,7 +3696,7 @@ function renderRecap() {
     }
   } else {
     wealthEl.textContent = '—';
-    wealthSub.textContent = bankSynced ? 'Loading GE prices…' : 'Open bank in-game to track';
+    wealthSub.textContent = hasSyncedItems() ? 'Loading GE prices…' : 'Open bank in-game to track';
   }
 
   document.getElementById('xpSpark').innerHTML = sparklineSvg(dailyTotalXpSeries());
@@ -3898,9 +3918,9 @@ function ensureItemIcons() {
 
 /** Total bank value (items at GE price + coins); null until prices load. */
 function bankValueEstimate() {
-  if (!gePrices || !bankSynced) return null;
+  if (!gePrices || !hasSyncedItems()) return null;
   let total = playerGold || 0;
-  for (const r of playerBank) {
+  for (const r of ownedItemRows()) {
     const p = gePrices[r.item_id];
     if (p) total += p * (r.quantity || 1);
   }
@@ -4650,8 +4670,8 @@ function buildGearUpgradeRecs() {
   const gearSet = GEAR[style];
   if (!gearSet) return [];
 
-  const bankNames = bankSynced
-    ? new Set(playerBank.map(r => (r.item_name || '').toLowerCase()))
+  const bankNames = hasSyncedItems()
+    ? new Set(ownedItemRows().map(r => (r.item_name || '').toLowerCase()))
     : new Set();
   const out = [];
 
@@ -4785,9 +4805,9 @@ function renderStats() {
 
 /** { [skill]: { total, fromLevel, toLevel, items: [{name, qty, xp, via}] } } or null. */
 function computeBankedXp() {
-  if (!bankSynced || !playerBank.length || typeof BANKED_XP === 'undefined') return null;
+  if (!hasSyncedItems() || typeof BANKED_XP === 'undefined') return null;
   const bySkill = {};
-  for (const row of playerBank) {
+  for (const row of ownedItemRows()) {
     const opts = BANKED_XP[(row.item_name || '').toLowerCase()];
     if (!opts) continue;
     const qty = row.quantity || 1;
@@ -4843,7 +4863,7 @@ function equipEmptyHint(kind) {
     return `${kind === 'bank' ? 'Bank' : 'Equipment'} data requires the RuneLite OSRS Journal plugin.`;
   }
   return kind === 'bank'
-    ? 'Open your bank in-game with the RuneLite plugin to sync equipment items.'
+    ? 'Open your bank or update inventory with Sync Bank & Inventory enabled.'
     : 'Log in with the RuneLite plugin to sync worn items.';
 }
 
@@ -4882,26 +4902,31 @@ function renderBankGear() {
   const list = document.getElementById('bankGearList');
   const hint = document.getElementById('bankGearHint');
   const badge = document.getElementById('bankGearBadge');
-  if (!bankSynced) {
+  if (!hasSyncedItems()) {
     list.innerHTML = '';
     hint.textContent = equipEmptyHint('bank');
     hint.style.display = '';
     badge.style.display = 'none';
     return;
   }
-  const gear = buildOwnedGearReport().filter(g => g.in_bank);
+  const gear = buildOwnedGearReport().filter(g => g.in_bank || g.in_inventory);
   if (!gear.length) {
     list.innerHTML = '';
-    hint.textContent = 'Bank synced, but no recognized equipment items found.';
+    hint.textContent = 'Synced, but no recognized equipment items found in bank or inventory.';
     hint.style.display = '';
     badge.style.display = 'none';
     return;
   }
   hint.style.display = 'none';
   badge.style.display = '';
-  list.innerHTML = gear.map(g =>
-    `<span class="bank-gear-chip">${itemIconHtml(g.item_id ?? g.name, { size: 'sm', alt: g.name, name: g.name })}<span>${g.name}${g.quantity > 1 ? `<span class="qty">x${g.quantity}</span>` : ''}${g.worn ? '<span class="qty">· worn</span>' : ''}</span></span>`
-  ).join('');
+  list.innerHTML = gear.map(g => {
+    const loc = [
+      g.worn ? 'worn' : '',
+      g.in_bank ? 'bank' : '',
+      g.in_inventory ? 'inv' : '',
+    ].filter(Boolean).join(' · ');
+    return `<span class="bank-gear-chip">${itemIconHtml(g.item_id ?? g.name, { size: 'sm', alt: g.name, name: g.name })}<span>${g.name}${g.quantity > 1 ? `<span class="qty">x${g.quantity}</span>` : ''}${loc ? `<span class="qty">· ${loc}</span>` : ''}</span></span>`;
+  }).join('');
 }
 
 function setStyle(style, btn) {
@@ -5250,10 +5275,16 @@ function buildExportData() {
 
   const bosses = getBossExportEntries();
   const ownedGear = buildOwnedGearReport();
-  const bankGear = playerBank
+  const bankGear = ownedItemRows()
     .filter(r => isGearItemName(r.item_name))
-    .map(r => ({ item_id: r.item_id, name: r.item_name, quantity: r.quantity }))
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .reduce((acc, r) => {
+      const key = (r.item_name || '').toLowerCase();
+      const existing = acc.get(key);
+      if (existing) existing.quantity += r.quantity || 1;
+      else acc.set(key, { item_id: r.item_id, name: r.item_name, quantity: r.quantity || 1 });
+      return acc;
+    }, new Map());
+  const bankGearList = [...bankGear.values()].sort((a, b) => a.name.localeCompare(b.name));
 
   return {
     meta: {
@@ -5280,23 +5311,25 @@ function buildExportData() {
     economy: {
       gold: playerGold,
       gold_formatted: formatGold(playerGold),
-      bank_synced: bankSynced,
+      bank_synced: hasSyncedItems(),
       bank_item_count: playerBank.length,
+      inventory_item_count: (playerInventory || []).length,
     },
     skills,
     equipment: {
       worn_synced: equipSynced,
       worn: { ...wornGear },
-      bank_synced: bankSynced,
+      bank_synced: hasSyncedItems(),
       owned_gear: ownedGear.map(g => ({
         name: g.name,
         location: formatGearLocation(g),
         worn: g.worn,
         in_bank: g.in_bank,
+        in_inventory: g.in_inventory,
         quantity: g.quantity,
         worn_slots: g.worn_slots,
       })),
-      bank_gear: bankGear,
+      bank_gear: bankGearList,
     },
     quests: {
       completed,
@@ -6289,7 +6322,7 @@ function setBreakpointStatusFilter(status) {
   renderBreakpoints();
 }
 
-/** True if any needle matches a worn, bank, or tracked-inventory item name. */
+/** True if any needle matches a worn, bank, or inventory item name. */
 function playerOwnsAnyItem(needles) {
   if (!Array.isArray(needles) || !needles.length) return false;
   const names = [];
@@ -6298,7 +6331,7 @@ function playerOwnsAnyItem(needles) {
       if (v) names.push(String(v).toLowerCase());
     }
   }
-  for (const row of [...(playerBank || []), ...(playerInventory || [])]) {
+  for (const row of ownedItemRows()) {
     if (row?.item_name) names.push(String(row.item_name).toLowerCase());
   }
   if (!names.length) return false;
@@ -6308,12 +6341,12 @@ function playerOwnsAnyItem(needles) {
   });
 }
 
-/** Sum quantity matching a name across bank + tracked inventory. */
+/** Sum quantity matching a name across bank + inventory. */
 function bankItemQty(needle) {
   const n = String(needle || '').toLowerCase();
   if (!n) return 0;
   let qty = 0;
-  for (const row of [...(playerBank || []), ...(playerInventory || [])]) {
+  for (const row of ownedItemRows()) {
     const name = String(row?.item_name || '').toLowerCase();
     if (name === n || name.includes(n)) qty += row.quantity || 0;
   }
@@ -6367,7 +6400,7 @@ function computeGracefulProgress() {
     marks, marksBank: markParts.bank, marksInv: markParts.inv,
     credited, remaining, totalMarks,
     done, pct,
-    bankSynced: !!bankSynced,
+    bankSynced: hasSyncedItems(),
   };
 }
 
@@ -6375,7 +6408,7 @@ function computeGracefulGoalPlan() {
   const g = computeGracefulProgress();
   const next = [];
   if (!g.done) {
-    if (!g.bankSynced) next.push('Open your bank in-game to sync Marks of grace & Graceful');
+    if (!g.bankSynced) next.push('Enable Sync Bank & Inventory, then open your bank or move items');
     else if (g.remaining > 0) next.push(`${g.remaining} more Mark${g.remaining === 1 ? '' : 's'} of grace`);
     if (g.missing[0]) next.push(`Next piece: ${g.missing[0].name} (${g.missing[0].cost} marks)`);
   }
@@ -6393,7 +6426,7 @@ function renderGracefulGoalBody(plan) {
   const g = plan.graceful || computeGracefulProgress();
   const pieces = (typeof GRACEFUL_SET !== 'undefined' && GRACEFUL_SET.pieces) ? GRACEFUL_SET.pieces : [];
   if (!g.bankSynced && !g.piecesOwned) {
-    return `<div class="goal-path"><p class="goal-path-note">Open your bank with the RuneLite plugin to count Marks of grace and Graceful pieces.</p></div>`;
+    return `<div class="goal-path"><p class="goal-path-note">Enable Sync Bank & Inventory in the plugin so Marks of grace and Graceful pieces in your bank or bag count.</p></div>`;
   }
   const rows = pieces.map(p => {
     const have = g.owned.some(o => o.key === p.key);
