@@ -1224,6 +1224,25 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 .path-badge.skill { background: var(--orange-soft); color: var(--orange); border-color: rgba(245, 158, 11, 0.3); cursor: help; }
 .goal-path-more summary { font-size: 11px; color: var(--text-muted); cursor: pointer; margin: 4px 0; }
 .goal-path-more summary:hover { color: var(--accent-hover); }
+.graceful-progress { padding-left: 0; margin-top: 10px; }
+.graceful-stats {
+  display: flex; flex-wrap: wrap; gap: 10px 16px;
+  font-size: 12px; color: var(--text-muted); margin-bottom: 10px;
+}
+.graceful-stats strong { color: var(--text); font-weight: 700; }
+.graceful-progress .goal-path-list {
+  list-style: none; margin: 0; padding: 0;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.graceful-progress .goal-path-list li {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12.5px; color: var(--text-muted);
+}
+.graceful-progress .goal-path-list li.path-done { color: var(--text); }
+.graceful-progress .path-mark { width: 1.1em; text-align: center; color: var(--green); }
+.graceful-progress .goal-path-list li:not(.path-done) .path-mark { color: var(--text-dim); }
+.graceful-progress .path-meta { margin-left: auto; font-size: 11px; color: var(--text-dim); }
+.goal-path-note { font-size: 12px; color: var(--text-muted); margin: 8px 0 0; }
 .hint-hover { font-weight: 500; text-transform: none; letter-spacing: 0; color: var(--text-muted); }
 
 /* Roadmap stages */
@@ -4436,7 +4455,10 @@ function suggestedMainPreset() {
   if (typeof GOAL_MAIN_PRESETS === 'undefined' || !playerSkills.attack) return null;
   let best = null;
   GOAL_MAIN_PRESETS.forEach((p, idx) => {
-    const plan = computeGoalPlan(p.all ? { label: p.label, all: true } : { label: p.label, quest: p.quest });
+    const goal = p.set ? { label: p.label, set: p.set }
+      : p.all ? { label: p.label, all: true }
+      : { label: p.label, quest: p.quest };
+    const plan = computeGoalPlan(goal);
     if (plan.totalSteps > 0 && plan.doneSteps >= plan.totalSteps) return; // already done
     if (!best || plan.pct > best.pct) best = { preset: p, idx, pct: plan.pct };
   });
@@ -5292,6 +5314,23 @@ function buildMainGoalExport() {
   const main = getMainGoal();
   if (!main) return null;
   const plan = computeGoalPlan(main.goal);
+  if (main.goal.set === 'graceful' && plan.graceful) {
+    const g = plan.graceful;
+    return {
+      label: main.goal.label || 'Graceful outfit',
+      target: 'Graceful outfit (260 Marks of grace)',
+      progress_pct: plan.pct,
+      steps_done: plan.doneSteps,
+      steps_total: plan.totalSteps,
+      pieces_owned: g.piecesOwned,
+      pieces_total: g.piecesTotal,
+      marks_banked: g.marks,
+      marks_still_needed: g.remaining,
+      missing_pieces: g.missing.map(p => `${p.name} (${p.cost} marks)`),
+      quests_remaining: [],
+      skill_targets: [],
+    };
+  }
   return {
     label: main.goal.label || main.goal.quest,
     target: main.goal.all ? 'Quest point cape (all quests)' : main.goal.quest,
@@ -5801,6 +5840,7 @@ function questDependencyChain(name, seen = new Set()) {
 
 function computeGoalPlan(goal) {
   if (goal.roadmap) return computeRoadmapPlan(goal);
+  if (goal.set === 'graceful') return computeGracefulGoalPlan();
   const questNames = goal.all
     ? getJournalQuestList().map(q => q.name)
     : [...questDependencyChain(goal.quest)];
@@ -5938,6 +5978,7 @@ function computeRoadmapPlan(goal) {
 
 function goalKey(goal) {
   if (goal.roadmap) return '__rm_' + goal.roadmap;
+  if (goal.set) return '__set_' + goal.set;
   return goal.all ? '__all' : normalizeQuestName(goal.quest);
 }
 
@@ -5970,6 +6011,10 @@ function addGoalPreset(i) {
 function addMainGoalPreset(i) {
   const p = GOAL_MAIN_PRESETS[i];
   if (!p) return;
+  if (p.set) {
+    addGoal({ label: p.label, set: p.set, id: p.id, main: true });
+    return;
+  }
   addGoal(p.all ? { label: p.label, all: true, main: true } : { label: p.label, quest: p.quest, main: true });
 }
 
@@ -6027,12 +6072,20 @@ function renderGoals() {
     const currentMainKey = getMainGoal() ? goalKey(getMainGoal().goal) : null;
     const suggested = currentMainKey ? null : suggestedMainPreset();
     mainPicker.innerHTML = GOAL_MAIN_PRESETS.map((p, i) => {
-      const key = p.all ? '__all' : normalizeQuestName(p.quest);
+      const key = p.set ? '__set_' + p.set : (p.all ? '__all' : normalizeQuestName(p.quest));
       const isMain = key === currentMainKey;
       const isSuggested = suggested?.idx === i;
+      let pctBadge = '';
+      if (p.set && playerSkills.attack) {
+        const plan = computeGoalPlan({ label: p.label, set: p.set });
+        const g = plan.graceful;
+        pctBadge = g
+          ? ` <span class="goal-main-card-pct">${g.piecesOwned}/${g.piecesTotal} · ${g.marks} marks</span>`
+          : ` <span class="goal-main-card-pct">${plan.pct}%</span>`;
+      }
       return `<button class="goal-main-card${isMain ? ' selected' : ''}" type="button" onclick="addMainGoalPreset(${i})"
         title="${isMain ? 'This is your main goal' : 'Set as your main goal'}">
-        <span class="goal-main-card-label">${p.label}${isMain ? ' <span class="goal-main-star">★</span>' : ''}${isSuggested ? ' <span class="goal-suggest-badge">Closest</span>' : ''}</span>
+        <span class="goal-main-card-label">${p.label}${isMain ? ' <span class="goal-main-star">★</span>' : ''}${isSuggested ? ' <span class="goal-suggest-badge">Closest</span>' : ''}${pctBadge}</span>
         <span class="goal-main-card-desc">${p.desc}</span>
       </button>`;
     }).join('');
@@ -6075,8 +6128,17 @@ function renderGoals() {
     list.innerHTML = goals.map((goal, idx) => {
       const plan = computeGoalPlan(goal);
       const complete = plan.doneSteps >= plan.totalSteps && plan.totalSteps > 0;
-      const sub = goal.roadmap ? 'Guided roadmap' : (goal.all ? 'All journal quests' : (goal.quest !== goal.label ? goal.quest : ''));
-      const body = complete ? '' : (goal.roadmap ? renderRoadmapBody(plan) : renderGoalPathBody(plan));
+      const sub = goal.roadmap ? 'Guided roadmap'
+        : goal.set === 'graceful' ? 'Marks of grace · bank sync'
+        : (goal.all ? 'All journal quests' : (goal.quest !== goal.label ? goal.quest : ''));
+      const body = complete ? ''
+        : goal.set === 'graceful' ? renderGracefulGoalBody(plan)
+        : (goal.roadmap ? renderRoadmapBody(plan) : renderGoalPathBody(plan));
+      const progressLabel = complete
+        ? 'Goal complete!'
+        : goal.set === 'graceful' && plan.graceful
+          ? `${plan.graceful.piecesOwned}/${plan.graceful.piecesTotal} pieces · ${plan.graceful.marks} marks · ${plan.graceful.remaining} still needed`
+          : `${plan.doneSteps} of ${plan.totalSteps} steps done · ${plan.pct}%`;
       return `<div class="goal-card${complete ? ' complete' : ''}${goal.main ? ' is-main' : ''}" role="listitem">
         <div class="goal-card-head">
           <div class="goal-title">${goal.label || goal.quest}${sub ? ` <span class="goal-sub">${sub}</span>` : ''}</div>
@@ -6088,7 +6150,7 @@ function renderGoals() {
         <div class="goal-progress" role="progressbar" aria-valuenow="${plan.pct}" aria-valuemin="0" aria-valuemax="100">
           <div class="goal-progress-fill" style="width:${plan.pct}%"></div>
         </div>
-        <div class="goal-progress-label">${complete ? 'Goal complete!' : `${plan.doneSteps} of ${plan.totalSteps} steps done · ${plan.pct}%`}</div>
+        <div class="goal-progress-label">${progressLabel}</div>
         ${body}
       </div>`;
     }).join('');
@@ -6239,6 +6301,89 @@ function playerOwnsAnyItem(needles) {
   });
 }
 
+/** Sum quantity of bank items matching a name (exact or substring). */
+function bankItemQty(needle) {
+  const n = String(needle || '').toLowerCase();
+  if (!n || !Array.isArray(playerBank)) return 0;
+  let qty = 0;
+  for (const row of playerBank) {
+    const name = String(row?.item_name || '').toLowerCase();
+    if (name === n || name.includes(n)) qty += row.quantity || 0;
+  }
+  return qty;
+}
+
+/**
+ * Graceful outfit progress from worn + bank sync.
+ * Marks still needed = 260 − (cost of owned pieces) − banked Marks of grace.
+ */
+function computeGracefulProgress() {
+  const pieces = (typeof GRACEFUL_SET !== 'undefined' && GRACEFUL_SET.pieces) ? GRACEFUL_SET.pieces : [];
+  const totalMarks = (typeof GRACEFUL_SET !== 'undefined' && GRACEFUL_SET.totalMarks) ? GRACEFUL_SET.totalMarks : 260;
+  const owned = [];
+  const missing = [];
+  let credited = 0;
+  for (const p of pieces) {
+    if (playerOwnsAnyItem([p.name])) {
+      owned.push(p);
+      credited += p.cost;
+    } else {
+      missing.push(p);
+    }
+  }
+  const marks = bankItemQty('mark of grace');
+  const remaining = Math.max(0, totalMarks - credited - marks);
+  const done = pieces.length > 0 && owned.length === pieces.length;
+  const effective = Math.min(totalMarks, credited + marks);
+  const pct = done ? 100 : (totalMarks ? Math.round((effective / totalMarks) * 100) : 0);
+  return {
+    owned, missing,
+    piecesOwned: owned.length,
+    piecesTotal: pieces.length,
+    marks, credited, remaining, totalMarks,
+    done, pct,
+    bankSynced: !!bankSynced,
+  };
+}
+
+function computeGracefulGoalPlan() {
+  const g = computeGracefulProgress();
+  const next = [];
+  if (!g.done) {
+    if (!g.bankSynced) next.push('Open your bank in-game to sync Marks of grace & Graceful');
+    else if (g.remaining > 0) next.push(`${g.remaining} more Mark${g.remaining === 1 ? '' : 's'} of grace`);
+    if (g.missing[0]) next.push(`Next piece: ${g.missing[0].name} (${g.missing[0].cost} marks)`);
+  }
+  return {
+    quests: [], skills: [], order: [],
+    next: next.slice(0, 3),
+    totalSteps: g.piecesTotal || 6,
+    doneSteps: g.piecesOwned,
+    pct: g.pct,
+    graceful: g,
+  };
+}
+
+function renderGracefulGoalBody(plan) {
+  const g = plan.graceful || computeGracefulProgress();
+  const pieces = (typeof GRACEFUL_SET !== 'undefined' && GRACEFUL_SET.pieces) ? GRACEFUL_SET.pieces : [];
+  if (!g.bankSynced && !g.piecesOwned) {
+    return `<div class="goal-path"><p class="goal-path-note">Open your bank with the RuneLite plugin to count Marks of grace and Graceful pieces.</p></div>`;
+  }
+  const rows = pieces.map(p => {
+    const have = g.owned.some(o => o.key === p.key);
+    return `<li class="${have ? 'path-done' : ''}"><span class="path-mark">${have ? '✓' : '○'}</span> ${p.name}<span class="path-meta">${p.cost} marks</span></li>`;
+  }).join('');
+  return `<div class="goal-path graceful-progress">
+    <div class="graceful-stats">
+      <span><strong>${g.piecesOwned}/${g.piecesTotal}</strong> pieces owned</span>
+      <span><strong>${g.marks}</strong> marks banked</span>
+      <span>${g.done ? '<strong>Set complete</strong>' : `<strong>${g.remaining}</strong> marks still needed`}</span>
+    </div>
+    <ol class="goal-path-list">${rows}</ol>
+  </div>`;
+}
+
 /** Evaluate a breakpoint against the live synced account. */
 function evaluateBreakpoint(bp) {
   if (!bp || typeof ACCOUNT_BREAKPOINTS === 'undefined') {
@@ -6248,6 +6393,27 @@ function evaluateBreakpoint(bp) {
   let done = true;
   let ready = true;
   let itemOwned = null;
+
+  if (bp.set === 'graceful') {
+    const g = computeGracefulProgress();
+    done = g.done;
+    ready = !done && (g.bankSynced || g.piecesOwned > 0 || questSkillLevel('agility') >= 10);
+    if (!g.bankSynced && !g.piecesOwned && !done) {
+      parts.push('Open bank to sync');
+    } else {
+      parts.push(`${g.piecesOwned}/${g.piecesTotal} pieces`);
+      parts.push(`${g.marks} marks`);
+      if (!done) parts.push(`${g.remaining} still needed`);
+    }
+    if (done) ready = false;
+    return {
+      done,
+      ready,
+      locked: !done && !ready,
+      progress: parts.join(' · '),
+      detail: bp.why || '',
+    };
+  }
 
   const checkQuest = (name, partial) => {
     if (!name) return;
@@ -6355,6 +6521,11 @@ function breakpointScore(bp, state) {
     else if (gap <= 12) score += 8;
   }
   if (bp.quest && !bp.skill) score += 6;
+  if (bp.set === 'graceful') {
+    const g = computeGracefulProgress();
+    if (g.piecesOwned > 0 || g.marks >= 30) score += 18;
+    else if (g.bankSynced) score += 8;
+  }
   return score;
 }
 

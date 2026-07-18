@@ -472,7 +472,22 @@ const GEAR_KEYWORDS = [
   'pernix', 'zaryte', 'crystal', 'blessed d\'hide', 'd\'hide body', 'd\'hide chaps', 'd\'hide coif',
   'kodai wand', 'eldritch', 'harmonised', 'volatile', 'osmumten', 'tassets', 'chestplate', 'faceguard',
   'salve amulet', 'blowpipe', 'crossbow', 'blowpipe', 'whip', 'defender', 'tyrannical', 'suffering',
+  'graceful', 'mark of grace',
 ];
+
+// Graceful outfit — bought from Grace (Rogues' Den) with Marks of grace.
+// Piece names match worn/bank via substring so recolors still count.
+const GRACEFUL_SET = {
+  totalMarks: 260,
+  pieces: [
+    { key: 'hood',   name: 'Graceful hood',   cost: 35 },
+    { key: 'cape',   name: 'Graceful cape',   cost: 40 },
+    { key: 'top',    name: 'Graceful top',    cost: 55 },
+    { key: 'legs',   name: 'Graceful legs',   cost: 60 },
+    { key: 'gloves', name: 'Graceful gloves', cost: 30 },
+    { key: 'boots',  name: 'Graceful boots',  cost: 40 },
+  ],
+};
 const BANK_JUNK_RE = /^(coins|pure essence|air rune|water rune|earth rune|mind rune|body rune|cosmic rune|chaos rune|nature rune|law rune|death rune|blood rune|soul rune|astral rune|mist rune|dust rune|mud rune|smoke rune|steam rune|lava rune|wrath rune|sunfire rune|bronze arrow|iron arrow|steel arrow|mithril arrow|adamant arrow|runite arrow|dragon arrow|iron ore|coal|gold ore|mithril ore|adamantite ore|runite ore|logs|oak logs|willow logs|maple logs|yew logs|magic logs|redwood logs)$/i;
 
 // ─── QUEST DATA ───────────────────────────────────────────────────────────────
@@ -774,6 +789,8 @@ const BANKED_XP = {
 const GOAL_MAIN_PRESETS = [
   { id: 'barrows-gloves', label: 'Barrows gloves',   quest: 'Recipe for Disaster',
     desc: 'Best-in-slot gloves for nearly every build — the classic mid-game milestone' },
+  { id: 'graceful-set',   label: 'Graceful outfit',  set: 'graceful',
+    desc: 'Best run-energy set — tracks Marks of grace and pieces from your bank sync' },
   { id: 'ancients',       label: 'Desert Treasure',  quest: 'Desert Treasure I',
     desc: 'Ancient Magicks: Ice Barrage and the spellbook that powers PvM and PvP' },
   { id: 'ds2',            label: 'Dragon Slayer II', quest: 'Dragon Slayer II',
@@ -1184,6 +1201,7 @@ const COMBAT_ACHIEVEMENT_TIERS = [
 //   skill + level — skill level met
 //   skills — all listed skill floors met
 //   ownsAny — done if any listed item name matches worn gear or bank (substring)
+//   set: 'graceful' — piece + Marks of grace progress from bank/worn sync
 //   pvm + skillFloor — readiness by stats; done only when ownsAny matches
 const BREAKPOINT_STAGES = [
   'Foundation', 'Transportation', 'Combat', 'Questing', 'Slayer',
@@ -1323,6 +1341,9 @@ const ACCOUNT_BREAKPOINTS = [
   { id: 'super-restores', stage: 'Skilling', category: 'Herblore', priority: 'High',
     label: 'Super restores (63 Herblore)', skill: 'herblore', level: 63,
     why: 'Major PvM supply breakpoint.' },
+  { id: 'graceful-set', stage: 'Skilling', category: 'Agility', priority: 'Essential',
+    type: 'item-set', set: 'graceful', label: 'Graceful outfit',
+    why: 'Best run-energy outfit for questing and skilling — full set costs 260 Marks of grace from Grace in the Rogues\' Den.' },
   { id: 'agility-60', stage: 'Skilling', category: 'Agility', priority: 'High',
     label: '60 Agility', skill: 'agility', level: 60,
     why: 'Seers\' rooftop and broad shortcut access.' },
