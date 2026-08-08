@@ -3360,7 +3360,7 @@ async function getActiveRSN(preferredRsn) {
  * playerBank, gold...). Single entry point for all three data paths so every
  * renderer reads the same shape. Returns the skill-row count (0 = nothing synced).
  */
-function applyPlayerPayload(rsn, skills, quests, equip, bank, playerRow) {
+function applyPlayerPayload(rsn, skills, quests, equip, bank, playerRow, inventoryRows) {
   playerSkills = {};
   for (const row of skills) {
     playerSkills[row.skill] = { level: row.level, xp: row.xp };
@@ -3369,12 +3369,13 @@ function applyPlayerPayload(rsn, skills, quests, equip, bank, playerRow) {
 
   syncedQuestPoints = null;
   lastSynced = null;
-  playerInventory = [];
+  playerInventory = Array.isArray(inventoryRows) ? inventoryRows : [];
   if (playerRow) {
     const qp = playerRow.quest_points;
     if (qp != null && !Number.isNaN(Number(qp))) syncedQuestPoints = Number(qp);
     if (playerRow.last_synced) lastSynced = playerRow.last_synced;
-    if (Array.isArray(playerRow.inventory_tracked)) {
+    // Legacy shape (pre player_inventory table) — keep reading if present.
+    if (!playerInventory.length && Array.isArray(playerRow.inventory_tracked)) {
       playerInventory = playerRow.inventory_tracked;
     }
   }
@@ -3416,7 +3417,8 @@ async function fetchFromLocalhostSession(sessionToken) {
     data.quests || [],
     data.equipment || [],
     data.bank || [],
-    data.player
+    data.player,
+    data.inventory || []
   );
   if (!count) throw new Error('No synced data yet — play with the plugin running.');
   return count;
@@ -3961,12 +3963,13 @@ async function fetchFromSupabase(rsn) {
 
   const headers = HOSTED_MODE ? await getAuthHeaders() : SB_HEADERS;
   const q = encodeURIComponent(rsn);
-  const [sRes, qRes, eRes, bRes, pRes] = await Promise.all([
+  const [sRes, qRes, eRes, bRes, pRes, iRes] = await Promise.all([
     fetch(`${SUPABASE_URL}/rest/v1/player_skills?rsn=eq.${q}&select=skill,level,xp`, {headers}),
     fetch(`${SUPABASE_URL}/rest/v1/player_quests?rsn=eq.${q}&select=quest_name,state`, {headers}),
     fetch(`${SUPABASE_URL}/rest/v1/player_equipment?rsn=eq.${q}&select=slot_id,slot_name,item_id,item_name`, {headers}),
     fetch(`${SUPABASE_URL}/rest/v1/player_bank?rsn=eq.${q}&select=item_id,item_name,quantity`, {headers}),
-    fetch(`${SUPABASE_URL}/rest/v1/players?rsn=eq.${q}&select=quest_points,last_synced,inventory_tracked`, {headers}),
+    fetch(`${SUPABASE_URL}/rest/v1/players?rsn=eq.${q}&select=quest_points,last_synced`, {headers}),
+    fetch(`${SUPABASE_URL}/rest/v1/player_inventory?rsn=eq.${q}&select=item_id,item_name,quantity`, {headers}),
   ]);
   if (!sRes.ok) throw new Error(`Could not load character (${sRes.status})`);
   const skills = await sRes.json();
@@ -3979,9 +3982,10 @@ async function fetchFromSupabase(rsn) {
   const equip = await eRes.json();
   const bank = bRes.ok ? await bRes.json() : [];
   const players = pRes.ok ? await pRes.json() : [];
+  const inventory = iRes.ok ? await iRes.json() : [];
   viewingOwnCharacter = true;
 
-  return applyPlayerPayload(rsn, skills, quests, equip, bank, players[0]);
+  return applyPlayerPayload(rsn, skills, quests, equip, bank, players[0], inventory);
 }
 
 /** Try to match synced equipment item names against gear dropdowns. */
@@ -7406,7 +7410,7 @@ function startRealtimeUpdates(rsn, onchange) {
   stopRealtimeUpdates();
   if (!supabaseClient || !rsn) return;
   try {
-    const tables = ['players', 'player_skills', 'player_quests'];
+    const tables = ['players', 'player_skills', 'player_quests', 'player_bank', 'player_inventory'];
     let ch = supabaseClient.channel('journal-live-' + rsn.toLowerCase());
     for (const table of tables) {
       ch = ch.on(
