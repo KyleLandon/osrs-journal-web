@@ -4,7 +4,7 @@ Static web app for [journal.osrsjournal.com](https://journal.osrsjournal.com).
 
 Players sign in, link characters via the RuneLite plugin pairing code, view stats/quests/gear, and search public profiles (Wise Old Man style).
 
-The [RuneLite plugin](https://github.com/YOUR_USER/osrs-journal-plugin) lives in a separate repo.
+The [RuneLite plugin](https://github.com/KyleLandon/osrs-journal-plugin) lives in a separate repo.
 
 ---
 
@@ -96,7 +96,7 @@ npx serve .
 
 ## Sync from monorepo
 
-When you edit `osrs-journal.html` in the parent **OSRS Import** project:
+When you edit `osrs-journal.html` in the parent **OSRS Journal** monorepo:
 
 ```bash
 cd website

@@ -1,5 +1,5 @@
 /**
- * Copy latest web app files from the parent OSRS Import monorepo.
+ * Copy latest web app files from the parent OSRS Journal monorepo.
  * Run from website/: npm run sync
  */
 import { copyFileSync, existsSync, mkdirSync, readdirSync, cpSync } from "node:fs";

@@ -27,20 +27,27 @@ async function loadPublicProfile(rsn) {
   const [pRes, sRes, gRes] = await Promise.all([
     fetch(`${SUPABASE_URL}/rest/v1/players?rsn=eq.${q}&select=rsn,quest_points,last_synced`, { headers }),
     fetch(`${SUPABASE_URL}/rest/v1/player_skills?rsn=eq.${q}&select=skill,level&skill=eq.overall`, { headers }),
-    fetch(`${SUPABASE_URL}/rest/v1/player_goals?rsn=eq.${q}&select=goals`, { headers }),
+    // RPC exposes only the main goal's label — anon has no direct table read.
+    fetch(`${SUPABASE_URL}/rest/v1/rpc/public_main_goal`, {
+      method: 'POST',
+      headers: { ...headers, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_rsn: rsn }),
+    }),
   ]);
   if (!pRes.ok) return null;
   const players = await pRes.json();
   if (!players?.[0]) return null;
   const skills = sRes.ok ? await sRes.json() : [];
-  const goalsRows = gRes.ok ? await gRes.json() : [];
-  const goals = Array.isArray(goalsRows?.[0]?.goals) ? goalsRows[0].goals : [];
-  const main = goals.find((g) => g && g.main);
+  let mainGoal = null;
+  if (gRes.ok) {
+    const label = await gRes.json();
+    if (typeof label === 'string' && label) mainGoal = label;
+  }
   return {
     rsn: players[0].rsn,
     qp: players[0].quest_points,
     total: skills?.[0]?.level ?? null,
-    mainGoal: main?.label || main?.quest || null,
+    mainGoal,
   };
 }
 
