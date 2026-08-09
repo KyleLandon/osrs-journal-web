@@ -1093,15 +1093,15 @@ const NEXT_UP_UNLOCKS = {
 
 // ─── ACHIEVEMENT DIARIES ─────────────────────────────────────────────────────
 // Region + tier metadata. `skillReqs` are the notable barriers for that tier
-// (highest / most common skill walls), not every task. Completion state comes
-// from the plugin via diary varbits.
+// (highest / most common skill walls), not every task. `questReqs` lists the
+// key quest gates (not exhaustive). Completion state comes from diary varbits.
 const DIARY_TIERS = ['easy', 'medium', 'hard', 'elite'];
 const ACHIEVEMENT_DIARIES = [
   { id: 'ardougne',   label: 'Ardougne',   reward: 'Ardougne cloak',
     tiers: {
       easy:   { skillReqs: { thieving: 5 } },
-      medium: { skillReqs: { thieving: 38, agility: 39 } },
-      hard:   { skillReqs: { thieving: 72, farming: 70, fishing: 70 } },
+      medium: { skillReqs: { thieving: 38, agility: 39 }, questReqs: ['Plague City'] },
+      hard:   { skillReqs: { thieving: 72, farming: 70, fishing: 70 }, questReqs: ['Watchtower'] },
       elite:  { skillReqs: { thieving: 82, crafting: 91, farming: 85 } },
     }},
   { id: 'desert',     label: 'Desert',     reward: 'Desert amulet',
@@ -1121,9 +1121,9 @@ const ACHIEVEMENT_DIARIES = [
   { id: 'fremennik',  label: 'Fremennik',  reward: 'Fremennik sea boots',
     tiers: {
       easy:   { skillReqs: { crafting: 23 } },
-      medium: { skillReqs: { agility: 47, hunter: 35 } },
-      hard:   { skillReqs: { agility: 62, herblore: 66, mining: 70 } },
-      elite:  { skillReqs: { agility: 80, crafting: 80, runecraft: 82 } },
+      medium: { skillReqs: { agility: 47, hunter: 35 }, questReqs: ['The Fremennik Trials'] },
+      hard:   { skillReqs: { agility: 62, herblore: 66, mining: 70 }, questReqs: ['The Fremennik Isles', 'Eadgar\'s Ruse'] },
+      elite:  { skillReqs: { agility: 80, crafting: 80, runecraft: 82 }, questReqs: ['Lunar Diplomacy'] },
     }},
   { id: 'kandarin',   label: 'Kandarin',   reward: 'Kandarin headgear',
     tiers: {
@@ -1135,8 +1135,8 @@ const ACHIEVEMENT_DIARIES = [
   { id: 'karamja',    label: 'Karamja',    reward: 'Karamja gloves',
     tiers: {
       easy:   { skillReqs: { agility: 15 } },
-      medium: { skillReqs: { agility: 32, mining: 40 } },
-      hard:   { skillReqs: { agility: 53, farming: 65, runecraft: 44 } },
+      medium: { skillReqs: { agility: 32, mining: 40 }, questReqs: ['Shilo Village', 'Jungle Potion'] },
+      hard:   { skillReqs: { agility: 53, farming: 65, runecraft: 44 }, questReqs: ['Tai Bwo Wannai Trio'] },
       elite:  { skillReqs: { agility: 80, farming: 87, runecraft: 91 } },
     }},
   { id: 'kourend',    label: 'Kourend & Kebos', reward: 'Rada\'s blessing',
@@ -1149,37 +1149,37 @@ const ACHIEVEMENT_DIARIES = [
   { id: 'lumbridge',  label: 'Lumbridge & Draynor', reward: 'Explorer\'s ring',
     tiers: {
       easy:   { skillReqs: { runecraft: 5 } },
-      medium: { skillReqs: { woodcutting: 36, firemaking: 30 } },
-      hard:   { skillReqs: { runecraft: 59, woodcutting: 57, agility: 46 } },
+      medium: { skillReqs: { woodcutting: 36, firemaking: 30 }, questReqs: ['Lost City', 'The Lost Tribe'] },
+      hard:   { skillReqs: { runecraft: 59, woodcutting: 57, agility: 46 }, questReqs: ['Another Slice of H.A.M.'] },
       elite:  { skillReqs: { runecraft: 76, woodcutting: 75, agility: 70 } },
     }},
   { id: 'morytania',  label: 'Morytania',  reward: 'Morytania legs',
     tiers: {
-      easy:   { skillReqs: { crafting: 15, cooking: 12 } },
-      medium: { skillReqs: { agility: 42, slayer: 42 } },
-      hard:   { skillReqs: { agility: 71, farming: 70, woodcutting: 50 } },
-      elite:  { skillReqs: { agility: 80, farming: 91, fishing: 96 } },
+      easy:   { skillReqs: { crafting: 15, cooking: 12 }, questReqs: ['Priest in Peril'] },
+      medium: { skillReqs: { agility: 42, slayer: 42 }, questReqs: ['Priest in Peril', 'Nature Spirit'] },
+      hard:   { skillReqs: { agility: 71, farming: 70, woodcutting: 50 }, questReqs: ['In Aid of the Myreque', 'Cabin Fever'] },
+      elite:  { skillReqs: { agility: 80, farming: 91, fishing: 96 }, questReqs: ['Sins of the Father'] },
     }},
   { id: 'varrock',    label: 'Varrock',    reward: 'Varrock armour',
     tiers: {
       easy:   { skillReqs: { mining: 15 } },
-      medium: { skillReqs: { agility: 40, farming: 30 } },
+      medium: { skillReqs: { agility: 40, farming: 30 }, questReqs: ['Enlightened Journey', 'Garden of Tranquillity'] },
       hard:   { skillReqs: { agility: 51, farming: 68, woodcutting: 60 } },
       elite:  { skillReqs: { agility: 80, smithing: 89, magic: 86 } },
     }},
   { id: 'western',    label: 'Western Provinces', reward: 'Western banner',
     tiers: {
       easy:   { skillReqs: { hunter: 9 } },
-      medium: { skillReqs: { hunter: 37, agility: 37 } },
-      hard:   { skillReqs: { hunter: 69, farming: 75, ranged: 70 } },
-      elite:  { skillReqs: { hunter: 92, farming: 91, thieving: 85 } },
+      medium: { skillReqs: { hunter: 37, agility: 37 }, questReqs: ['Big Chompy Bird Hunting', 'Eagles\' Peak'] },
+      hard:   { skillReqs: { hunter: 69, farming: 75, ranged: 70 }, questReqs: ['Regicide'] },
+      elite:  { skillReqs: { hunter: 92, farming: 91, thieving: 85 }, questReqs: ['Monkey Madness II'] },
     }},
   { id: 'wilderness', label: 'Wilderness', reward: 'Wilderness sword',
     tiers: {
       easy:   { skillReqs: { agility: 15 } },
       medium: { skillReqs: { agility: 52, magic: 60 } },
       hard:   { skillReqs: { agility: 64, magic: 66, slayer: 68 } },
-      elite:  { skillReqs: { agility: 84, magic: 96, slayer: 85 } },
+      elite:  { skillReqs: { agility: 84, magic: 96, slayer: 85 }, questReqs: ['Desert Treasure I'] },
     }},
 ];
 
@@ -1380,4 +1380,196 @@ const ACCOUNT_BREAKPOINTS = [
   { id: 'pvm-toa', stage: 'PvM', category: 'Raid', priority: 'Essential', type: 'pvm',
     label: 'Tombs of Amascut', quest: 'Beneath Cursed Sands', skillFloor: { attack: 80, ranged: 80, magic: 80 },
     why: 'Highly scalable raid — excellent bridge into endgame PvM.' },
+];
+
+// ─── SKILL CALCULATOR METHODS ────────────────────────────────────────────────
+// Per-skill training methods for the calculator. Fields:
+//   name       — method label
+//   level      — level required to use the method
+//   xp         — XP per action
+//   perHour    — approximate actions per hour (estimates; used for time-to-goal)
+//   inputs     — GE items consumed per action: [{ n: name, q: qty }]
+//   outputs    — GE items produced per action (offsets cost)
+//   note       — caveat shown under the row
+// GP per action is computed live from wiki GE prices; methods without
+// inputs/outputs show no cost. Rates are conservative estimates, not tick-perfect.
+const CALC_METHODS = {
+  prayer: [
+    { name: 'Big bones (gilded altar)', level: 1, xp: 52.5, perHour: 2500, inputs: [{ n: 'Big bones', q: 1 }] },
+    { name: 'Dragon bones (gilded altar)', level: 1, xp: 252, perHour: 2500, inputs: [{ n: 'Dragon bones', q: 1 }] },
+    { name: 'Wyrm bones (gilded altar)', level: 1, xp: 175, perHour: 2500, inputs: [{ n: 'Wyrm bones', q: 1 }] },
+    { name: 'Dagannoth bones (gilded altar)', level: 1, xp: 437.5, perHour: 2500, inputs: [{ n: 'Dagannoth bones', q: 1 }] },
+    { name: 'Superior dragon bones (gilded altar)', level: 70, xp: 525, perHour: 2500, inputs: [{ n: 'Superior dragon bones', q: 1 }] },
+    { name: 'Dragon bones (Chaos altar)', level: 1, xp: 252, perHour: 1200, inputs: [{ n: 'Dragon bones', q: 0.5 }], note: 'Wilderness — 50% chance to save the bone; effective half cost.' },
+  ],
+  cooking: [
+    { name: 'Jug of wine', level: 35, xp: 200, perHour: 1350, inputs: [{ n: 'Grapes', q: 1 }, { n: 'Jug of water', q: 1 }], outputs: [{ n: 'Jug of wine', q: 1 }], note: 'Fastest conventional cooking XP; some wines fail below 68.' },
+    { name: 'Monkfish', level: 62, xp: 150, perHour: 1300, inputs: [{ n: 'Raw monkfish', q: 1 }], outputs: [{ n: 'Monkfish', q: 1 }] },
+    { name: 'Karambwan', level: 30, xp: 190, perHour: 1400, inputs: [{ n: 'Raw karambwan', q: 1 }], outputs: [{ n: 'Cooked karambwan', q: 1 }], note: 'Requires Tai Bwo Wannai Trio to cook properly.' },
+    { name: 'Shark', level: 80, xp: 210, perHour: 1300, inputs: [{ n: 'Raw shark', q: 1 }], outputs: [{ n: 'Shark', q: 1 }] },
+    { name: 'Anglerfish', level: 84, xp: 230, perHour: 1300, inputs: [{ n: 'Raw anglerfish', q: 1 }], outputs: [{ n: 'Anglerfish', q: 1 }] },
+  ],
+  fletching: [
+    { name: 'Steel darts', level: 37, xp: 7.5, perHour: 9000, inputs: [{ n: 'Steel dart tip', q: 1 }, { n: 'Feather', q: 1 }], outputs: [{ n: 'Steel dart', q: 1 }] },
+    { name: 'Mithril darts', level: 52, xp: 11.2, perHour: 9000, inputs: [{ n: 'Mithril dart tip', q: 1 }, { n: 'Feather', q: 1 }], outputs: [{ n: 'Mithril dart', q: 1 }] },
+    { name: 'Adamant darts', level: 67, xp: 15, perHour: 9000, inputs: [{ n: 'Adamant dart tip', q: 1 }, { n: 'Feather', q: 1 }], outputs: [{ n: 'Adamant dart', q: 1 }] },
+    { name: 'Rune darts', level: 81, xp: 18.8, perHour: 9000, inputs: [{ n: 'Rune dart tip', q: 1 }, { n: 'Feather', q: 1 }], outputs: [{ n: 'Rune dart', q: 1 }] },
+    { name: 'Maple longbow (u)', level: 55, xp: 58.3, perHour: 1600, inputs: [{ n: 'Maple logs', q: 1 }], outputs: [{ n: 'Maple longbow (u)', q: 1 }] },
+    { name: 'Yew longbow (u)', level: 70, xp: 75, perHour: 1600, inputs: [{ n: 'Yew logs', q: 1 }], outputs: [{ n: 'Yew longbow (u)', q: 1 }] },
+    { name: 'Magic longbow (u)', level: 85, xp: 91.5, perHour: 1600, inputs: [{ n: 'Magic logs', q: 1 }], outputs: [{ n: 'Magic longbow (u)', q: 1 }] },
+  ],
+  firemaking: [
+    { name: 'Willow logs', level: 30, xp: 90, perHour: 1300, inputs: [{ n: 'Willow logs', q: 1 }] },
+    { name: 'Maple logs', level: 45, xp: 135, perHour: 1300, inputs: [{ n: 'Maple logs', q: 1 }] },
+    { name: 'Yew logs', level: 60, xp: 202.5, perHour: 1300, inputs: [{ n: 'Yew logs', q: 1 }] },
+    { name: 'Magic logs', level: 75, xp: 303.8, perHour: 1300, inputs: [{ n: 'Magic logs', q: 1 }] },
+    { name: 'Redwood logs', level: 90, xp: 350, perHour: 1300, inputs: [{ n: 'Redwood logs', q: 1 }] },
+    { name: 'Wintertodt (per crate ≈)', level: 50, xp: 800, perHour: 60, note: 'XP scales with Firemaking level; rewards often profit. Rough average shown.' },
+  ],
+  smithing: [
+    { name: 'Steel bars (Blast Furnace)', level: 30, xp: 17.5, perHour: 3800, inputs: [{ n: 'Iron ore', q: 1 }, { n: 'Coal', q: 1 }], outputs: [{ n: 'Steel bar', q: 1 }] },
+    { name: 'Gold bars (BF + goldsmith gauntlets)', level: 40, xp: 56.2, perHour: 4200, inputs: [{ n: 'Gold ore', q: 1 }], outputs: [{ n: 'Gold bar', q: 1 }], note: 'Requires Family Crest goldsmith gauntlets for the boosted XP.' },
+    { name: 'Mithril bars (Blast Furnace)', level: 50, xp: 30, perHour: 3500, inputs: [{ n: 'Mithril ore', q: 1 }, { n: 'Coal', q: 2 }], outputs: [{ n: 'Mithril bar', q: 1 }] },
+    { name: 'Adamantite bars (Blast Furnace)', level: 70, xp: 37.5, perHour: 3200, inputs: [{ n: 'Adamantite ore', q: 1 }, { n: 'Coal', q: 3 }], outputs: [{ n: 'Adamantite bar', q: 1 }] },
+    { name: 'Runite bars (Blast Furnace)', level: 85, xp: 50, perHour: 3000, inputs: [{ n: 'Runite ore', q: 1 }, { n: 'Coal', q: 4 }], outputs: [{ n: 'Runite bar', q: 1 }] },
+    { name: 'Cannonballs', level: 35, xp: 25.6, perHour: 700, inputs: [{ n: 'Steel bar', q: 1 }], outputs: [{ n: 'Cannonball', q: 4 }], note: 'Slow but AFK and profitable. Per steel bar (makes 4).' },
+  ],
+  crafting: [
+    { name: 'Cut sapphires', level: 20, xp: 50, perHour: 2400, inputs: [{ n: 'Uncut sapphire', q: 1 }], outputs: [{ n: 'Sapphire', q: 1 }] },
+    { name: 'Cut rubies', level: 34, xp: 85, perHour: 2400, inputs: [{ n: 'Uncut ruby', q: 1 }], outputs: [{ n: 'Ruby', q: 1 }] },
+    { name: 'Unpowered orbs (glassblowing)', level: 46, xp: 52.5, perHour: 1500, inputs: [{ n: 'Molten glass', q: 1 }], outputs: [{ n: 'Unpowered orb', q: 1 }] },
+    { name: 'Green d\'hide bodies', level: 63, xp: 186, perHour: 1150, inputs: [{ n: 'Green dragon leather', q: 3 }], outputs: [{ n: 'Green d\'hide body', q: 1 }] },
+    { name: 'Blue d\'hide bodies', level: 71, xp: 210, perHour: 1150, inputs: [{ n: 'Blue dragon leather', q: 3 }], outputs: [{ n: 'Blue d\'hide body', q: 1 }] },
+    { name: 'Black d\'hide bodies', level: 84, xp: 258, perHour: 1150, inputs: [{ n: 'Black dragon leather', q: 3 }], outputs: [{ n: 'Black d\'hide body', q: 1 }] },
+  ],
+  herblore: [
+    { name: 'Prayer potions', level: 38, xp: 87.5, perHour: 2200, inputs: [{ n: 'Ranarr weed', q: 1 }, { n: 'Snape grass', q: 1 }, { n: 'Vial of water', q: 1 }], outputs: [{ n: 'Prayer potion(3)', q: 1 }] },
+    { name: 'Super restores', level: 63, xp: 142.5, perHour: 2200, inputs: [{ n: 'Snapdragon', q: 1 }, { n: 'Red spiders\' eggs', q: 1 }, { n: 'Vial of water', q: 1 }], outputs: [{ n: 'Super restore(3)', q: 1 }] },
+    { name: 'Saradomin brews', level: 81, xp: 180, perHour: 2200, inputs: [{ n: 'Toadflax', q: 1 }, { n: 'Crushed nest', q: 1 }, { n: 'Vial of water', q: 1 }], outputs: [{ n: 'Saradomin brew(3)', q: 1 }] },
+    { name: 'Stamina potions', level: 77, xp: 102, perHour: 2400, inputs: [{ n: 'Super energy(3)', q: 1 }, { n: 'Amylase crystal', q: 3 }], outputs: [{ n: 'Stamina potion(3)', q: 1 }] },
+    { name: 'Super combat potions', level: 90, xp: 150, perHour: 2400, inputs: [{ n: 'Super attack(4)', q: 1 }, { n: 'Super strength(4)', q: 1 }, { n: 'Super defence(4)', q: 1 }, { n: 'Torstol', q: 1 }], outputs: [{ n: 'Super combat potion(4)', q: 1 }] },
+  ],
+  magic: [
+    { name: 'High Level Alchemy', level: 55, xp: 65, perHour: 1200, inputs: [{ n: 'Nature rune', q: 1 }], note: 'Alch items near break-even (check margins) — rune cost shown.' },
+    { name: 'Superheat Item (iron)', level: 43, xp: 53, perHour: 1500, inputs: [{ n: 'Nature rune', q: 1 }, { n: 'Iron ore', q: 1 }], outputs: [{ n: 'Iron bar', q: 1 }], note: 'Also gives 12.5 Smithing XP per cast.' },
+    { name: 'Camelot Teleport', level: 45, xp: 55.5, perHour: 1800, inputs: [{ n: 'Law rune', q: 1 }, { n: 'Air rune', q: 5 }] },
+    { name: 'Plank Make (mahogany)', level: 86, xp: 90, perHour: 1750, inputs: [{ n: 'Mahogany logs', q: 1 }, { n: 'Nature rune', q: 1 }, { n: 'Astral rune', q: 2 }, { n: 'Coins', q: 1050 }], outputs: [{ n: 'Mahogany plank', q: 1 }], note: 'Lunar spellbook (Dream Mentor).' },
+    { name: 'Ice Burst (maniacal monkeys)', level: 70, xp: 40, perHour: 4500, inputs: [{ n: 'Death rune', q: 2 }, { n: 'Chaos rune', q: 4 }, { n: 'Water rune', q: 4 }], note: 'Plus large Magic XP from damage — real rate is far higher (~250k+/hr).' },
+    { name: 'Ice Barrage (maniacal monkeys)', level: 94, xp: 52, perHour: 4500, inputs: [{ n: 'Death rune', q: 4 }, { n: 'Blood rune', q: 2 }, { n: 'Water rune', q: 6 }], note: 'Plus damage XP — real rate ~350k+/hr.' },
+  ],
+  runecraft: [
+    { name: 'Lava runes (with binding necklace)', level: 23, xp: 10.5, perHour: 5500, inputs: [{ n: 'Pure essence', q: 1 }], note: 'Per essence. Requires talismans + rings of dueling; ~52k XP/hr.' },
+    { name: 'Guardians of the Rift (per game ≈)', level: 27, xp: 4500, perHour: 6, note: 'XP scales with level; also earns pearls for the Raiments outfit.' },
+    { name: 'Blood runes (Arceuus)', level: 77, xp: 23.8, perHour: 1600, note: 'Per dense essence block; AFK and profitable.' },
+    { name: 'Nature runes (Abyss)', level: 44, xp: 9, perHour: 3000, inputs: [{ n: 'Pure essence', q: 1 }], outputs: [{ n: 'Nature rune', q: 1 }], note: 'Per essence; profit scales with nature rune price.' },
+  ],
+  mining: [
+    { name: 'Iron ore (3-rock)', level: 15, xp: 35, perHour: 1900, outputs: [{ n: 'Iron ore', q: 1 }] },
+    { name: 'Motherlode Mine (pay-dirt)', level: 30, xp: 60, perHour: 900, note: 'AFK; earns golden nuggets for the Prospector outfit.' },
+    { name: 'Granite (quarry)', level: 45, xp: 62, perHour: 1500, note: 'Average across block sizes; bring waterskins or use humidify.' },
+    { name: 'Amethyst', level: 92, xp: 240, perHour: 400, outputs: [{ n: 'Amethyst', q: 1 }], note: 'Very AFK; used for broad bolts and dart tips.' },
+  ],
+  fishing: [
+    { name: 'Fly fishing (trout/salmon)', level: 20, xp: 55, perHour: 1500, note: 'Drop-fishing average; best early XP.' },
+    { name: 'Barbarian fishing', level: 48, xp: 75, perHour: 1400, note: 'Also gives passive Strength and Agility XP; needs Barbarian Training started.' },
+    { name: 'Monkfish', level: 62, xp: 120, perHour: 800, outputs: [{ n: 'Raw monkfish', q: 1 }], note: 'Requires Swan Song.' },
+    { name: 'Anglerfish', level: 82, xp: 120, perHour: 550, outputs: [{ n: 'Raw anglerfish', q: 1 }], note: 'Requires 100% Piscarilius favour (legacy) / sandworms.' },
+    { name: 'Sharks', level: 76, xp: 110, perHour: 500, outputs: [{ n: 'Raw shark', q: 1 }], note: 'Very AFK.' },
+  ],
+  woodcutting: [
+    { name: 'Oak logs', level: 15, xp: 37.5, perHour: 1500, outputs: [{ n: 'Oak logs', q: 1 }] },
+    { name: 'Willow logs', level: 30, xp: 67.5, perHour: 1300, outputs: [{ n: 'Willow logs', q: 1 }] },
+    { name: 'Teak logs', level: 35, xp: 85, perHour: 1100, outputs: [{ n: 'Teak logs', q: 1 }], note: 'With tick manipulation this is the fastest XP in the skill.' },
+    { name: 'Maple logs', level: 45, xp: 100, perHour: 950, outputs: [{ n: 'Maple logs', q: 1 }] },
+    { name: 'Yew logs', level: 60, xp: 175, perHour: 350, outputs: [{ n: 'Yew logs', q: 1 }], note: 'AFK and profitable.' },
+    { name: 'Magic logs', level: 75, xp: 250, perHour: 220, outputs: [{ n: 'Magic logs', q: 1 }], note: 'Slow XP; strong profit.' },
+    { name: 'Redwood logs', level: 90, xp: 380, perHour: 300, outputs: [{ n: 'Redwood logs', q: 1 }], note: 'Very AFK.' },
+  ],
+  thieving: [
+    { name: 'Fruit stalls (Hosidius)', level: 25, xp: 28.5, perHour: 3000 },
+    { name: 'Blackjacking (bandits)', level: 45, xp: 45, perHour: 4000, note: 'Click-intensive; rates rise sharply with level (up to ~250k/hr).' },
+    { name: 'Ardougne knights', level: 55, xp: 84.3, perHour: 2800, note: 'Best with Ardougne diary medium + Thieving outfit; semi-AFK in knight room.' },
+    { name: 'Pyramid Plunder', level: 71, xp: 5000, perHour: 12, note: 'Per full run approximation; requires Icthlarin\'s Little Helper.' },
+  ],
+  agility: [
+    { name: 'Draynor Village rooftop (lap)', level: 10, xp: 120, perHour: 220 },
+    { name: 'Canifis rooftop (lap)', level: 40, xp: 240, perHour: 190, note: 'Best Marks of grace per hour for the Graceful set.' },
+    { name: 'Falador rooftop (lap)', level: 50, xp: 440, perHour: 180 },
+    { name: 'Seers\' Village rooftop (lap)', level: 60, xp: 570, perHour: 185, note: 'Best with Camelot teleport + hard Kandarin diary.' },
+    { name: 'Pollnivneach rooftop (lap)', level: 70, xp: 890, perHour: 160 },
+    { name: 'Rellekka rooftop (lap)', level: 80, xp: 780, perHour: 175 },
+    { name: 'Ardougne rooftop (lap)', level: 90, xp: 793, perHour: 190 },
+  ],
+  hunter: [
+    { name: 'Birdhouse run (yew, per run ≈)', level: 59, xp: 4200, perHour: 12, note: 'Passive — one run every 50 minutes; XP shown per full run of 4 houses.' },
+    { name: 'Grey chinchompas', level: 53, xp: 198.5, perHour: 400, outputs: [{ n: 'Chinchompa', q: 1 }] },
+    { name: 'Red chinchompas', level: 63, xp: 265, perHour: 450, outputs: [{ n: 'Red chinchompa', q: 1 }] },
+    { name: 'Black chinchompas', level: 73, xp: 315, perHour: 480, outputs: [{ n: 'Black chinchompa', q: 1 }], note: 'Wilderness — risk of PK deaths.' },
+    { name: 'Herbiboar', level: 80, xp: 2400, perHour: 70, note: 'Requires 31 Herblore; also gives herbs.' },
+  ],
+  farming: [
+    { name: 'Herb run (ranarr, per patch ≈)', level: 32, xp: 90, perHour: 60, inputs: [{ n: 'Ranarr seed', q: 1 }], outputs: [{ n: 'Grimy ranarr weed', q: 6 }], note: 'Plant + harvest average (~6 herbs). Most Farming XP comes from tree runs.' },
+    { name: 'Oak tree (check-health)', level: 15, xp: 467.3, perHour: 8, inputs: [{ n: 'Acorn', q: 1 }] },
+    { name: 'Willow tree (check-health)', level: 30, xp: 1456.5, perHour: 8, inputs: [{ n: 'Willow seed', q: 1 }] },
+    { name: 'Maple tree (check-health)', level: 45, xp: 3403.4, perHour: 8, inputs: [{ n: 'Maple seed', q: 1 }] },
+    { name: 'Yew tree (check-health)', level: 60, xp: 7069.9, perHour: 8, inputs: [{ n: 'Yew seed', q: 1 }] },
+    { name: 'Magic tree (check-health)', level: 75, xp: 13768.3, perHour: 8, inputs: [{ n: 'Magic seed', q: 1 }] },
+    { name: 'Palm tree (check-health)', level: 68, xp: 10150.1, perHour: 8, inputs: [{ n: 'Palm tree seed', q: 1 }] },
+  ],
+  construction: [
+    { name: 'Oak larders', level: 33, xp: 480, perHour: 380, inputs: [{ n: 'Oak plank', q: 8 }], note: 'Butler recommended; cost shown per larder.' },
+    { name: 'Oak dungeon doors', level: 74, xp: 600, perHour: 400, inputs: [{ n: 'Oak plank', q: 10 }] },
+    { name: 'Mahogany tables', level: 52, xp: 840, perHour: 350, inputs: [{ n: 'Mahogany plank', q: 6 }], note: 'Fastest conventional rate (~900k GP/hr cost).' },
+    { name: 'Mythical capes (mounted)', level: 47, xp: 370, perHour: 350, inputs: [{ n: 'Teak plank', q: 3 }], note: 'Requires Dragon Slayer II; cheapest decent method.' },
+  ],
+  attack: [
+    { name: 'Sand/Ammonite crabs (XP/hr)', level: 1, xp: 40000, perHour: 1, note: 'AFK. Rate shown is XP per hour, not per action.' },
+    { name: 'Nightmare Zone (XP/hr)', level: 40, xp: 90000, perHour: 1, note: 'Requires 5 quest bosses unlocked; absorption + overload method.' },
+    { name: 'Slayer tasks (XP/hr)', level: 1, xp: 70000, perHour: 1, note: 'Trains Slayer at the same time.' },
+  ],
+  strength: [
+    { name: 'Sand/Ammonite crabs (XP/hr)', level: 1, xp: 40000, perHour: 1, note: 'AFK. Rate shown is XP per hour.' },
+    { name: 'Nightmare Zone (XP/hr)', level: 40, xp: 95000, perHour: 1, note: 'Absorption + overload method.' },
+    { name: 'Slayer tasks (XP/hr)', level: 1, xp: 75000, perHour: 1 },
+  ],
+  defence: [
+    { name: 'Sand/Ammonite crabs (XP/hr)', level: 1, xp: 35000, perHour: 1, note: 'AFK on defensive style.' },
+    { name: 'Nightmare Zone (XP/hr)', level: 40, xp: 85000, perHour: 1 },
+    { name: 'Chinning defensive (XP/hr)', level: 1, xp: 150000, perHour: 1, note: 'Long-ranged style at maniacal monkeys.' },
+  ],
+  ranged: [
+    { name: 'Crabs with best crossbow (XP/hr)', level: 1, xp: 35000, perHour: 1, note: 'AFK. Rate shown is XP per hour.' },
+    { name: 'Cannon on Slayer tasks (XP/hr)', level: 35, xp: 90000, perHour: 1, note: 'Expensive but fast; trains Slayer too.' },
+    { name: 'Chinning maniacal monkeys (XP/hr)', level: 55, xp: 350000, perHour: 1, note: 'Very expensive; rates scale with chin tier and prayer.' },
+  ],
+  hitpoints: [
+    { name: 'Any combat training (passive)', level: 1, xp: 1, perHour: 1, note: 'Hitpoints XP comes automatically at 1/3 the rate of combat XP.' },
+  ],
+  slayer: [
+    { name: 'Slayer tasks (XP/hr ≈)', level: 1, xp: 25000, perHour: 1, note: 'Scales heavily with combat stats and task list; use Turael skipping early, point-boosting later.' },
+  ],
+};
+
+// ─── ACTIVITY TIMERS ─────────────────────────────────────────────────────────
+// Startable countdown timers for repeatable activities. `mins` = full cycle.
+const TIMER_PRESETS = [
+  { id: 'herb', label: 'Herb run', mins: 80, icon: '🌿', desc: 'Herb patches grow in ~80 minutes (4 × 20 min stages).' },
+  { id: 'birdhouse', label: 'Birdhouse run', mins: 50, icon: '🐦', desc: 'Birdhouses fill with birds after 50 minutes.' },
+  { id: 'seaweed', label: 'Giant seaweed', mins: 40, icon: '🌊', desc: 'Underwater patches near Fossil Island grow in ~40 minutes.' },
+  { id: 'tree', label: 'Tree run', mins: 280, icon: '🌳', desc: 'Oak ~3h20m, willow ~4h40m, maple ~5h20m, yew ~6h40m, magic ~8h. Timer set to willow.' },
+  { id: 'fruit-tree', label: 'Fruit tree run', mins: 960, icon: '🍌', desc: 'Fruit trees take 16 hours to grow.' },
+  { id: 'hardwood', label: 'Hardwood trees', mins: 1280, icon: '🪵', desc: 'Teak/mahogany patches on Fossil Island take ~21h20m.' },
+  { id: 'crystal-tree', label: 'Crystal tree', mins: 480, icon: '💎', desc: 'The Prifddinas crystal tree grows in 8 hours.' },
+  { id: 'hespori', label: 'Hespori', mins: 1920, icon: '👁', desc: 'Hespori grows in ~32 hours.' },
+  { id: 'aerial', label: 'Molch pearls / misc', mins: 60, icon: '⏱', desc: 'General-purpose 1 hour timer.' },
+];
+
+// Daily/weekly resets (UTC 00:00; weekly = Wednesday). Shown as auto countdowns.
+const RESET_ACTIVITIES = [
+  { id: 'battlestaves', label: 'Battlestaves from Zaff', period: 'daily', desc: 'Buy discounted battlestaves in Varrock (amount scales with Varrock diary).' },
+  { id: 'herb-boxes', label: 'NMZ herb boxes', period: 'daily', desc: 'Buy up to 15 herb boxes with Nightmare Zone points (~10k profit each).' },
+  { id: 'sand', label: 'Buckets of sand (Bert)', period: 'daily', desc: '84 buckets of sand delivered daily after The Hand in the Sand + easy Ardougne diary.' },
+  { id: 'ess', label: 'Pure essence (Cromperty)', period: 'daily', desc: 'Free pure essence from Wizard Cromperty (Ardougne diary).' },
+  { id: 'kingdom', label: 'Kingdom of Miscellania', period: 'daily', desc: 'Top up coffer and check approval (Throne of Miscellania).' },
+  { id: 'tears', label: 'Tears of Guthix', period: 'weekly', desc: 'Weekly minigame — free XP in your lowest skill.' },
 ];

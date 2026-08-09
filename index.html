@@ -20,6 +20,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/osrs-redesign.css">
+<link rel="stylesheet" href="features.css">
 <style>
 :root {
   --bg: #0c1017;
@@ -1582,11 +1583,17 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
     <nav class="sb-nav" id="appSideNav">
       <button type="button" class="sb-nav-btn active" data-tab="overview" onclick="switchTab('overview')"><span class="sb-icon">▣</span><span class="sb-label">Overview</span></button>
       <button type="button" class="sb-nav-btn" data-tab="stats" onclick="switchTab('stats')"><span class="sb-icon">☰</span><span class="sb-label">Skills</span></button>
+      <button type="button" class="sb-nav-btn" data-tab="progress" onclick="switchTab('progress')"><span class="sb-icon">↗</span><span class="sb-label">Progress</span></button>
+      <button type="button" class="sb-nav-btn" data-tab="calc" onclick="switchTab('calc')"><span class="sb-icon">∑</span><span class="sb-label">Calculator</span></button>
       <button type="button" class="sb-nav-btn" data-tab="equipment" onclick="switchTab('equipment')"><span class="sb-icon">⬡</span><span class="sb-label">Gear</span></button>
+      <button type="button" class="sb-nav-btn" data-tab="upgrades" onclick="switchTab('upgrades')"><span class="sb-icon">↑</span><span class="sb-label">Upgrades</span></button>
       <button type="button" class="sb-nav-btn" data-tab="quests" onclick="switchTab('quests')"><span class="sb-icon">≡</span><span class="sb-label">Quests</span></button>
+      <button type="button" class="sb-nav-btn" data-tab="guide" onclick="switchTab('guide')"><span class="sb-icon">↦</span><span class="sb-label">Quest Guide</span></button>
       <button type="button" class="sb-nav-btn" data-tab="goals" onclick="switchTab('goals')" data-tour="goals-tab"><span class="sb-icon">◎</span><span class="sb-label">Goals</span></button>
       <button type="button" class="sb-nav-btn" data-tab="bosses" onclick="switchTab('bosses')"><span class="sb-icon">▲</span><span class="sb-label">Bosses</span></button>
       <button type="button" class="sb-nav-btn" data-tab="achievements" onclick="switchTab('achievements')"><span class="sb-icon">★</span><span class="sb-label">Achievements</span></button>
+      <button type="button" class="sb-nav-btn" data-tab="collection" onclick="switchTab('collection')"><span class="sb-icon">◈</span><span class="sb-label">Collection Log</span></button>
+      <button type="button" class="sb-nav-btn" data-tab="timers" onclick="switchTab('timers')"><span class="sb-icon">⏱</span><span class="sb-label">Timers</span></button>
       <button type="button" class="sb-nav-btn" data-tab="plan" onclick="switchTab('plan')"><span class="sb-icon">✦</span><span class="sb-label">AI Tools</span></button>
     </nav>
     <div class="sb-foot">
@@ -1897,7 +1904,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
   <div class="ach-pane active" id="panel-diaries" data-ach-pane="diaries">
     <div class="goal-intro">
       <h2>Achievement Diaries</h2>
-      <p>Live-synced from RuneLite on login. Green = complete; blue = your stats clear the skill walls for that tier.</p>
+      <p>Live-synced from RuneLite. Green = complete; blue = skills <em>and</em> key quest gates clear for that tier — expand each tier to see exactly what&apos;s blocking you.</p>
     </div>
     <div class="diary-grid" id="diaryGrid"></div>
     <div class="hint" id="diaryHint">Log in with the OSRS Journal plugin to sync diary completion.</div>
@@ -1968,6 +1975,40 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
   </div>
 </div>
 
+<!-- ===== PROGRESS (XP + wealth charts) ===== -->
+<div class="panel" id="panel-progress" role="tabpanel">
+  <div id="progressRoot"><div class="hint">Sync a character to see XP and wealth history.</div></div>
+</div>
+
+<!-- ===== SKILL CALCULATOR ===== -->
+<div class="panel" id="panel-calc" role="tabpanel">
+  <div class="goal-intro">
+    <h2>Skill calculator</h2>
+    <p>Pre-filled with your live XP. Pick a skill and target level to see actions, time, and GE cost for common methods.</p>
+  </div>
+  <div id="calcRoot"></div>
+</div>
+
+<!-- ===== OPTIMAL QUEST GUIDE ===== -->
+<div class="panel" id="panel-guide" role="tabpanel">
+  <div id="guideRoot"></div>
+</div>
+
+<!-- ===== GEAR UPGRADES ===== -->
+<div class="panel" id="panel-upgrades" role="tabpanel">
+  <div id="upgradesRoot"></div>
+</div>
+
+<!-- ===== TIMERS ===== -->
+<div class="panel" id="panel-timers" role="tabpanel">
+  <div id="timersRoot"></div>
+</div>
+
+<!-- ===== COLLECTION LOG ===== -->
+<div class="panel" id="panel-collection" role="tabpanel">
+  <div id="clogRoot"></div>
+</div>
+
   </div><!-- /page-content -->
 </div><!-- /page-shell -->
 
@@ -1984,9 +2025,15 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
   <div class="mobile-more-sheet" id="mobileMoreSheet" onclick="if(event.target===this)toggleMobileMore(false)">
     <div class="mobile-more-card" role="dialog" aria-label="More destinations">
       <h3>More</h3>
+      <button type="button" class="btn-secondary" onclick="switchTab('progress');toggleMobileMore(false)">Progress</button>
+      <button type="button" class="btn-secondary" onclick="switchTab('calc');toggleMobileMore(false)">Calculator</button>
       <button type="button" class="btn-secondary" onclick="switchTab('equipment');toggleMobileMore(false)">Gear</button>
+      <button type="button" class="btn-secondary" onclick="switchTab('upgrades');toggleMobileMore(false)">Upgrades</button>
+      <button type="button" class="btn-secondary" onclick="switchTab('guide');toggleMobileMore(false)">Quest Guide</button>
       <button type="button" class="btn-secondary" onclick="switchTab('bosses');toggleMobileMore(false)">Bosses</button>
       <button type="button" class="btn-secondary" onclick="switchTab('achievements');toggleMobileMore(false)">Achievements</button>
+      <button type="button" class="btn-secondary" onclick="switchTab('collection');toggleMobileMore(false)">Collection Log</button>
+      <button type="button" class="btn-secondary" onclick="switchTab('timers');toggleMobileMore(false)">Timers</button>
       <button type="button" class="btn-secondary" onclick="switchTab('plan');toggleMobileMore(false)">AI Tools</button>
       <button type="button" class="btn-ghost" onclick="toggleMobileMore(false)">Close</button>
     </div>
@@ -2027,6 +2074,13 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
 <script src="game-data.js"></script>
+<script src="quest-guide-data.js"></script>
+<script src="features-progress.js"></script>
+<script src="features-calc.js"></script>
+<script src="features-guide.js"></script>
+<script src="features-upgrades.js"></script>
+<script src="features-timers.js"></script>
+<script src="features-clog.js"></script>
 <script>
 /*
  * ARCHITECTURE OVERVIEW
@@ -4090,8 +4144,13 @@ async function fetchPlayer(rsnOverride, options = {}) {
 
     // Progressive enhancements — re-render whichever section they feed when ready
     if (dataSource !== 'wom') {
-      loadXpGains(rsn).then(() => { renderStats(); renderDashboard(); });
+      loadXpGains(rsn).then(() => {
+        renderStats();
+        renderDashboard();
+        if (typeof renderProgress === 'function' && currentAppTab === 'progress') renderProgress();
+      });
       loadDiariesAndCa(rsn).then(() => { renderDiaries(); renderCombatAchievements(); });
+      if (typeof loadCollectionLog === 'function') loadCollectionLog(rsn);
     }
     if (viewingOwnCharacter && dataSource === 'supabase') {
       loadGoalsFromServer(rsn).then(() => { renderGoals(); renderDashboard(); });
@@ -6890,6 +6949,9 @@ function diaryTierReady(tierMeta) {
   for (const [sk, need] of Object.entries(tierMeta.skillReqs || {})) {
     if (questSkillLevel(sk) < need) return false;
   }
+  for (const q of tierMeta.questReqs || []) {
+    if (!questsDone.has(q)) return false;
+  }
   return true;
 }
 
@@ -6915,14 +6977,20 @@ function renderDiaries() {
     const tiers = DIARY_TIERS.map(tier => {
       const meta = d.tiers[tier] || {};
       const done = diaryComplete(d.id, tier);
-      const ready = !done && diaryTierReady(meta);
-      const missing = Object.entries(meta.skillReqs || {})
+      const skillMissing = Object.entries(meta.skillReqs || {})
         .filter(([sk, need]) => questSkillLevel(sk) < need)
-        .map(([sk, need]) => `${formatSkillName(sk)} ${questSkillLevel(sk)}/${need}`)
-        .slice(0, 2);
+        .map(([sk, need]) => `${formatSkillName(sk)} ${questSkillLevel(sk)}/${need}`);
+      const questMissing = (meta.questReqs || []).filter(q => !questsDone.has(q));
+      const ready = !done && !skillMissing.length && !questMissing.length;
       const status = done ? 'done' : ready ? 'ready' : 'blocked';
-      const label = done ? 'Complete' : ready ? 'Skills ready' : (missing.join(', ') || 'Blocked');
-      return `<div class="diary-tier"><span>${tier}</span><span class="${status}">${label}</span></div>`;
+      const short = done ? 'Complete' : ready ? 'Ready' : (skillMissing[0] || questMissing[0] || 'Blocked');
+      const detailBits = [];
+      if (!done && skillMissing.length) detailBits.push('Skills: ' + skillMissing.join(', '));
+      if (!done && questMissing.length) detailBits.push('Quests: ' + questMissing.join(', '));
+      const detail = detailBits.length
+        ? `<div class="diary-missing">${detailBits.join(' · ')}</div>`
+        : (ready && !done ? '<div class="diary-missing">Skill &amp; quest walls clear — finish the tasks in-game</div>' : '');
+      return `<div class="diary-tier expanded"><div><span>${tier}</span> <span class="${status}">${short}</span></div>${detail}</div>`;
     }).join('');
     const doneCount = DIARY_TIERS.filter(t => diaryComplete(d.id, t)).length;
     return `<div class="diary-card${doneCount === 4 ? ' complete' : ''}">
@@ -7060,13 +7128,19 @@ let currentAppTab = 'overview';
 const APP_PAGE_META = {
   overview: { title: 'Overview', desc: 'Your account at a glance' },
   stats: { title: 'Skills', desc: 'XP gains, levels and training methods' },
+  progress: { title: 'Progress', desc: 'XP gains, personal records and net worth' },
+  calc: { title: 'Calculator', desc: 'Actions, time and GE cost to your next level' },
   equipment: { title: 'Gear', desc: 'Worn equipment, bank and loadouts' },
+  upgrades: { title: 'Upgrades', desc: 'Next gear upgrade per slot for your account' },
   quests: { title: 'Quests', desc: 'Plan your quest progression' },
+  guide: { title: 'Quest Guide', desc: 'Optimal order with auto-checkoff from sync' },
   goals: { title: 'Goals & Roadmap', desc: 'Track milestones and money makers' },
   bosses: { title: 'Bosses', desc: 'Combat access and recommendations' },
   achievements: { title: 'Achievements', desc: 'Diaries and combat achievements' },
   diaries: { title: 'Achievements', desc: 'Diaries and combat achievements' },
   ca: { title: 'Achievements', desc: 'Diaries and combat achievements' },
+  collection: { title: 'Collection Log', desc: 'Obtained uniques synced from RuneLite' },
+  timers: { title: 'Timers', desc: 'Herb runs, birdhouses and daily resets' },
   plan: { title: 'AI Tools', desc: 'Your personal OSRS advisor' },
 };
 
@@ -7131,7 +7205,7 @@ function switchTab(tab) {
   document.querySelectorAll('.mb-nav-btn[data-tab]').forEach((btn) => {
     const t = btn.getAttribute('data-tab');
     if (t === 'more') {
-      btn.classList.toggle('active', ['equipment', 'bosses', 'achievements', 'plan'].includes(tab));
+      btn.classList.toggle('active', ['equipment', 'bosses', 'achievements', 'plan', 'progress', 'calc', 'upgrades', 'guide', 'collection', 'timers'].includes(tab));
       return;
     }
     btn.classList.toggle('active', t === tab);
@@ -7141,6 +7215,15 @@ function switchTab(tab) {
   if (tab === 'bosses') renderBosses();
   if (tab === 'equipment') renderSyncedEquipment();
   if (tab === 'goals') renderGoals();
+  if (tab === 'progress' && typeof renderProgress === 'function') renderProgress();
+  if (tab === 'calc' && typeof renderCalculator === 'function') {
+    loadGePrices(); loadGeMapping();
+    renderCalculator();
+  }
+  if (tab === 'guide' && typeof renderQuestGuide === 'function') renderQuestGuide();
+  if (tab === 'upgrades' && typeof renderUpgrades === 'function') renderUpgrades();
+  if (tab === 'timers' && typeof renderTimers === 'function') renderTimers();
+  if (tab === 'collection' && typeof renderCollectionLog === 'function') renderCollectionLog();
   if (tab === 'overview' && playerSkills.attack) {
     renderMainGoalHero();
     renderNextSession();

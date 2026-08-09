@@ -14,6 +14,14 @@ const copies = [
   [join(root, "privacy.html"), join(here, "privacy.html")],
   [join(root, "quest-reqs-data.json"), join(here, "quest-reqs-data.json")],
   [join(root, "game-data.js"), join(here, "game-data.js")],
+  [join(root, "quest-guide-data.js"), join(here, "quest-guide-data.js")],
+  [join(root, "features.css"), join(here, "features.css")],
+  [join(root, "features-progress.js"), join(here, "features-progress.js")],
+  [join(root, "features-calc.js"), join(here, "features-calc.js")],
+  [join(root, "features-guide.js"), join(here, "features-guide.js")],
+  [join(root, "features-upgrades.js"), join(here, "features-upgrades.js")],
+  [join(root, "features-timers.js"), join(here, "features-timers.js")],
+  [join(root, "features-clog.js"), join(here, "features-clog.js")],
 ];
 
 for (const [src, dest] of copies) {
