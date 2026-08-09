@@ -3423,11 +3423,19 @@ function applyPlayerPayload(rsn, skills, quests, equip, bank, playerRow, invento
 
   syncedQuestPoints = null;
   lastSynced = null;
+  window.collectionCount = null;
+  window.collectionCountMax = null;
   playerInventory = Array.isArray(inventoryRows) ? inventoryRows : [];
   if (playerRow) {
     const qp = playerRow.quest_points;
     if (qp != null && !Number.isNaN(Number(qp))) syncedQuestPoints = Number(qp);
     if (playerRow.last_synced) lastSynced = playerRow.last_synced;
+    if (playerRow.collection_count != null && !Number.isNaN(Number(playerRow.collection_count))) {
+      window.collectionCount = Number(playerRow.collection_count);
+    }
+    if (playerRow.collection_count_max != null && !Number.isNaN(Number(playerRow.collection_count_max))) {
+      window.collectionCountMax = Number(playerRow.collection_count_max);
+    }
     // Legacy shape (pre player_inventory table) — keep reading if present.
     if (!playerInventory.length && Array.isArray(playerRow.inventory_tracked)) {
       playerInventory = playerRow.inventory_tracked;
@@ -3991,7 +3999,7 @@ async function fetchPublicProfile(rsn) {
   const [sRes, qRes, pRes] = await Promise.all([
     fetch(`${SUPABASE_URL}/rest/v1/player_skills?rsn=eq.${q}&select=skill,level,xp`, { headers }),
     fetch(`${SUPABASE_URL}/rest/v1/player_quests?rsn=eq.${q}&select=quest_name,state`, { headers }),
-    fetch(`${SUPABASE_URL}/rest/v1/players?rsn=eq.${q}&select=quest_points,last_synced`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/players?rsn=eq.${q}&select=quest_points,last_synced,collection_count,collection_count_max`, { headers }),
   ]);
   if (!sRes.ok) throw new Error(`Could not load profile (${sRes.status})`);
   const skills = await sRes.json();
@@ -4022,7 +4030,7 @@ async function fetchFromSupabase(rsn) {
     fetch(`${SUPABASE_URL}/rest/v1/player_quests?rsn=eq.${q}&select=quest_name,state`, {headers}),
     fetch(`${SUPABASE_URL}/rest/v1/player_equipment?rsn=eq.${q}&select=slot_id,slot_name,item_id,item_name`, {headers}),
     fetch(`${SUPABASE_URL}/rest/v1/player_bank?rsn=eq.${q}&select=item_id,item_name,quantity`, {headers}),
-    fetch(`${SUPABASE_URL}/rest/v1/players?rsn=eq.${q}&select=quest_points,last_synced`, {headers}),
+    fetch(`${SUPABASE_URL}/rest/v1/players?rsn=eq.${q}&select=quest_points,last_synced,collection_count,collection_count_max`, {headers}),
     fetch(`${SUPABASE_URL}/rest/v1/player_inventory?rsn=eq.${q}&select=item_id,item_name,quantity`, {headers}),
   ]);
   if (!sRes.ok) throw new Error(`Could not load character (${sRes.status})`);
