@@ -25,7 +25,7 @@ async function loadPublicProfile(rsn) {
     Authorization: `Bearer ${SUPABASE_ANON}`,
   };
   const [pRes, sRes, gRes] = await Promise.all([
-    fetch(`${SUPABASE_URL}/rest/v1/players?rsn=eq.${q}&select=rsn,quest_points,last_synced`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/players?rsn=eq.${q}&select=rsn,quest_points,last_synced,collection_count,collection_count_max`, { headers }),
     fetch(`${SUPABASE_URL}/rest/v1/player_skills?rsn=eq.${q}&select=skill,level&skill=eq.overall`, { headers }),
     // RPC exposes only the main goal's label — anon has no direct table read.
     fetch(`${SUPABASE_URL}/rest/v1/rpc/public_main_goal`, {
