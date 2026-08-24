@@ -78,6 +78,8 @@
   }
 
   function wornInSlot(slot) {
+    const want = (typeof canonicalEquipSlot === 'function') ? canonicalEquipSlot(slot) : slot;
+    if (wornGear && wornGear[want]) return wornGear[want];
     // Map simulator slot names to wornGear slot names used by the plugin
     const aliases = {
       head: ['head', 'helm', 'hat'],
@@ -87,15 +89,15 @@
       weapon: ['weapon'],
       body: ['body', 'torso'],
       shield: ['shield', 'offhand'],
-      legs: ['legs', 'legs'],
-      hands: ['hands', 'gloves'],
-      feet: ['feet', 'boots'],
+      legs: ['legs'],
+      gloves: ['gloves', 'hands'],
+      boots: ['boots', 'feet'],
       ring: ['ring'],
     };
-    const keys = aliases[slot] || [slot];
+    const keys = aliases[want] || aliases[slot] || [slot];
     for (const k of Object.keys(wornGear || {})) {
       const lk = k.toLowerCase();
-      if (keys.some((a) => lk === a || lk.includes(a))) return wornGear[k];
+      if (keys.some((a) => lk === a)) return wornGear[k];
     }
     return null;
   }
@@ -139,8 +141,9 @@
           break;
         }
       }
-      // Also treat bank-owned as "have" for "owned but not worn"
-      if (!current) {
+      // Bank/inventory fallback only when the slot is actually empty — never
+      // pretend a banked item is "Now" while something else is worn.
+      if (!current && !wornName) {
         for (let i = ladder.length - 1; i >= 0; i--) {
           if (ladder[i][0] === 'None') continue;
           if (owns(ladder[i][0], owned)) {

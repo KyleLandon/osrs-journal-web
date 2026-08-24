@@ -1778,6 +1778,11 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
     <div class="equip-sync-grid" id="equipSyncGrid"></div>
     <p class="equip-sync-hint" id="equipSyncHint">Log in with the RuneLite plugin to sync worn items.</p>
   </div>
+  <div class="equip-sync-section" id="inventorySection">
+    <div class="section-title">Inventory <span class="equip-sync-badge" id="inventoryBadge" style="display:none">Live sync</span></div>
+    <div class="bank-gear-list" id="inventoryList"></div>
+    <p class="equip-sync-hint" id="inventoryHint">Enable Sync Bank &amp; Inventory in the plugin — your bag contents show up here.</p>
+  </div>
   <div class="equip-sync-section" id="bankGearSection">
     <div class="section-title">Bank &amp; Inventory Gear <span class="equip-sync-badge" id="bankGearBadge" style="display:none">Live sync</span></div>
     <div class="bank-gear-list" id="bankGearList"></div>
@@ -3150,6 +3155,27 @@ let wornGearIds = {};
 let lastSynced = null;
 let exportFormat = 'markdown';
 
+/** Plugin slot names → website SLOT_ORDER keys (RuneLite AMULET → neck). */
+const EQUIP_SLOT_ALIASES = {
+  amulet: 'neck',
+  neck: 'neck',
+  helmet: 'head',
+  helm: 'head',
+  hat: 'head',
+  back: 'cape',
+  torso: 'body',
+  offhand: 'shield',
+  hands: 'gloves',
+  feet: 'boots',
+  ammunition: 'ammo',
+};
+
+function canonicalEquipSlot(name) {
+  const k = String(name || '').toLowerCase();
+  if (typeof SLOT_ORDER !== 'undefined' && SLOT_ORDER.includes(k)) return k;
+  return EQUIP_SLOT_ALIASES[k] || k;
+}
+
 function qd(name) {
   name = normalizeQuestName(name);
   if (name === 'Recipe for Disaster') {
@@ -3447,8 +3473,9 @@ function applyPlayerPayload(rsn, skills, quests, equip, bank, playerRow, invento
   equipSynced = equip.length > 0;
   if (equip.length) {
     for (const row of equip) {
-      wornGear[row.slot_name] = row.item_name;
-      if (row.item_id != null) wornGearIds[row.slot_name] = row.item_id;
+      const slot = canonicalEquipSlot(row.slot_name);
+      wornGear[slot] = row.item_name;
+      if (row.item_id != null) wornGearIds[slot] = row.item_id;
     }
     populateEquipmentFromDB(equip);
   }
@@ -4041,10 +4068,13 @@ async function fetchFromSupabase(rsn) {
     throw err;
   }
   const quests = await qRes.json();
-  const equip = await eRes.json();
+  const equip = eRes.ok ? await eRes.json() : [];
   const bank = bRes.ok ? await bRes.json() : [];
   const players = pRes.ok ? await pRes.json() : [];
   const inventory = iRes.ok ? await iRes.json() : [];
+  if (!eRes.ok) console.warn('player_equipment fetch failed', eRes.status);
+  if (!bRes.ok) console.warn('player_bank fetch failed', bRes.status);
+  if (!iRes.ok) console.warn('player_inventory fetch failed', iRes.status);
   viewingOwnCharacter = true;
 
   return applyPlayerPayload(rsn, skills, quests, equip, bank, players[0], inventory);
@@ -4053,12 +4083,21 @@ async function fetchFromSupabase(rsn) {
 /** Try to match synced equipment item names against gear dropdowns. */
 function populateEquipmentFromDB(equipRows) {
   for (const row of equipRows) {
-    const slot = row.slot_name;
+    const slot = canonicalEquipSlot(row.slot_name);
+    const synced = (row.item_name || '').toLowerCase();
+    const stripped = synced.replace(/\s*\([^)]*\)/g, '').trim();
     for (const style of ['melee','ranged','magic']) {
       const key = style + '_' + slot;
       const gearList = GEAR[style]?.[slot];
       if (!gearList) continue;
-      const idx = gearList.findIndex(item => item[0].toLowerCase() === row.item_name.toLowerCase());
+      let idx = gearList.findIndex(item => item[0].toLowerCase() === synced);
+      if (idx < 0) idx = gearList.findIndex(item => item[0].toLowerCase() === stripped);
+      if (idx < 0) {
+        idx = gearList.findIndex(item => {
+          const n = item[0].toLowerCase();
+          return n !== 'none' && n !== 'unarmed' && n.length > 3 && (synced.includes(n) || stripped === n);
+        });
+      }
       if (idx >= 0) {
         equipment[key] = idx;
         break;
@@ -4747,7 +4786,7 @@ function buildGearUpgradeRecs() {
   const out = [];
 
   for (const [slot, items] of Object.entries(gearSet)) {
-    const wornName = (wornGear[slot] || '').toLowerCase();
+    const wornName = (wornGear[canonicalEquipSlot(slot)] || wornGear[slot] || '').toLowerCase();
     if (!wornName) continue;
 
     let wornIdx = -1;
@@ -4792,7 +4831,7 @@ function buildGearUpgradeRecs() {
     out.push({
       slot: SLOT_LABELS[slot]?.toLowerCase() || slot,
       name,
-      from: wornGear[slot] || 'empty slot',
+      from: wornGear[canonicalEquipSlot(slot)] || wornGear[slot] || 'empty slot',
       price,
       affordable,
       score,
@@ -4966,7 +5005,45 @@ function renderSyncedEquipment() {
       </div>`;
     }).join('');
   }
+  renderInventory();
   renderBankGear();
+}
+
+function inventoryEmptyHint() {
+  if (dataSource === 'public') {
+    return "This player's inventory is private — only they can see it when signed in.";
+  }
+  if (dataSource === 'wom') {
+    return 'Inventory requires the RuneLite OSRS Journal plugin with Sync Bank & Inventory enabled.';
+  }
+  return 'Enable Sync Bank & Inventory in the plugin, then wait a few seconds or open your bank in-game.';
+}
+
+function renderInventory() {
+  const list = document.getElementById('inventoryList');
+  const hint = document.getElementById('inventoryHint');
+  const badge = document.getElementById('inventoryBadge');
+  if (!list || !hint || !badge) return;
+  const rows = Array.isArray(playerInventory) ? playerInventory : [];
+  if (!rows.length) {
+    list.innerHTML = '';
+    hint.textContent = inventoryEmptyHint();
+    hint.style.display = '';
+    badge.style.display = 'none';
+    return;
+  }
+  hint.style.display = 'none';
+  badge.style.display = '';
+  const sorted = [...rows].sort((a, b) =>
+    (b.quantity || 0) - (a.quantity || 0) || String(a.item_name || '').localeCompare(String(b.item_name || ''))
+  );
+  list.innerHTML = sorted.map(r => {
+    const name = r.item_name || 'Unknown';
+    const qty = (r.quantity || 0) > 1
+      ? `<span class="qty">x${Number(r.quantity).toLocaleString()}</span>`
+      : '';
+    return `<span class="bank-gear-chip">${itemIconHtml(r.item_id ?? name, { size: 'sm', alt: name, name }) }<span>${name}${qty}</span></span>`;
+  }).join('');
 }
 
 function renderBankGear() {
@@ -7501,7 +7578,7 @@ function startRealtimeUpdates(rsn, onchange) {
   stopRealtimeUpdates();
   if (!supabaseClient || !rsn) return;
   try {
-    const tables = ['players', 'player_skills', 'player_quests', 'player_bank', 'player_inventory'];
+    const tables = ['players', 'player_skills', 'player_quests', 'player_equipment', 'player_bank', 'player_inventory'];
     let ch = supabaseClient.channel('journal-live-' + rsn.toLowerCase());
     for (const table of tables) {
       ch = ch.on(
