@@ -53,7 +53,10 @@
 
   function canonicalName(name) {
     let s = String(name || '').toLowerCase().replace(/[\u2018\u2019]/g, "'").trim();
-    s = s.replace(/\s*\((?:or|\d+|uncharged|charged|broken|empty|off|on|lit|beta|l|t|a|c|e)\)/g, '');
+    s = s.replace(/\s*\((?:or|\d+|uncharged|charged|broken|empty|off|on|lit|beta|inactive|active|new|full|degraded|l|t|a|c|e)\)/g, '');
+    // Barrows / degrading gear: "Ahrim's hood 75", "Dharok's platebody 0"
+    s = s.replace(/\s+(100|75|50|25|0)$/g, '');
+    s = s.replace(/\s+\d+\/\d+$/g, '');
     s = s.replace(/\s+/g, ' ').trim();
     if (SLAYER_HELM_RE.test(s)) {
       s = 'slayer helmet' + (/\(i\)/.test(String(name).toLowerCase()) ? ' (i)' : '');
@@ -233,7 +236,7 @@
       return {
         slot,
         wornName,
-        currentName: current ? current[0] : (wornName || 'Empty'),
+        currentName: wornName || (current ? current[0] : 'Empty'),
         nextName: next[0],
         nextReason: locationLabel(findOwned(next[0], entries)),
         status: 'equip',
@@ -255,7 +258,7 @@
       return {
         slot,
         wornName,
-        currentName: current ? current[0] : (wornName || 'Empty'),
+        currentName: wornName || (current ? current[0] : 'Empty'),
         nextName: null,
         nextReason: current || wornName ? 'Best in slot for this style' : '',
         status: 'bis',
@@ -268,7 +271,7 @@
     return {
       slot,
       wornName,
-      currentName: current ? current[0] : (wornName || 'Empty'),
+      currentName: wornName || (current ? current[0] : 'Empty'),
       nextName: next[0],
       nextReason: wearable
         ? 'Next upgrade — obtain it'
