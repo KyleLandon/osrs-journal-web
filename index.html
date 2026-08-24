@@ -3036,8 +3036,28 @@ const QUEST_ALIASES = {
   "Alfred Grimhand's Barcrawl (miniquest)": "Alfred Grimhand's Barcrawl",
   "Bear your Soul (miniquest)": "Bear Your Soul",
   "Eagle's Peak": "Eagles' Peak",
+  "Vampire Slayer": "Vampyre Slayer",
+  "Rag and Bone Man": "Rag and Bone Man I",
+  "The Digsite": "The Dig Site",
+  "Dragon Slayer": "Dragon Slayer I",
+  "Desert Treasure": "Desert Treasure I",
+  "Forgettable Tale of a Drunken Dwarf": "Forgettable Tale...",
+  "Mourning's Ends Part I": "Mourning's End Part I",
+  "Mourning's Ends Part II": "Mourning's End Part II",
+  "Black Knight's Fortress": "Black Knights' Fortress",
+  "Making Friends With My Arm": "Making Friends with My Arm",
   "Recipe for Disaster/Freeing_King_Awowogei": "Recipe for Disaster - King Awowogei",
   "Recipe for Disaster/Freeing King Awowogei": "Recipe for Disaster - King Awowogei",
+  // Wiki optimal-guide titles → RuneLite Quest.getName()
+  "Recipe for Disaster - Freeing the Goblin generals": "Recipe for Disaster - Wartface & Bentnoze",
+  "Recipe for Disaster - Freeing the Mountain Dwarf": "Recipe for Disaster - Mountain Dwarf",
+  "Recipe for Disaster - Freeing Evil Dave": "Recipe for Disaster - Evil Dave",
+  "Recipe for Disaster - Freeing Pirate Pete": "Recipe for Disaster - Pirate Pete",
+  "Recipe for Disaster - Freeing the Lumbridge Guide": "Recipe for Disaster - Lumbridge Guide",
+  "Recipe for Disaster - Freeing Skrach Uglogwee": "Recipe for Disaster - Skrach Uglogwee",
+  "Recipe for Disaster - Freeing Sir Amik Varze": "Recipe for Disaster - Sir Amik Varze",
+  "Recipe for Disaster - Freeing King Awowogei": "Recipe for Disaster - King Awowogei",
+  "Recipe for Disaster - Defeating the Culinaromancer": "Recipe for Disaster - Culinaromancer",
 };
 
 function normalizeQuestName(name) {
@@ -3187,10 +3207,17 @@ function qd(name) {
   if (name === 'Desert Treasure II' || name === 'Desert Treasure II - The Fallen Empire') {
     return questsDone.has('Desert Treasure II - The Fallen Empire') || questsDone.has('Desert Treasure II');
   }
-  if (name === 'Making Friends With My Arm') {
+  if (name === 'Making Friends with My Arm' || name === 'Making Friends With My Arm') {
     return questsDone.has('Making Friends with My Arm') || questsDone.has('Making Friends With My Arm');
   }
-  return questsDone.has(name);
+  if (questsDone.has(name)) return true;
+  const alias = typeof QUEST_DETAILS_ALIASES !== 'undefined' ? QUEST_DETAILS_ALIASES[name] : null;
+  if (alias && questsDone.has(alias)) return true;
+  const want = name.toLowerCase();
+  for (const q of questsDone) {
+    if (normalizeQuestName(q).toLowerCase() === want) return true;
+  }
+  return false;
 }
 
 function qi(name) {
@@ -4183,6 +4210,8 @@ async function fetchPlayer(rsnOverride, options = {}) {
     renderEquipDoll();
     renderBosses();
     renderDashboard();
+    if (typeof renderQuestGuide === 'function') renderQuestGuide();
+    if (typeof renderUpgrades === 'function' && currentAppTab === 'upgrades') renderUpgrades();
     updateSyncBanner();
     updateCombatLevel();
     refreshExport();
@@ -4196,7 +4225,11 @@ async function fetchPlayer(rsnOverride, options = {}) {
         renderDashboard();
         if (typeof renderProgress === 'function' && currentAppTab === 'progress') renderProgress();
       });
-      loadDiariesAndCa(rsn).then(() => { renderDiaries(); renderCombatAchievements(); });
+      loadDiariesAndCa(rsn).then(() => {
+        renderDiaries();
+        renderCombatAchievements();
+        if (typeof renderQuestGuide === 'function') renderQuestGuide();
+      });
       if (typeof loadCollectionLog === 'function') loadCollectionLog(rsn);
     }
     if (viewingOwnCharacter && dataSource === 'supabase') {
@@ -7465,6 +7498,7 @@ function startSystemHealthChecks() {
       renderEquipDoll();
       renderBosses();
       renderDashboard();
+      if (typeof renderQuestGuide === 'function') renderQuestGuide();
       updateSyncBanner();
       updateCombatLevel();
       refreshExport();
@@ -7629,6 +7663,8 @@ function startLiveRefresh(localSessionToken) {
         renderQuests();
         renderSyncedEquipment();
         renderDashboard();
+        if (typeof renderQuestGuide === 'function') renderQuestGuide();
+        if (typeof renderUpgrades === 'function' && currentAppTab === 'upgrades') renderUpgrades();
         updateSyncBanner();
         refreshExport();
       } catch (_) {}

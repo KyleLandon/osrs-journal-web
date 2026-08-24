@@ -2,13 +2,13 @@
 // (https://oldschool.runescape.wiki/w/Optimal_quest_guide), retrieved 2026-08.
 // Step types:
 //   q     — a quest tracked by the in-game quest list (auto-checked from sync)
-//   mini  — a miniquest (manual check-off)
+//   mini  — a miniquest (auto-checked from sync when RuneLite tracks it)
 //   diary — an achievement diary step; region/tier auto-checked from diary sync
-//   train — a skill-training step (manual check-off)
-//   unlock— a non-quest unlock/activity step (manual check-off)
+//   train — a skill-training step (auto-checked when the synced skill is high enough)
+//   unlock— a non-quest unlock/activity step (manual, skipped once later quests are done)
 //   note  — informational row (no checkbox)
 const OPTIMAL_QUEST_GUIDE = [
-  { t: 'note', label: 'Learning the Ropes (Tutorial Island)' },
+  { t: 'q', n: 'Learning the Ropes', qp: 1, info: 'Tutorial Island.' },
   { t: 'q', n: 'Cook\'s Assistant', qp: 1, info: 'Consider getting an extra pot of flour for Prince Ali Rescue. Also start Rune Mysteries, The Restless Ghost and Prince Ali Rescue while in the area to speed them up later.' },
   { t: 'q', n: 'Sheep Shearer', qp: 1, info: 'Consider getting an extra 3 balls of wool for the Prince Ali rescue quest.' },
   { t: 'q', n: 'Misthalin Mystery', qp: 1 },
