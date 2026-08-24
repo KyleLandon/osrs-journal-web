@@ -3540,15 +3540,16 @@ async function fetchFromLocalhostSession(sessionToken) {
   return count;
 }
 
-// ─── XP GAINS (daily snapshots) ──────────────────────────────────────────────
-// The sync function writes one row per skill per UTC day. Baselines:
+// ─── XP GAINS (3-hour snapshots) ─────────────────────────────────────────────
+// /sync writes at most one packed row per character per UTC 3-hour bucket.
+// Baselines:
 //   today's gain = live XP − last snapshot before today
 //   week's gain  = live XP − oldest snapshot in the 8-day window
 // Gains are progressive enhancement: any failure just hides them.
 
 /** { [skill]: { today, week } } — null until loaded, {} when no history yet. */
 let skillGains = null;
-/** Raw 31-day snapshot rows (asc by date) — feeds the recap, charts, timeline. */
+/** Flattened snapshot rows (asc by time) — feeds the recap, charts, timeline. */
 let snapshotRows = null;
 /** { [skill]: level } as of the last snapshot before today — for "levels gained today". */
 let skillLevelBaseline = {};
@@ -3561,6 +3562,38 @@ let goalsSyncTimer = null;
 /** Onboarding tour step index, or -1 when inactive */
 let onboardStep = -1;
 
+function snapshotInstant(row) {
+  if (row?.snapped_at) return String(row.snapped_at);
+  if (row?.snap_date) return String(row.snap_date).slice(0, 10) + 'T00:00:00.000Z';
+  return '';
+}
+
+function snapshotDay(row) {
+  if (row?.snap_date) return String(row.snap_date).slice(0, 10);
+  const at = snapshotInstant(row);
+  return at ? at.slice(0, 10) : '';
+}
+
+function unpackXpSnapshots(packed) {
+  const rows = [];
+  for (const p of packed || []) {
+    const at = p.snapped_at;
+    const day = String(at || '').slice(0, 10);
+    const skills = p.skills && typeof p.skills === 'object' ? p.skills : {};
+    for (const [skill, v] of Object.entries(skills)) {
+      const rec = v && typeof v === 'object' ? v : {};
+      rows.push({
+        snap_date: day,
+        snapped_at: at,
+        skill,
+        level: rec.level ?? 1,
+        xp: rec.xp ?? 0,
+      });
+    }
+  }
+  return rows;
+}
+
 async function loadXpGains(rsn) {
   skillGains = null;
   snapshotRows = null;
@@ -3568,21 +3601,37 @@ async function loadXpGains(rsn) {
   if (!isSupabaseConfigured() || !rsn) return;
   try {
     const headers = (HOSTED_MODE && viewingOwnCharacter) ? await getAuthHeaders() : SB_HEADERS;
-    const since = new Date(Date.now() - 31 * 864e5).toISOString().slice(0, 10);
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/player_snapshots?rsn=eq.${encodeURIComponent(rsn)}` +
-        `&snap_date=gte.${since}&select=snap_date,skill,level,xp&order=snap_date.asc`,
+    const sinceDate = new Date(Date.now() - 31 * 864e5).toISOString().slice(0, 10);
+    const sinceIso = sinceDate + 'T00:00:00.000Z';
+    const q = encodeURIComponent(rsn);
+    let rows = [];
+
+    const packedRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/player_xp_snapshots?rsn=eq.${q}` +
+        `&snapped_at=gte.${sinceIso}&select=snapped_at,skills&order=snapped_at.asc&limit=1000`,
       { headers }
     );
-    if (!res.ok) return;
-    const rows = await res.json();
+    if (packedRes.ok) {
+      rows = unpackXpSnapshots(await packedRes.json());
+    }
+    if (!rows.length) {
+      const legacyRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/player_snapshots?rsn=eq.${q}` +
+          `&snap_date=gte.${sinceDate}&select=snap_date,skill,level,xp&order=snap_date.asc`,
+        { headers }
+      );
+      if (legacyRes.ok) rows = await legacyRes.json();
+    }
+    if (!rows.length) return;
+
     const today = new Date().toISOString().slice(0, 10);
     const weekAgo = new Date(Date.now() - 8 * 864e5).toISOString().slice(0, 10);
-    const dayBaseline = {};   // latest snapshot before today
-    const weekBaseline = {};  // oldest snapshot within the last 8 days
+    const dayBaseline = {};
+    const weekBaseline = {};
     for (const r of rows) {
-      if (r.snap_date >= today) continue;
-      if (r.snap_date >= weekAgo && weekBaseline[r.skill] === undefined) weekBaseline[r.skill] = r.xp;
+      const day = snapshotDay(r);
+      if (!day || day >= today) continue;
+      if (day >= weekAgo && weekBaseline[r.skill] === undefined) weekBaseline[r.skill] = r.xp;
       dayBaseline[r.skill] = r.xp;
       skillLevelBaseline[r.skill] = r.level;
     }
@@ -3703,16 +3752,25 @@ function sparklineSvg(values, { width = 220, height = 44 } = {}) {
   </svg>`;
 }
 
-/** Daily total-XP series from snapshots (each synced day has a full skill set). */
+/** Daily total-XP series from snapshots (last point of each UTC day). */
 function dailyTotalXpSeries() {
   if (!snapshotRows?.length) return [];
+  const lastTsByDay = {};
+  for (const r of snapshotRows) {
+    if (r.skill === 'overall') continue;
+    const day = snapshotDay(r);
+    const ts = snapshotInstant(r);
+    if (!day || !ts) continue;
+    if (!lastTsByDay[day] || ts > lastTsByDay[day]) lastTsByDay[day] = ts;
+  }
   const byDate = {};
   for (const r of snapshotRows) {
     if (r.skill === 'overall') continue;
-    byDate[r.snap_date] = (byDate[r.snap_date] || 0) + (r.xp || 0);
+    const day = snapshotDay(r);
+    if (snapshotInstant(r) !== lastTsByDay[day]) continue;
+    byDate[day] = (byDate[day] || 0) + (r.xp || 0);
   }
   const series = Object.entries(byDate).sort((a, b) => a[0].localeCompare(b[0])).map(([, v]) => v);
-  // Append the live total so today's progress shows immediately
   const liveTotal = Object.entries(playerSkills)
     .filter(([k]) => k !== 'overall')
     .reduce((a, [, v]) => a + (v.xp || 0), 0);
@@ -3731,9 +3789,10 @@ function buildTimelineEvents() {
     }
     const today = new Date().toISOString().slice(0, 10);
     for (const [skill, rows] of Object.entries(bySkill)) {
+      rows.sort((a, b) => snapshotInstant(a).localeCompare(snapshotInstant(b)));
       for (let i = 1; i < rows.length; i++) {
         if (rows[i].level > rows[i - 1].level) {
-          events.push({ date: rows[i].snap_date, type: 'level', skill, from: rows[i - 1].level, to: rows[i].level });
+          events.push({ date: snapshotDay(rows[i]), type: 'level', skill, from: rows[i - 1].level, to: rows[i].level });
         }
       }
       // Live level vs last snapshot — today's ding shows before tomorrow's snapshot
@@ -3770,7 +3829,7 @@ function renderRecap() {
   const section = document.getElementById('recapSection');
   if (!section) return;
   // Needs at least one prior snapshot day, and only for full-sync profiles
-  const hasHistory = snapshotRows?.some(r => r.snap_date < new Date().toISOString().slice(0, 10));
+  const hasHistory = snapshotRows?.some(r => snapshotDay(r) < new Date().toISOString().slice(0, 10));
   if (!hasHistory || dataSource === 'wom' || !playerSkills.attack) {
     section.style.display = 'none';
     return;

@@ -26,28 +26,59 @@
     return new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
   }
 
+  function rowInstant(r) {
+    if (typeof snapshotInstant === 'function') return snapshotInstant(r);
+    if (r?.snapped_at) return String(r.snapped_at);
+    if (r?.snap_date) return String(r.snap_date).slice(0, 10) + 'T00:00:00.000Z';
+    return '';
+  }
+
+  function rowDay(r) {
+    if (typeof snapshotDay === 'function') return snapshotDay(r);
+    if (r?.snap_date) return String(r.snap_date).slice(0, 10);
+    return rowInstant(r).slice(0, 10);
+  }
+
+  function snapChartLabel(iso) {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return String(iso).slice(5, 10);
+    return d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric' });
+  }
+
   function seriesForSkill(skill, since) {
     if (!snapshotRows?.length) return [];
-    const byDate = {};
+    const byTs = {};
     for (const r of snapshotRows) {
-      if (r.snap_date < since) continue;
+      const day = rowDay(r);
+      if (!day || day < since) continue;
+      const ts = rowInstant(r);
+      if (!ts) continue;
       if (skill === 'overall') {
         if (r.skill === 'overall') continue;
-        byDate[r.snap_date] = (byDate[r.snap_date] || 0) + (r.xp || 0);
+        byTs[ts] = (byTs[ts] || 0) + (r.xp || 0);
       } else if (r.skill === skill) {
-        byDate[r.snap_date] = r.xp || 0;
+        byTs[ts] = r.xp || 0;
       }
     }
-    return Object.keys(byDate).sort().map((d) => ({ date: d, xp: byDate[d] }));
+    return Object.keys(byTs).sort().map((d) => ({ date: d, xp: byTs[d] }));
+  }
+
+  function lastPerUtcDay(series) {
+    const byDay = {};
+    for (const s of series) {
+      const day = String(s.date).slice(0, 10);
+      byDay[day] = s;
+    }
+    return Object.keys(byDay).sort().map((day) => ({ date: day, xp: byDay[day].xp }));
   }
 
   function dailyGains(series) {
+    const daily = lastPerUtcDay(series);
     const out = [];
-    for (let i = 1; i < series.length; i++) {
-      out.push({ date: series[i].date, gain: Math.max(0, series[i].xp - series[i - 1].xp) });
+    for (let i = 1; i < daily.length; i++) {
+      out.push({ date: daily[i].date, gain: Math.max(0, daily[i].xp - daily[i - 1].xp) });
     }
-    // Append today's live gain if we have a baseline
-    if (series.length && playerSkills) {
+    if (daily.length && playerSkills) {
       const today = new Date().toISOString().slice(0, 10);
       let live;
       if (progressSkill === 'overall') {
@@ -56,11 +87,13 @@
         live = playerSkills[progressSkill]?.xp;
       }
       if (live != null) {
-        const last = series[series.length - 1];
+        const last = daily[daily.length - 1];
         if (last.date < today) {
           out.push({ date: today, gain: Math.max(0, live - last.xp) });
-        } else if (series.length >= 2) {
-          out[out.length - 1] = { date: today, gain: Math.max(0, live - series[series.length - 2].xp) };
+        } else if (daily.length >= 2) {
+          out[out.length - 1] = { date: today, gain: Math.max(0, live - daily[daily.length - 2].xp) };
+        } else {
+          out.push({ date: today, gain: Math.max(0, live - last.xp) });
         }
       }
     }
@@ -69,7 +102,7 @@
 
   function chartSvg(points, { width = 640, height = 180, color = 'var(--accent)', fill = true } = {}) {
     if (!points || points.length < 2) {
-      return '<div class="spark-empty">Not enough history yet — keep the plugin syncing for a day or two.</div>';
+      return '<div class="spark-empty">Not enough history yet — keep the plugin syncing for a few hours.</div>';
     }
     const values = points.map((p) => p.value);
     const min = Math.min(...values);
@@ -124,10 +157,18 @@
   function personalRecords() {
     if (!snapshotRows?.length) return [];
     const bySkillDate = {};
+    const lastTs = {};
     for (const r of snapshotRows) {
       if (r.skill === 'overall') continue;
-      if (!bySkillDate[r.skill]) bySkillDate[r.skill] = {};
-      bySkillDate[r.skill][r.snap_date] = r.xp;
+      const day = rowDay(r);
+      const ts = rowInstant(r);
+      if (!day || !ts) continue;
+      const key = r.skill + '\0' + day;
+      if (!lastTs[key] || ts >= lastTs[key]) {
+        lastTs[key] = ts;
+        if (!bySkillDate[r.skill]) bySkillDate[r.skill] = {};
+        bySkillDate[r.skill][day] = r.xp;
+      }
     }
     const records = [];
     for (const [skill, dates] of Object.entries(bySkillDate)) {
@@ -165,22 +206,25 @@
 
     const since = daysAgo(progressRange);
     const series = seriesForSkill(progressSkill, since);
-    const linePoints = series.map((s) => ({ date: s.date, value: s.xp, label: s.date.slice(5) }));
-    // Append live point
+    const linePoints = series.map((s) => ({ date: s.date, value: s.xp, label: snapChartLabel(s.date) }));
     if (series.length) {
-      const today = new Date().toISOString().slice(0, 10);
       let live;
       if (progressSkill === 'overall') {
         live = Object.entries(playerSkills).reduce((s, [k, v]) => (k === 'overall' ? s : s + (v.xp || 0)), 0);
       } else {
         live = playerSkills[progressSkill]?.xp;
       }
-      if (live != null && series[series.length - 1].date !== today) {
-        linePoints.push({ date: today, value: live, label: 'today' });
-      } else if (live != null) {
-        linePoints[linePoints.length - 1] = { date: today, value: live, label: 'today' };
+      if (live != null) {
+        const last = linePoints[linePoints.length - 1];
+        if (!last || last.value !== live) {
+          linePoints.push({ date: new Date().toISOString(), value: live, label: 'now' });
+        } else if (last) {
+          last.label = 'now';
+        }
       }
     }
+
+    const uniqueDays = new Set(series.map((s) => String(s.date).slice(0, 10))).size;
 
     const gains = dailyGains(series);
     const todayTotal = typeof totalXpGain === 'function' ? totalXpGain('today') : null;
@@ -216,6 +260,10 @@
     }
 
     root.innerHTML = `
+      <div class="goal-intro">
+        <h2>Progress</h2>
+        <p>XP is snapshotted every 3 hours while you play. The line chart is intra-day; the bars are calendar-day totals.</p>
+      </div>
       <div class="progress-toolbar">
         <div id="progressRangeBtns" class="quest-filter">
           <button type="button" class="filter-btn${progressRange === 7 ? ' active' : ''}" onclick="setProgressRange(7,this)">7d</button>
@@ -230,7 +278,7 @@
       <div class="progress-stat-row">
         <div class="progress-stat"><div class="num">${todayTotal != null ? '+' + formatXp(todayTotal) : '—'}</div><div class="lbl">XP today</div></div>
         <div class="progress-stat"><div class="num">${weekTotal != null ? '+' + formatXp(weekTotal) : '—'}</div><div class="lbl">XP this week</div></div>
-        <div class="progress-stat"><div class="num">${series.length}</div><div class="lbl">Days with snapshots</div></div>
+        <div class="progress-stat"><div class="num">${uniqueDays}</div><div class="lbl">Days tracked</div></div>
       </div>
 
       <section class="progress-card">
