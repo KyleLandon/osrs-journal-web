@@ -2273,7 +2273,11 @@ async function openOwnJournal() {
     showPairModal();
     return;
   }
-  const rsn = linkedCharacterMeta[0]?.rsn;
+  const saved = (localStorage.getItem('osrs_rsn') || document.getElementById('rsnInput').value || '').trim();
+  const match = saved
+    ? linkedCharacterMeta.find(c => c.rsn.toLowerCase() === saved.toLowerCase())
+    : null;
+  const rsn = match?.rsn || linkedCharacterMeta[0]?.rsn;
   if (!rsn) {
     showPairModal();
     return;
@@ -2987,6 +2991,24 @@ async function getLinkedCharacterMeta() {
   if (!HOSTED_MODE || !authSession) return [];
   try {
     const headers = await getAuthHeaders();
+    headers['Content-Type'] = 'application/json';
+    // RPC is scoped to auth.uid() — never the public character directory.
+    const rpcRes = await withTimeout(
+      fetch(`${SUPABASE_URL}/rest/v1/rpc/linked_characters`, {
+        method: 'POST',
+        headers,
+        body: '{}',
+        signal: typeof AbortSignal !== 'undefined' && AbortSignal.timeout
+          ? AbortSignal.timeout(8000)
+          : undefined,
+      }),
+      9000,
+      'Linked characters lookup timed out',
+    );
+    if (rpcRes.ok) {
+      const rows = await rpcRes.json();
+      return Array.isArray(rows) ? rows : [];
+    }
     const res = await withTimeout(
       fetch(`${SUPABASE_URL}/rest/v1/user_characters?select=rsn,is_public`, {
         headers,
@@ -7607,7 +7629,9 @@ function startSystemHealthChecks() {
   }
 
   const savedRsn = localStorage.getItem('osrs_rsn') || '';
-  if (savedRsn) document.getElementById('rsnInput').value = savedRsn;
+  if (savedRsn && !(HOSTED_MODE && authSession && !linkedCharacterMeta.length)) {
+    document.getElementById('rsnInput').value = savedRsn;
+  }
   // Prefer in-memory links from refreshAuthUi (no second user_characters round trip).
   const activeRsn = await getActiveRSN(savedRsn || null);
   if (activeRsn) {
@@ -7624,7 +7648,10 @@ function startSystemHealthChecks() {
     return;
   }
 
-  const saved = localStorage.getItem('osrs_skills');
+  // Hosted: never replay another visitor's cached skills as "your" journal.
+  const saved = (!HOSTED_MODE || linkedCharacterMeta.length)
+    ? localStorage.getItem('osrs_skills')
+    : null;
   if (saved) {
     playerSkills = JSON.parse(saved);
     playerGold = parseInt(localStorage.getItem('osrs_gold') || '0', 10) || 0;
@@ -7634,6 +7661,9 @@ function startSystemHealthChecks() {
     updateCombatLevel();
     updateSyncBanner();
     refreshExport();
+  }
+  if (HOSTED_MODE && !linkedCharacterMeta.length) {
+    playerRSN = '';
   }
   if (HOSTED_MODE) {
     msg.textContent = authSession
