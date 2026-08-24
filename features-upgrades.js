@@ -161,6 +161,11 @@
     for (const row of playerBank || []) {
       if (row.item_name) out.push({ name: row.item_name, where: 'bank', id: row.item_id });
     }
+    for (const row of typeof playerStashes !== 'undefined' ? playerStashes : []) {
+      if (!row.item_name) continue;
+      const where = row.container === 'looting_bag' ? 'looting_bag' : 'poh';
+      out.push({ name: row.item_name, where, id: row.item_id });
+    }
     return out;
   }
 
@@ -170,6 +175,8 @@
 
   function locationLabel(hits) {
     if (hits.some((h) => h.where === 'inventory')) return 'In your inventory — equip it';
+    if (hits.some((h) => h.where === 'looting_bag')) return 'In your looting bag';
+    if (hits.some((h) => h.where === 'poh')) return 'In your house — take it out';
     if (hits.some((h) => h.where === 'bank')) return 'In your bank — equip it';
     if (hits.some((h) => h.where === 'worn')) return 'Equipped in another slot';
     return 'You own this';

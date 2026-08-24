@@ -1783,8 +1783,18 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
     <div class="bank-gear-list" id="inventoryList"></div>
     <p class="equip-sync-hint" id="inventoryHint">Enable Sync Bank &amp; Inventory in the plugin — your bag contents show up here.</p>
   </div>
+  <div class="equip-sync-section" id="lootingBagSection">
+    <div class="section-title">Looting bag <span class="equip-sync-badge" id="lootingBagBadge" style="display:none">Live sync</span></div>
+    <div class="bank-gear-list" id="lootingBagList"></div>
+    <p class="equip-sync-hint" id="lootingBagHint">Check your looting bag in-game with Sync Bank &amp; Inventory enabled.</p>
+  </div>
+  <div class="equip-sync-section" id="pohStorageSection">
+    <div class="section-title">Player-owned house <span class="equip-sync-badge" id="pohStorageBadge" style="display:none">Live sync</span></div>
+    <div class="bank-gear-list" id="pohStorageList"></div>
+    <p class="equip-sync-hint" id="pohStorageHint">Open costume-room storage (armour case, cape rack, treasure chest, etc.) with Sync Bank &amp; Inventory enabled.</p>
+  </div>
   <div class="equip-sync-section" id="bankGearSection">
-    <div class="section-title">Bank &amp; Inventory Gear <span class="equip-sync-badge" id="bankGearBadge" style="display:none">Live sync</span></div>
+    <div class="section-title">Bank, bag &amp; house gear <span class="equip-sync-badge" id="bankGearBadge" style="display:none">Live sync</span></div>
     <div class="bank-gear-list" id="bankGearList"></div>
     <p class="equip-sync-hint" id="bankGearHint">Open your bank or update inventory with Sync Bank &amp; Inventory enabled.</p>
   </div>
@@ -3180,15 +3190,48 @@ let bankSynced = false;
 let playerBank = [];
 /** Inventory snapshot from plugin (Sync Bank & Inventory) — counted with bank. */
 let playerInventory = [];
+/** Looting bag + POH costume-room snapshots ({ container, item_id, item_name, quantity }). */
+let playerStashes = [];
 
-/** Bank + inventory rows for ownership / quantity checks. */
-function ownedItemRows() {
-  return [...(playerBank || []), ...(playerInventory || [])];
+const STASH_LABELS = {
+  looting_bag: 'Looting bag',
+  poh_magic_wardrobe: 'Magic wardrobe',
+  poh_armour: 'Armour case',
+  poh_fancy_dress: 'Fancy dress box',
+  poh_treasure_0: 'Treasure chest',
+  poh_treasure_1: 'Treasure chest',
+  poh_treasure_1a: 'Treasure chest',
+  poh_treasure_2: 'Treasure chest',
+  poh_treasure_2a: 'Treasure chest',
+  poh_treasure_3: 'Treasure chest',
+  poh_treasure_3a: 'Treasure chest',
+  poh_capes: 'Cape rack',
+  poh_capes_2: 'Cape rack',
+  poh_holiday: 'Toy box',
+};
+
+function lootingBagRows() {
+  return (playerStashes || []).filter(r => r.container === 'looting_bag');
 }
 
-/** True when bank and/or inventory has been synced. */
+function pohStorageRows() {
+  return (playerStashes || []).filter(r => String(r.container || '').startsWith('poh_'));
+}
+
+function stashLocationLabel(container) {
+  return STASH_LABELS[container] || 'House';
+}
+
+/** Bank + inventory + extra storage rows for ownership / quantity checks. */
+function ownedItemRows() {
+  return [...(playerBank || []), ...(playerInventory || []), ...(playerStashes || [])];
+}
+
+/** True when bank and/or inventory/stashes has been synced. */
 function hasSyncedItems() {
-  return !!bankSynced || !!(playerInventory && playerInventory.length);
+  return !!bankSynced ||
+    !!(playerInventory && playerInventory.length) ||
+    !!(playerStashes && playerStashes.length);
 }
 let equipSynced = false;
 let wornGear = {};
@@ -3313,6 +3356,8 @@ function buildOwnedGearReport() {
       worn: true,
       in_bank: false,
       in_inventory: false,
+      in_looting_bag: false,
+      in_poh: false,
       quantity: 1,
       worn_slots: [slot],
     });
@@ -3334,6 +3379,8 @@ function buildOwnedGearReport() {
           worn: false,
           in_bank: flag === 'in_bank',
           in_inventory: flag === 'in_inventory',
+          in_looting_bag: flag === 'in_looting_bag',
+          in_poh: flag === 'in_poh',
           quantity: row.quantity || 1,
           worn_slots: [],
         });
@@ -3342,6 +3389,8 @@ function buildOwnedGearReport() {
   };
   addContainerRows(playerBank, 'in_bank');
   addContainerRows(playerInventory, 'in_inventory');
+  addContainerRows(lootingBagRows(), 'in_looting_bag');
+  addContainerRows(pohStorageRows(), 'in_poh');
 
   return [...byName.values()].sort((a, b) => a.name.localeCompare(b.name));
 }
@@ -3351,7 +3400,9 @@ function formatGearLocation(item) {
   if (item.worn) parts.push('worn' + (item.worn_slots.length ? ' (' + item.worn_slots.join(', ') + ')' : ''));
   if (item.in_bank) parts.push('bank');
   if (item.in_inventory) parts.push('inventory');
-  if ((item.in_bank || item.in_inventory) && item.quantity > 1) {
+  if (item.in_looting_bag) parts.push('looting bag');
+  if (item.in_poh) parts.push('house');
+  if ((item.in_bank || item.in_inventory || item.in_looting_bag || item.in_poh) && item.quantity > 1) {
     parts[parts.length - 1] += ' x' + item.quantity;
   }
   return parts.join(' + ') || 'owned';
@@ -3489,7 +3540,7 @@ async function getActiveRSN(preferredRsn) {
  * playerBank, gold...). Single entry point for all three data paths so every
  * renderer reads the same shape. Returns the skill-row count (0 = nothing synced).
  */
-function applyPlayerPayload(rsn, skills, quests, equip, bank, playerRow, inventoryRows) {
+function applyPlayerPayload(rsn, skills, quests, equip, bank, playerRow, inventoryRows, stashRows) {
   playerSkills = {};
   for (const row of skills) {
     playerSkills[row.skill] = { level: row.level, xp: row.xp };
@@ -3501,6 +3552,7 @@ function applyPlayerPayload(rsn, skills, quests, equip, bank, playerRow, invento
   window.collectionCount = null;
   window.collectionCountMax = null;
   playerInventory = Array.isArray(inventoryRows) ? inventoryRows : [];
+  playerStashes = Array.isArray(stashRows) ? stashRows : [];
   if (playerRow) {
     const qp = playerRow.quest_points;
     if (qp != null && !Number.isNaN(Number(qp))) syncedQuestPoints = Number(qp);
@@ -3556,7 +3608,8 @@ async function fetchFromLocalhostSession(sessionToken) {
     data.equipment || [],
     data.bank || [],
     data.player,
-    data.inventory || []
+    data.inventory || [],
+    data.stashes || []
   );
   if (!count) throw new Error('No synced data yet — play with the plugin running.');
   return count;
@@ -4160,13 +4213,14 @@ async function fetchFromSupabase(rsn) {
 
   const headers = HOSTED_MODE ? await getAuthHeaders() : SB_HEADERS;
   const q = encodeURIComponent(rsn);
-  const [sRes, qRes, eRes, bRes, pRes, iRes] = await Promise.all([
+  const [sRes, qRes, eRes, bRes, pRes, iRes, stashRes] = await Promise.all([
     fetch(`${SUPABASE_URL}/rest/v1/player_skills?rsn=eq.${q}&select=skill,level,xp`, {headers}),
     fetch(`${SUPABASE_URL}/rest/v1/player_quests?rsn=eq.${q}&select=quest_name,state`, {headers}),
     fetch(`${SUPABASE_URL}/rest/v1/player_equipment?rsn=eq.${q}&select=slot_id,slot_name,item_id,item_name`, {headers}),
     fetch(`${SUPABASE_URL}/rest/v1/player_bank?rsn=eq.${q}&select=item_id,item_name,quantity`, {headers}),
     fetch(`${SUPABASE_URL}/rest/v1/players?rsn=eq.${q}&select=quest_points,last_synced,collection_count,collection_count_max`, {headers}),
     fetch(`${SUPABASE_URL}/rest/v1/player_inventory?rsn=eq.${q}&select=item_id,item_name,quantity`, {headers}),
+    fetch(`${SUPABASE_URL}/rest/v1/player_item_stashes?rsn=eq.${q}&select=container,item_id,item_name,quantity`, {headers}),
   ]);
   if (!sRes.ok) throw new Error(`Could not load character (${sRes.status})`);
   const skills = await sRes.json();
@@ -4180,12 +4234,14 @@ async function fetchFromSupabase(rsn) {
   const bank = bRes.ok ? await bRes.json() : [];
   const players = pRes.ok ? await pRes.json() : [];
   const inventory = iRes.ok ? await iRes.json() : [];
+  const stashes = stashRes.ok ? await stashRes.json() : [];
   if (!eRes.ok) console.warn('player_equipment fetch failed', eRes.status);
   if (!bRes.ok) console.warn('player_bank fetch failed', bRes.status);
   if (!iRes.ok) console.warn('player_inventory fetch failed', iRes.status);
+  if (!stashRes.ok) console.warn('player_item_stashes fetch failed', stashRes.status);
   viewingOwnCharacter = true;
 
-  return applyPlayerPayload(rsn, skills, quests, equip, bank, players[0], inventory);
+  return applyPlayerPayload(rsn, skills, quests, equip, bank, players[0], inventory, stashes);
 }
 
 /** Try to match synced equipment item names against gear dropdowns. */
@@ -4275,6 +4331,7 @@ async function fetchPlayer(rsnOverride, options = {}) {
       wornGearIds = {};
       playerBank = [];
       playerInventory = [];
+      playerStashes = [];
       bankSynced = false;
       questsInProgress = new Set();
       playerDiaries = [];
@@ -5120,6 +5177,8 @@ function renderSyncedEquipment() {
     }).join('');
   }
   renderInventory();
+  renderLootingBag();
+  renderPohStorage();
   renderBankGear();
 }
 
@@ -5131,6 +5190,27 @@ function inventoryEmptyHint() {
     return 'Inventory requires the RuneLite OSRS Journal plugin with Sync Bank & Inventory enabled.';
   }
   return 'Enable Sync Bank & Inventory in the plugin, then wait a few seconds or open your bank in-game.';
+}
+
+function extraStorageEmptyHint(kind) {
+  if (dataSource === 'public') {
+    return `This player's ${kind} is private — only they can see it when signed in.`;
+  }
+  if (dataSource === 'wom') {
+    return `${kind} requires the RuneLite OSRS Journal plugin with Sync Bank & Inventory enabled.`;
+  }
+  if (kind === 'looting bag') {
+    return 'Check your looting bag in-game with Sync Bank & Inventory enabled.';
+  }
+  return 'Open costume-room storage (armour case, cape rack, treasure chest, etc.) with Sync Bank & Inventory enabled.';
+}
+
+function renderItemChipRow(r, extraQtyHtml) {
+  const name = r.item_name || 'Unknown';
+  const qty = (r.quantity || 0) > 1
+    ? `<span class="qty">x${Number(r.quantity).toLocaleString()}</span>`
+    : '';
+  return `<span class="bank-gear-chip">${itemIconHtml(r.item_id ?? name, { size: 'sm', alt: name, name }) }<span>${name}${qty}${extraQtyHtml || ''}</span></span>`;
 }
 
 function renderInventory() {
@@ -5151,12 +5231,53 @@ function renderInventory() {
   const sorted = [...rows].sort((a, b) =>
     (b.quantity || 0) - (a.quantity || 0) || String(a.item_name || '').localeCompare(String(b.item_name || ''))
   );
+  list.innerHTML = sorted.map(r => renderItemChipRow(r)).join('');
+}
+
+function renderLootingBag() {
+  const list = document.getElementById('lootingBagList');
+  const hint = document.getElementById('lootingBagHint');
+  const badge = document.getElementById('lootingBagBadge');
+  if (!list || !hint || !badge) return;
+  const rows = lootingBagRows();
+  if (!rows.length) {
+    list.innerHTML = '';
+    hint.textContent = extraStorageEmptyHint('looting bag');
+    hint.style.display = '';
+    badge.style.display = 'none';
+    return;
+  }
+  hint.style.display = 'none';
+  badge.style.display = '';
+  const sorted = [...rows].sort((a, b) =>
+    (b.quantity || 0) - (a.quantity || 0) || String(a.item_name || '').localeCompare(String(b.item_name || ''))
+  );
+  list.innerHTML = sorted.map(r => renderItemChipRow(r)).join('');
+}
+
+function renderPohStorage() {
+  const list = document.getElementById('pohStorageList');
+  const hint = document.getElementById('pohStorageHint');
+  const badge = document.getElementById('pohStorageBadge');
+  if (!list || !hint || !badge) return;
+  const rows = pohStorageRows();
+  if (!rows.length) {
+    list.innerHTML = '';
+    hint.textContent = extraStorageEmptyHint('house storage');
+    hint.style.display = '';
+    badge.style.display = 'none';
+    return;
+  }
+  hint.style.display = 'none';
+  badge.style.display = '';
+  const sorted = [...rows].sort((a, b) =>
+    String(a.container || '').localeCompare(String(b.container || '')) ||
+    (b.quantity || 0) - (a.quantity || 0) ||
+    String(a.item_name || '').localeCompare(String(b.item_name || ''))
+  );
   list.innerHTML = sorted.map(r => {
-    const name = r.item_name || 'Unknown';
-    const qty = (r.quantity || 0) > 1
-      ? `<span class="qty">x${Number(r.quantity).toLocaleString()}</span>`
-      : '';
-    return `<span class="bank-gear-chip">${itemIconHtml(r.item_id ?? name, { size: 'sm', alt: name, name }) }<span>${name}${qty}</span></span>`;
+    const loc = stashLocationLabel(r.container);
+    return renderItemChipRow(r, loc ? `<span class="qty">· ${loc}</span>` : '');
   }).join('');
 }
 
@@ -5171,10 +5292,10 @@ function renderBankGear() {
     badge.style.display = 'none';
     return;
   }
-  const gear = buildOwnedGearReport().filter(g => g.in_bank || g.in_inventory);
+  const gear = buildOwnedGearReport().filter(g => g.in_bank || g.in_inventory || g.in_looting_bag || g.in_poh);
   if (!gear.length) {
     list.innerHTML = '';
-    hint.textContent = 'Synced, but no recognized equipment items found in bank or inventory.';
+    hint.textContent = 'Synced, but no recognized equipment items found in bank, inventory, looting bag, or house storage.';
     hint.style.display = '';
     badge.style.display = 'none';
     return;
@@ -5186,6 +5307,8 @@ function renderBankGear() {
       g.worn ? 'worn' : '',
       g.in_bank ? 'bank' : '',
       g.in_inventory ? 'inv' : '',
+      g.in_looting_bag ? 'bag' : '',
+      g.in_poh ? 'house' : '',
     ].filter(Boolean).join(' · ');
     return `<span class="bank-gear-chip">${itemIconHtml(g.item_id ?? g.name, { size: 'sm', alt: g.name, name: g.name })}<span>${g.name}${g.quantity > 1 ? `<span class="qty">x${g.quantity}</span>` : ''}${loc ? `<span class="qty">· ${loc}</span>` : ''}</span></span>`;
   }).join('');
@@ -5576,6 +5699,8 @@ function buildExportData() {
       bank_synced: hasSyncedItems(),
       bank_item_count: playerBank.length,
       inventory_item_count: (playerInventory || []).length,
+      looting_bag_item_count: lootingBagRows().length,
+      poh_item_count: pohStorageRows().length,
     },
     skills,
     equipment: {
@@ -5588,6 +5713,8 @@ function buildExportData() {
         worn: g.worn,
         in_bank: g.in_bank,
         in_inventory: g.in_inventory,
+        in_looting_bag: g.in_looting_bag,
+        in_poh: g.in_poh,
         quantity: g.quantity,
         worn_slots: g.worn_slots,
       })),
@@ -6628,7 +6755,17 @@ function marksOfGraceBreakdown() {
     const name = String(row?.item_name || '').toLowerCase();
     if (name === n || name.includes(n)) inv += row.quantity || 0;
   }
-  return { bank, inv, total: bank + inv };
+  let bag = 0;
+  let poh = 0;
+  for (const row of lootingBagRows()) {
+    const name = String(row?.item_name || '').toLowerCase();
+    if (name === n || name.includes(n)) bag += row.quantity || 0;
+  }
+  for (const row of pohStorageRows()) {
+    const name = String(row?.item_name || '').toLowerCase();
+    if (name === n || name.includes(n)) poh += row.quantity || 0;
+  }
+  return { bank, inv, bag, poh, total: bank + inv + bag + poh };
 }
 
 /**
@@ -6660,6 +6797,7 @@ function computeGracefulProgress() {
     piecesOwned: owned.length,
     piecesTotal: pieces.length,
     marks, marksBank: markParts.bank, marksInv: markParts.inv,
+    marksBag: markParts.bag, marksPoh: markParts.poh,
     credited, remaining, totalMarks,
     done, pct,
     bankSynced: hasSyncedItems(),
@@ -6694,11 +6832,18 @@ function renderGracefulGoalBody(plan) {
     const have = g.owned.some(o => o.key === p.key);
     return `<li class="${have ? 'path-done' : ''}"><span class="path-mark">${have ? '✓' : '○'}</span> ${p.name}<span class="path-meta">${p.cost} marks</span></li>`;
   }).join('');
-  const marksLabel = g.marksInv > 0 && g.marksBank > 0
-    ? `${g.marks} marks (${g.marksBank} bank · ${g.marksInv} inv)`
+  const markBits = [];
+  if (g.marksBank) markBits.push(`${g.marksBank} bank`);
+  if (g.marksInv) markBits.push(`${g.marksInv} inv`);
+  if (g.marksBag) markBits.push(`${g.marksBag} bag`);
+  if (g.marksPoh) markBits.push(`${g.marksPoh} house`);
+  const marksLabel = markBits.length > 1
+    ? `${g.marks} marks (${markBits.join(' · ')})`
     : g.marksInv > 0
       ? `${g.marks} marks in inventory`
-      : `${g.marks} marks in bank`;
+      : g.marksBag > 0
+        ? `${g.marks} marks in looting bag`
+        : `${g.marks} marks in bank`;
   return `<div class="goal-path graceful-progress">
     <div class="graceful-stats">
       <span><strong>${g.piecesOwned}/${g.piecesTotal}</strong> pieces owned</span>
