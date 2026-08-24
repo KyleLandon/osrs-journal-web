@@ -7663,15 +7663,14 @@ let realtimeDebounce = null;
 
 /**
  * Subscribe to postgres_changes for this RSN so plugin syncs appear within a
- * second instead of on the next poll. RLS applies to realtime, so this only
- * receives rows the current session could SELECT (own or public characters).
- * Any event just triggers the normal pull — no incremental state patching.
+ * second instead of on the next poll. High-churn bank/inventory/equipment are
+ * not in Realtime (WAL cost); the 90s poll still picks those up.
  */
 function startRealtimeUpdates(rsn, onchange) {
   stopRealtimeUpdates();
   if (!supabaseClient || !rsn) return;
   try {
-    const tables = ['players', 'player_skills', 'player_quests', 'player_equipment', 'player_bank', 'player_inventory'];
+    const tables = ['players', 'player_skills', 'player_quests'];
     let ch = supabaseClient.channel('journal-live-' + rsn.toLowerCase());
     for (const table of tables) {
       ch = ch.on(
