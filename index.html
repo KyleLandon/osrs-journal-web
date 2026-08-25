@@ -1440,7 +1440,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 <section id="landing" class="landing">
   <nav class="landing-nav" aria-label="Marketing">
     <div class="landing-nav-inner">
-      <a class="landing-nav-brand" href="#" onclick="goHome();return false">
+      <a class="landing-nav-brand" href="#" onclick="onBrandClick();return false" title="Your journal">
         <img src="assets/icon.png" alt="" class="brand-icon" width="28" height="28">
         <span class="sb-brand-text">OSRS<span>Journal</span></span>
       </a>
@@ -1562,7 +1562,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 <!-- ===== AUTHENTICATED APP SHELL ===== -->
 <div class="app-shell" id="appShell" style="display:none">
   <aside class="app-sidebar" id="appSidebar" aria-label="Journal navigation">
-    <a class="sb-brand" href="#" onclick="switchTab('overview');return false">
+    <a class="sb-brand" href="#" onclick="onBrandClick();return false" title="Your journal">
       <img src="assets/icon.png" alt="" class="sb-logo-img" width="28" height="28">
       <span class="sb-brand-text">OSRS<span>Journal</span></span>
     </a>
@@ -1578,7 +1578,8 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
         <span class="sb-sync-dot off" id="sbSyncDot"></span>
         <span id="sbSyncText">Not synced</span>
       </div>
-      <select id="charSwitcher" class="sb-char-select" style="display:none" onchange="fetchPlayer(this.value)" title="Switch character" aria-label="Switch character"></select>
+      <div id="charSwitcher" class="sb-char-list" style="display:none" role="listbox" aria-label="Switch character"></div>
+      <button type="button" class="sb-home-char" id="ownJournalBtn" style="display:none" onclick="openOwnJournal()">← Your journal</button>
     </div>
     <nav class="sb-nav" id="appSideNav">
       <button type="button" class="sb-nav-btn active" data-tab="overview" onclick="switchTab('overview')"><span class="sb-icon">▣</span><span class="sb-label">Overview</span></button>
@@ -1607,6 +1608,9 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 
   <div class="app-main">
     <header class="app-topbar">
+      <a class="app-topbar-brand" href="#" onclick="onBrandClick();return false" title="Your journal" aria-label="Your journal">
+        <img src="assets/icon.png" alt="" width="24" height="24">
+      </a>
       <div class="app-topbar-titles">
         <div class="app-topbar-title" id="appPageTitle">Overview</div>
         <div class="app-topbar-desc" id="appPageDesc">Your account at a glance</div>
@@ -1615,6 +1619,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
         <input id="rsnInput" type="text" placeholder="Search player…" maxlength="12" onkeydown="if(event.key==='Enter')fetchPlayer()" aria-label="Search player" />
       </div>
       <div class="app-topbar-actions">
+        <select id="topbarCharSwitcher" class="topbar-char-select" style="display:none" onchange="switchCharacter(this.value)" title="Switch character" aria-label="Switch character"></select>
         <button type="button" class="app-topbar-icon-btn" id="fetchBtn" onclick="fetchPlayer()" title="Search">⌕</button>
         <button type="button" class="app-account-btn" id="authBtn" onclick="toggleAuthPanel()" title="Account" aria-label="Account">A</button>
         <div class="status-msg" id="statusMsg" style="display:none"></div>
@@ -1630,7 +1635,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 <div class="public-profile-banner" id="publicProfileBanner">
   <div>
     <strong>Public profile — skill data only</strong>
-    <span>Quest completion, gear and bank are unavailable. <a href="#" onclick="toggleAuthPanel();return false">Connect RuneLite to see your full account →</a></span>
+    <span id="publicProfileBannerText">Quest completion, gear and bank are unavailable. <a href="#" onclick="toggleAuthPanel();return false">Connect RuneLite to see your full account →</a></span>
   </div>
 </div>
 <section class="profile-section visible" id="dashboard">
@@ -2040,6 +2045,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
   <div class="mobile-more-sheet" id="mobileMoreSheet" onclick="if(event.target===this)toggleMobileMore(false)">
     <div class="mobile-more-card" role="dialog" aria-label="More destinations">
       <h3>More</h3>
+      <div id="mobileCharSwitcher" class="mobile-char-switch" style="display:none"></div>
       <button type="button" class="btn-secondary" onclick="switchTab('progress');toggleMobileMore(false)">Progress</button>
       <button type="button" class="btn-secondary" onclick="switchTab('calc');toggleMobileMore(false)">Calculator</button>
       <button type="button" class="btn-secondary" onclick="switchTab('equipment');toggleMobileMore(false)">Gear</button>
@@ -2246,7 +2252,38 @@ document.addEventListener('click', (e) => {
   closeAuthPanel();
 });
 
-/** Nav brand → always the landing/home. Journal is reached via search or "Open my journal". */
+/** Last-used linked character, else the first one paired. */
+function ownHomeRsn() {
+  const saved = (localStorage.getItem('osrs_own_rsn') || '').trim();
+  const match = saved
+    ? linkedCharacterMeta.find(c => c.rsn.toLowerCase() === saved.toLowerCase())
+    : null;
+  return match?.rsn || linkedCharacterMeta[0]?.rsn || null;
+}
+
+/**
+ * Logo click: signed-in users go to their own character (Overview).
+ * Already there → Overview. Signed out → marketing landing.
+ */
+function onBrandClick() {
+  closeAuthPanel();
+  if (typeof toggleMobileMore === 'function') toggleMobileMore(false);
+  if (authSession && linkedCharacterMeta.length) {
+    const home = ownHomeRsn();
+    const inApp = document.body.classList.contains('app-active');
+    const onHome = home && playerRSN && playerRSN.toLowerCase() === home.toLowerCase();
+    if (inApp && onHome) {
+      switchTab('overview');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    openOwnJournal();
+    return;
+  }
+  goHome();
+}
+
+/** Nav brand fallback when signed out — marketing landing. */
 function goHome() {
   closeAuthPanel();
   showLanding();
@@ -2283,18 +2320,107 @@ async function openOwnJournal() {
     showPairModal();
     return;
   }
-  const saved = (localStorage.getItem('osrs_rsn') || document.getElementById('rsnInput').value || '').trim();
-  const match = saved
-    ? linkedCharacterMeta.find(c => c.rsn.toLowerCase() === saved.toLowerCase())
-    : null;
-  const rsn = match?.rsn || linkedCharacterMeta[0]?.rsn;
+  const rsn = ownHomeRsn();
   if (!rsn) {
     showPairModal();
     return;
   }
-  document.getElementById('rsnInput').value = rsn;
-  await fetchPlayer(rsn);
+  if (typeof currentAppTab !== 'undefined') currentAppTab = 'overview';
+  await switchCharacter(rsn);
+}
+
+/** Load a linked (or searched) character without dumping the user on landing. */
+async function switchCharacter(rsn) {
+  const name = String(rsn || '').trim();
+  if (!name) return;
+  if (typeof toggleMobileMore === 'function') toggleMobileMore(false);
+  document.getElementById('rsnInput').value = name;
+  await fetchPlayer(name);
   startLiveRefresh();
+}
+
+function escapeAttr(s) {
+  return String(s || '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;');
+}
+
+function escapeHtmlText(s) {
+  return String(s || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+/** Sidebar chips, topbar select, mobile sheet, and "back to my journal" on public profiles. */
+function renderCharacterSwitcher() {
+  const chars = linkedCharacterMeta || [];
+  const current = (playerRSN || '').toLowerCase();
+  const home = ownHomeRsn();
+  const viewingOwn = Boolean(chars.find(c => c.rsn.toLowerCase() === current));
+  const showList = chars.length > 1;
+
+  const sidebar = document.getElementById('charSwitcher');
+  if (sidebar) {
+    if (showList) {
+      sidebar.style.display = '';
+      sidebar.innerHTML = chars.map((c) => {
+        const active = c.rsn.toLowerCase() === current;
+        return `<button type="button" class="sb-char-btn${active ? ' active' : ''}" data-rsn="${escapeAttr(c.rsn)}" onclick="switchCharacter(this.dataset.rsn)" role="option" aria-selected="${active}">${escapeHtmlText(c.rsn)}</button>`;
+      }).join('');
+    } else {
+      sidebar.style.display = 'none';
+      sidebar.innerHTML = '';
+    }
+  }
+
+  const topbar = document.getElementById('topbarCharSwitcher');
+  if (topbar) {
+    if (showList) {
+      topbar.style.display = '';
+      topbar.innerHTML = chars.map((c) => {
+        const sel = c.rsn.toLowerCase() === current ? ' selected' : '';
+        return `<option value="${escapeAttr(c.rsn)}"${sel}>${escapeHtmlText(c.rsn)}</option>`;
+      }).join('');
+      if (!viewingOwn && home) {
+        topbar.insertAdjacentHTML('afterbegin', `<option value="" disabled selected>Viewing ${escapeHtmlText(playerRSN || 'profile')}</option>`);
+      }
+    } else {
+      topbar.style.display = 'none';
+    }
+  }
+
+  const mobile = document.getElementById('mobileCharSwitcher');
+  if (mobile) {
+    if (chars.length) {
+      mobile.style.display = '';
+      const chips = chars.map((c) => {
+        const active = c.rsn.toLowerCase() === current;
+        return `<button type="button" class="btn-secondary${active ? ' active' : ''}" data-rsn="${escapeAttr(c.rsn)}" onclick="switchCharacter(this.dataset.rsn)">${escapeHtmlText(c.rsn)}</button>`;
+      }).join('');
+      mobile.innerHTML = `<p class="mobile-char-label">Your characters</p>${chips}`;
+    } else {
+      mobile.style.display = 'none';
+      mobile.innerHTML = '';
+    }
+  }
+
+  const homeBtn = document.getElementById('ownJournalBtn');
+  if (homeBtn) {
+    const showHome = Boolean(home && !viewingOwn);
+    homeBtn.style.display = showHome ? '' : 'none';
+    if (showHome) homeBtn.textContent = `← ${home}`;
+  }
+
+  const bannerText = document.getElementById('publicProfileBannerText');
+  if (bannerText) {
+    if (home) {
+      bannerText.innerHTML = `Quest completion, gear and bank are unavailable. <a href="#" onclick="openOwnJournal();return false">Back to ${escapeHtmlText(home)} →</a>`;
+    } else {
+      bannerText.innerHTML = 'Quest completion, gear and bank are unavailable. <a href="#" onclick="toggleAuthPanel();return false">Connect RuneLite to see your full account →</a>';
+    }
+  }
 }
 
 function showPairModal() {
@@ -2426,8 +2552,10 @@ async function refreshAuthUi(opts = {}) {
     }
     linkedCharacterMeta = await getLinkedCharacterMeta();
     const names = linkedCharacterMeta.map(c => c.rsn);
-    document.getElementById('linkedChars').textContent = names.length
-      ? 'Linked: ' + names.join(', ')
+    document.getElementById('linkedChars').innerHTML = names.length
+      ? 'Linked: ' + names.map((n) =>
+          `<button type="button" class="linked-char-link" data-rsn="${escapeAttr(n)}" onclick="switchCharacter(this.dataset.rsn)">${escapeHtmlText(n)}</button>`
+        ).join(' · ')
       : 'No characters linked yet — enter a pairing code from the plugin.';
     const privacyRow = document.getElementById('privacyRow');
     const activeRsn = document.getElementById('rsnInput').value.trim();
@@ -2443,6 +2571,7 @@ async function refreshAuthUi(opts = {}) {
     }
     // Dashboard privacy badge depends on linkedCharacterMeta
     if (playerSkills.attack) renderDashboard();
+    renderCharacterSwitcher();
     if (needsPairing()) personalizeLanding(null);
     else if (names[0]) personalizeLanding(names[0]);
   } else {
@@ -2867,7 +2996,7 @@ async function signOut() {
   authSession = null;
   // Clear cached character data so nothing lingers on shared machines,
   // then return to a clean home page.
-  ['osrs_rsn', 'osrs_skills', 'osrs_gold', 'osrs_equip', 'osrs_quests'].forEach(k => localStorage.removeItem(k));
+  ['osrs_rsn', 'osrs_own_rsn', 'osrs_skills', 'osrs_gold', 'osrs_equip', 'osrs_quests'].forEach(k => localStorage.removeItem(k));
   window.location.href = window.location.origin + window.location.pathname;
 }
 
@@ -4393,6 +4522,7 @@ async function fetchPlayer(rsnOverride, options = {}) {
       dataSource = 'wom';
     }
     localStorage.setItem('osrs_rsn', rsn);
+    if (viewingOwnCharacter) localStorage.setItem('osrs_own_rsn', rsn);
     localStorage.setItem('osrs_skills', JSON.stringify(playerSkills));
     playerRSN = rsn;
     renderStats();
@@ -4717,18 +4847,7 @@ function renderDashboard() {
     gainsBox.style.display = 'none';
   }
 
-  // Character switcher — only for signed-in users with 2+ linked characters
-  const switcher = document.getElementById('charSwitcher');
-  if (switcher) {
-    if (linkedCharacterMeta.length > 1) {
-      switcher.style.display = '';
-      switcher.innerHTML = linkedCharacterMeta.map(c =>
-        `<option value="${c.rsn.replace(/"/g, '&quot;')}"${c.rsn.toLowerCase() === (playerRSN || '').toLowerCase() ? ' selected' : ''}>${c.rsn}</option>`
-      ).join('');
-    } else {
-      switcher.style.display = 'none';
-    }
-  }
+  renderCharacterSwitcher();
 
   const privacyBadge = document.getElementById('privacyBadge');
   const ownMeta = linkedCharacterMeta.find(c => c.rsn.toLowerCase() === (playerRSN || '').toLowerCase());
