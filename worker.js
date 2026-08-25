@@ -18,25 +18,38 @@ function escapeHtml(s) {
     .replace(/"/g, '&quot;');
 }
 
+function rsnIlikeFilter(rsn) {
+  const escaped = String(rsn || '').trim()
+    .replace(/\\/g, '\\\\')
+    .replace(/\*/g, '**')
+    .replace(/_/g, '\\_')
+    .replace(/%/g, '\\%');
+  return `rsn=ilike.${encodeURIComponent(escaped)}`;
+}
+
 async function loadPublicProfile(rsn) {
-  const q = encodeURIComponent(rsn);
+  const filter = rsnIlikeFilter(rsn);
   const headers = {
     apikey: SUPABASE_ANON,
     Authorization: `Bearer ${SUPABASE_ANON}`,
   };
-  const [pRes, sRes, gRes] = await Promise.all([
-    fetch(`${SUPABASE_URL}/rest/v1/players?rsn=eq.${q}&select=rsn,quest_points,last_synced,collection_count,collection_count_max`, { headers }),
-    fetch(`${SUPABASE_URL}/rest/v1/player_skills?rsn=eq.${q}&select=skill,level&skill=eq.overall`, { headers }),
-    // RPC exposes only the main goal's label — anon has no direct table read.
-    fetch(`${SUPABASE_URL}/rest/v1/rpc/public_main_goal`, {
-      method: 'POST',
-      headers: { ...headers, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ p_rsn: rsn }),
-    }),
-  ]);
+  const pRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/players?${filter}&select=rsn,quest_points,last_synced&limit=1`,
+    { headers }
+  );
   if (!pRes.ok) return null;
   const players = await pRes.json();
   if (!players?.[0]) return null;
+  const canonical = players[0].rsn;
+  const q = encodeURIComponent(canonical);
+  const [sRes, gRes] = await Promise.all([
+    fetch(`${SUPABASE_URL}/rest/v1/player_skills?rsn=eq.${q}&select=skill,level&skill=eq.overall`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/rpc/public_main_goal`, {
+      method: 'POST',
+      headers: { ...headers, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_rsn: canonical }),
+    }),
+  ]);
   const skills = sRes.ok ? await sRes.json() : [];
   let mainGoal = null;
   if (gRes.ok) {
@@ -44,7 +57,7 @@ async function loadPublicProfile(rsn) {
     if (typeof label === 'string' && label) mainGoal = label;
   }
   return {
-    rsn: players[0].rsn,
+    rsn: canonical,
     qp: players[0].quest_points,
     total: skills?.[0]?.level ?? null,
     mainGoal,

@@ -3045,10 +3045,57 @@ async function getLinkedCharacters() {
 
 async function isOwnCharacter(rsn) {
   if (!HOSTED_MODE || !authSession) return false;
-  const linked = linkedCharacterMeta.length
-    ? linkedCharacterMeta.map(c => c.rsn)
-    : await getLinkedCharacters();
-  return linked.some(r => r.toLowerCase() === rsn.toLowerCase());
+  return Boolean(ownLinkedRsn(rsn) || (await getLinkedCharacters()).some(
+    r => r.toLowerCase() === String(rsn || '').toLowerCase()
+  ));
+}
+
+/** In-game RSN from linked characters, matching ignore-case. */
+function ownLinkedRsn(rsn) {
+  const want = String(rsn || '').trim().toLowerCase();
+  if (!want) return null;
+  const match = linkedCharacterMeta.find(c => (c.rsn || '').toLowerCase() === want);
+  return match?.rsn || null;
+}
+
+/**
+ * Postgres rsn is case-sensitive (Paiinless ≠ paiinless). PostgREST ilike
+ * treats * as %; _ is still a single-char wildcard.
+ */
+function rsnIlikeFilter(rsn) {
+  const escaped = String(rsn || '').trim()
+    .replace(/\\/g, '\\\\')
+    .replace(/\*/g, '**')
+    .replace(/_/g, '\\_')
+    .replace(/%/g, '\\%');
+  return `rsn=ilike.${encodeURIComponent(escaped)}`;
+}
+
+/**
+ * Map typed / URL RSNs to the casing stored by the plugin so eq filters hit.
+ */
+async function resolveCanonicalRsn(rsn, headers) {
+  const raw = String(rsn || '').trim();
+  if (!raw) return raw;
+  const linked = ownLinkedRsn(raw);
+  if (linked) return linked;
+
+  const hdrs = headers || SB_HEADERS;
+  const filter = rsnIlikeFilter(raw);
+  const tryTable = async (table) => {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/${table}?${filter}&select=rsn&limit=1`,
+      { headers: hdrs }
+    );
+    if (!res.ok) return null;
+    const rows = await res.json();
+    return rows[0]?.rsn || null;
+  };
+  try {
+    return (await tryTable('players')) || (await tryTable('player_skills')) || raw;
+  } catch (_) {
+    return raw;
+  }
 }
 
 // ─── STATE ───────────────────────────────────────────────────────────────────
@@ -3516,9 +3563,9 @@ async function getActiveRSN(preferredRsn) {
   }
 
   if (preferredRsn) {
-    const q = encodeURIComponent(preferredRsn);
+    const resolved = await resolveCanonicalRsn(preferredRsn, SB_HEADERS);
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/players?rsn=eq.${q}&select=rsn,last_synced&limit=1`,
+      `${SUPABASE_URL}/rest/v1/players?rsn=eq.${encodeURIComponent(resolved)}&select=rsn,last_synced&limit=1`,
       { headers: SB_HEADERS }
     );
     if (res.ok) {
@@ -4182,12 +4229,13 @@ function bankValueEstimate() {
 /** Public profile — skills & quests only (Wise Old Man style). */
 async function fetchPublicProfile(rsn) {
   if (!isSupabaseConfigured()) throw new Error('Journal not configured.');
+  rsn = await resolveCanonicalRsn(rsn, SB_HEADERS);
   const q = encodeURIComponent(rsn);
   const headers = SB_HEADERS;
   const [sRes, qRes, pRes] = await Promise.all([
     fetch(`${SUPABASE_URL}/rest/v1/player_skills?rsn=eq.${q}&select=skill,level,xp`, { headers }),
     fetch(`${SUPABASE_URL}/rest/v1/player_quests?rsn=eq.${q}&select=quest_name,state`, { headers }),
-    fetch(`${SUPABASE_URL}/rest/v1/players?rsn=eq.${q}&select=quest_points,last_synced,collection_count,collection_count_max`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/players?rsn=eq.${q}&select=rsn,quest_points,last_synced`, { headers }),
   ]);
   if (!sRes.ok) throw new Error(`Could not load profile (${sRes.status})`);
   const skills = await sRes.json();
@@ -4212,13 +4260,14 @@ async function fetchFromSupabase(rsn) {
   }
 
   const headers = HOSTED_MODE ? await getAuthHeaders() : SB_HEADERS;
+  rsn = ownLinkedRsn(rsn) || await resolveCanonicalRsn(rsn, headers);
   const q = encodeURIComponent(rsn);
   const [sRes, qRes, eRes, bRes, pRes, iRes, stashRes] = await Promise.all([
     fetch(`${SUPABASE_URL}/rest/v1/player_skills?rsn=eq.${q}&select=skill,level,xp`, {headers}),
     fetch(`${SUPABASE_URL}/rest/v1/player_quests?rsn=eq.${q}&select=quest_name,state`, {headers}),
     fetch(`${SUPABASE_URL}/rest/v1/player_equipment?rsn=eq.${q}&select=slot_id,slot_name,item_id,item_name`, {headers}),
     fetch(`${SUPABASE_URL}/rest/v1/player_bank?rsn=eq.${q}&select=item_id,item_name,quantity`, {headers}),
-    fetch(`${SUPABASE_URL}/rest/v1/players?rsn=eq.${q}&select=quest_points,last_synced,collection_count,collection_count_max`, {headers}),
+    fetch(`${SUPABASE_URL}/rest/v1/players?rsn=eq.${q}&select=rsn,quest_points,last_synced`, {headers}),
     fetch(`${SUPABASE_URL}/rest/v1/player_inventory?rsn=eq.${q}&select=item_id,item_name,quantity`, {headers}),
     fetch(`${SUPABASE_URL}/rest/v1/player_item_stashes?rsn=eq.${q}&select=container,item_id,item_name,quantity`, {headers}),
   ]);
@@ -4294,8 +4343,12 @@ async function fetchFromWOM(rsn) {
  * out of the landing page during pre-loads.
  */
 async function fetchPlayer(rsnOverride, options = {}) {
-  const rsn = (rsnOverride || document.getElementById('rsnInput').value).trim();
+  let rsn = (rsnOverride || document.getElementById('rsnInput').value).trim();
   if (!rsn) return;
+  if (isSupabaseConfigured()) {
+    const headers = (HOSTED_MODE && authSession) ? await getAuthHeaders() : SB_HEADERS;
+    rsn = await resolveCanonicalRsn(rsn, headers);
+  }
   document.getElementById('rsnInput').value = rsn;
   const btn = document.getElementById('fetchBtn');
   const msg = document.getElementById('statusMsg');
@@ -4443,9 +4496,11 @@ function updateProfileUrl(rsn, options = {}) {
   if (window.location.search.includes('local_session')) return;
   try {
     const url = new URL(window.location);
-    if ((url.searchParams.get('rsn') || '').toLowerCase() === rsn.toLowerCase()) return;
+    const current = url.searchParams.get('rsn') || '';
+    if (current === rsn) return;
     url.searchParams.set('rsn', rsn);
-    if (options.silent || options.keepView) {
+    const caseOnly = current.toLowerCase() === rsn.toLowerCase();
+    if (options.silent || options.keepView || caseOnly) {
       history.replaceState({ rsn }, '', url);
     } else {
       history.pushState({ rsn }, '', url);
