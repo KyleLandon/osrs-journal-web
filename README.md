@@ -81,6 +81,17 @@ See the monorepo `supabase/AUTH_SETUP.md` — Site URL must match `WEB_APP_URL`.
 
 ---
 
+## Versioning
+
+`package.json` / `version.json` hold the site label (**currently 1.1.0**). Cloudflare
+`npm run build` writes `version.build.json` with that label plus the deploy git SHA.
+The footer and sidebar show e.g. `v1.1.0 · 98a0fab` on production, or `v1.1.0` locally
+until you run a build.
+
+Bump the version when you ship a user-facing site change so you can tell live vs local.
+
+---
+
 ## Local development
 
 ```bash

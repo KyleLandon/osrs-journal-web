@@ -1411,6 +1411,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
     <button class="btn-secondary" type="button" onclick="signOut()" style="width:100%">Sign out</button>
     <button class="btn-danger" type="button" onclick="deleteAccount()">Delete account &amp; data</button>
     <p class="auth-legal"><a href="/privacy.html" target="_blank" rel="noopener">Privacy Policy</a></p>
+    <p class="app-version auth-version" data-app-version>v1.1.0</p>
   </div>
   <p class="status-msg" id="authMsg" style="margin-top:8px"></p>
 </div>
@@ -1602,6 +1603,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
         <span class="built-by-label">Built by</span>
         <img src="assets/landon-co-logo.png" alt="Landon & Co." class="built-by-logo" width="72" height="72">
       </a>
+      <span class="app-version" data-app-version>v1.1.0</span>
       <button type="button" class="sb-collapse-btn" id="sidebarCollapseBtn" onclick="toggleSidebarCollapsed()" title="Collapse sidebar" aria-label="Collapse sidebar">‹</button>
     </div>
   </aside>
@@ -7803,6 +7805,29 @@ function startSystemHealthChecks() {
   setInterval(() => { if (!document.hidden) checkSystemHealth(); }, 90000);
 }
 
+/** Stamp footer/sidebar with package version + deploy SHA from version.build.json. */
+async function applyAppVersion() {
+  let info = { version: '1.1.0', commit: '', builtAt: '' };
+  try {
+    const stamped = await fetch('version.build.json', { cache: 'no-store' });
+    if (stamped.ok) {
+      info = { ...info, ...(await stamped.json()) };
+    } else {
+      const fallback = await fetch('version.json', { cache: 'no-store' });
+      if (fallback.ok) info = { ...info, ...(await fallback.json()) };
+    }
+  } catch (_) { /* keep fallback */ }
+  const short = String(info.commit || '').replace(/^(dev|local)$/i, '');
+  const label = short ? `v${info.version} · ${short}` : `v${info.version}`;
+  const title = info.builtAt
+    ? `Site ${info.version} (${info.commit || 'local'}) · ${info.builtAt}`
+    : `Site ${info.version}`;
+  document.querySelectorAll('[data-app-version]').forEach((el) => {
+    el.textContent = label;
+    el.title = title;
+  });
+}
+
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 // Boot order matters: quest metadata → Supabase config → auth state → then the
 // first data source that applies, checked from most to least specific:
@@ -7821,6 +7846,7 @@ function startSystemHealthChecks() {
   }
 
   await loadQuestReqs();
+  applyAppVersion();
   renderEquipDoll();
   renderSyncedEquipment();
   renderQuests();
@@ -8114,6 +8140,7 @@ function startLiveRefresh(localSessionToken) {
     </a>
     <span id="systemStatusSep" style="display:none"> · </span><a href="/privacy.html">Privacy Policy</a>
     · <a href="https://stats.uptimerobot.com/aO38xlD5F5" target="_blank" rel="noopener noreferrer">Status</a>
+    · <span class="app-version" data-app-version>v1.1.0</span>
     · OSRS Journal — not affiliated with Jagex or RuneLite
   </div>
 </footer>

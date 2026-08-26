@@ -1,8 +1,40 @@
 /**
  * Cloudflare Pages build — writes supabase-config.json from env vars when set,
  * otherwise keeps the committed supabase-config.json in the repo.
+ * Also stamps version.build.json (gitignored) with the deploy git SHA.
  */
-import { existsSync, writeFileSync } from "node:fs";
+import { execSync } from "node:child_process";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+
+function gitSha() {
+  const fromCf = (process.env.CF_PAGES_COMMIT_SHA || process.env.GITHUB_SHA || "").trim();
+  if (fromCf) return fromCf.slice(0, 7);
+  try {
+    return execSync("git rev-parse --short HEAD", { stdio: ["ignore", "pipe", "ignore"] })
+      .toString()
+      .trim();
+  } catch {
+    return "dev";
+  }
+}
+
+function writeVersionStamp() {
+  let version = "1.1.0";
+  try {
+    version = JSON.parse(readFileSync("package.json", "utf8")).version || version;
+  } catch {
+    /* keep fallback */
+  }
+  const stamp = {
+    version,
+    commit: gitSha(),
+    builtAt: new Date().toISOString(),
+  };
+  writeFileSync("version.build.json", JSON.stringify(stamp, null, 2) + "\n");
+  console.log("Stamped", stamp.version, stamp.commit);
+}
+
+writeVersionStamp();
 
 const required = ["SUPABASE_URL", "SUPABASE_ANON_KEY", "API_BASE_URL"];
 const missing = required.filter((k) => !process.env[k]?.trim());
