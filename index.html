@@ -1411,7 +1411,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
     <button class="btn-secondary" type="button" onclick="signOut()" style="width:100%">Sign out</button>
     <button class="btn-danger" type="button" onclick="deleteAccount()">Delete account &amp; data</button>
     <p class="auth-legal"><a href="/privacy.html" target="_blank" rel="noopener">Privacy Policy</a></p>
-    <p class="app-version auth-version" data-app-version>v1.1.0</p>
+    <p class="app-version auth-version" data-app-version>v1.1.1</p>
   </div>
   <p class="status-msg" id="authMsg" style="margin-top:8px"></p>
 </div>
@@ -1603,7 +1603,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
         <span class="built-by-label">Built by</span>
         <img src="assets/landon-co-logo.png" alt="Landon & Co." class="built-by-logo" width="72" height="72">
       </a>
-      <span class="app-version" data-app-version>v1.1.0</span>
+      <span class="app-version" data-app-version>v1.1.1</span>
       <button type="button" class="sb-collapse-btn" id="sidebarCollapseBtn" onclick="toggleSidebarCollapsed()" title="Collapse sidebar" aria-label="Collapse sidebar">‹</button>
     </div>
   </aside>
@@ -3902,6 +3902,31 @@ async function loadXpGains(rsn) {
   } catch (_) { /* gains stay hidden */ }
 }
 
+/** Recalc today/week XP from snapshots already in memory — no extra fetch. */
+function recomputeSkillGainsFromSnapshots() {
+  if (!snapshotRows?.length) return;
+  const today = new Date().toISOString().slice(0, 10);
+  const weekAgo = new Date(Date.now() - 8 * 864e5).toISOString().slice(0, 10);
+  const dayBaseline = {};
+  const weekBaseline = {};
+  for (const r of snapshotRows) {
+    const day = snapshotDay(r);
+    if (!day || day >= today) continue;
+    if (day >= weekAgo && weekBaseline[r.skill] === undefined) weekBaseline[r.skill] = r.xp;
+    dayBaseline[r.skill] = r.xp;
+  }
+  const gains = {};
+  for (const [skill, d] of Object.entries(playerSkills)) {
+    if (skill === 'overall') continue;
+    const cur = d.xp || 0;
+    gains[skill] = {
+      today: dayBaseline[skill] != null ? Math.max(0, cur - dayBaseline[skill]) : null,
+      week: weekBaseline[skill] != null ? Math.max(0, cur - weekBaseline[skill]) : null,
+    };
+  }
+  skillGains = gains;
+}
+
 /** Sum of per-skill gains for 'today' or 'week'; null when no baseline exists yet. */
 function totalXpGain(kind) {
   if (!skillGains) return null;
@@ -4422,6 +4447,158 @@ async function fetchFromSupabase(rsn) {
   viewingOwnCharacter = true;
 
   return applyPlayerPayload(rsn, skills, quests, equip, bank, players[0], inventory, stashes);
+}
+
+async function restHeadersForCharacter(rsn) {
+  if (!isSupabaseConfigured()) return null;
+  if (HOSTED_MODE && !(await isOwnCharacter(rsn))) return SB_HEADERS;
+  return HOSTED_MODE ? await getAuthHeaders() : SB_HEADERS;
+}
+
+/** Patch skill numbers in place — no overview rebuild (avoids the 3s flash). */
+function patchOverviewSkillNumbers() {
+  if (!playerSkills.attack) return;
+  const cb = getCombatLevel();
+  const style = getDominantStyle();
+  const totalLvl = playerSkills.overall?.level
+    || Object.entries(playerSkills).filter(([k]) => k !== 'overall').reduce((a, [, v]) => a + (v.level || 1), 0);
+  const totalXp = Object.values(playerSkills).reduce((a, v) => a + (v.xp || 0), 0);
+  const dashCb = document.getElementById('dashCb');
+  const dashTotal = document.getElementById('dashTotal');
+  const dashTotalXp = document.getElementById('dashTotalXp');
+  if (dashCb) dashCb.textContent = cb;
+  if (dashTotal) dashTotal.textContent = totalLvl;
+  if (dashTotalXp) dashTotalXp.textContent = formatGold(totalXp) + ' total XP';
+  const sbSub = document.getElementById('sbCharSub');
+  if (sbSub) sbSub.textContent = `Combat ${cb} · ${style.charAt(0).toUpperCase() + style.slice(1)}`;
+  updateCombatLevel();
+
+  const todayGain = totalXpGain('today');
+  const weekGain = totalXpGain('week');
+  const dashGains = document.getElementById('dashGains');
+  const dashGainsWeek = document.getElementById('dashGainsWeek');
+  if (dashGains && todayGain != null) {
+    dashGains.textContent = '+' + formatXp(todayGain);
+    if (dashGainsWeek) {
+      dashGainsWeek.textContent = weekGain != null
+        ? `+${formatXp(weekGain)} this week`
+        : 'first tracked day';
+    }
+  }
+  const recapXp = document.getElementById('recapXp');
+  if (recapXp && document.getElementById('recapSection')?.style.display !== 'none') {
+    recapXp.textContent = todayGain != null ? '+' + formatXp(todayGain) : '—';
+  }
+}
+
+/** Update existing skill cards without wiping the grid (no 3s flash). */
+function patchStatsSkillNumbers() {
+  if (currentAppTab !== 'stats' || typeof SKILL_GROUPS === 'undefined') return;
+  for (const [group, skills] of Object.entries(SKILL_GROUPS)) {
+    const grid = document.getElementById('grid-' + group);
+    if (!grid) continue;
+    const cards = grid.querySelectorAll('.skill-card');
+    skills.forEach((sk, i) => {
+      const card = cards[i];
+      if (!card) return;
+      const d = playerSkills[sk] || { level: 1, xp: 0 };
+      const lvl = d.level || 1;
+      const xp = d.xp || 0;
+      const prog = sk === 'overall'
+        ? Math.round(lvl / MAX_TOTAL_LEVEL * 100)
+        : levelProgress(xp, lvl);
+      const xpStr = xp > 1000000
+        ? (xp / 1000000).toFixed(2) + 'm xp'
+        : xp > 1000 ? (xp / 1000).toFixed(1) + 'k xp' : xp + ' xp';
+      const gain = skillGains?.[sk]?.today;
+      const lvlEl = card.querySelector('.skill-level');
+      const xpEl = card.querySelector('.skill-xp');
+      const fill = card.querySelector('.skill-bar-fill');
+      if (lvlEl) lvlEl.textContent = String(lvl);
+      if (xpEl) {
+        xpEl.textContent = xpStr;
+        if (gain > 0) {
+          xpEl.appendChild(document.createTextNode(' '));
+          const span = document.createElement('span');
+          span.className = 'skill-gain';
+          span.textContent = '+' + formatXp(gain);
+          xpEl.appendChild(span);
+        }
+      }
+      if (fill) fill.style.width = prog + '%';
+    });
+  }
+}
+
+async function fetchSkillsOnly(rsn) {
+  const headers = await restHeadersForCharacter(rsn);
+  if (!headers) return;
+  const q = encodeURIComponent(rsn);
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/player_skills?rsn=eq.${q}&select=skill,level,xp`,
+    { headers }
+  );
+  if (!res.ok) return;
+  const rows = await res.json();
+  if (!rows.length) return;
+  for (const row of rows) {
+    playerSkills[row.skill] = { level: row.level, xp: row.xp };
+  }
+  localStorage.setItem('osrs_skills', JSON.stringify(playerSkills));
+  recomputeSkillGainsFromSnapshots();
+  patchOverviewSkillNumbers();
+  patchStatsSkillNumbers();
+}
+
+async function fetchQuestsOnly(rsn) {
+  const headers = await restHeadersForCharacter(rsn);
+  if (!headers) return;
+  const q = encodeURIComponent(rsn);
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/player_quests?rsn=eq.${q}&select=quest_name,state`,
+    { headers }
+  );
+  if (!res.ok) return;
+  const rows = await res.json();
+  if (!rows.length) return;
+  applyQuestsFromSync(rows);
+  const { qp, journalDone, journalTotal } = computeQuestStats();
+  const qpEl = document.getElementById('dashQp');
+  const questsEl = document.getElementById('dashQuests');
+  if (qpEl && dataSource !== 'wom') {
+    qpEl.textContent = qp;
+    if (questsEl) questsEl.textContent = journalDone + ' / ' + journalTotal + ' quests';
+  }
+  renderQuests();
+  if (typeof renderQuestGuide === 'function' && currentAppTab === 'quests') renderQuestGuide();
+}
+
+async function refreshLastSyncedOnly(rsn) {
+  const headers = await restHeadersForCharacter(rsn);
+  if (!headers) return;
+  const q = encodeURIComponent(rsn);
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/players?rsn=eq.${q}&select=last_synced,quest_points`,
+    { headers }
+  );
+  if (!res.ok) return;
+  const rows = await res.json();
+  const row = rows[0];
+  if (!row) return;
+  if (row.last_synced) lastSynced = row.last_synced;
+  if (row.quest_points != null && !Number.isNaN(Number(row.quest_points))) {
+    syncedQuestPoints = Number(row.quest_points);
+  }
+  const syncAge = formatSyncAge(lastSynced);
+  const dashSync = document.getElementById('dashSync');
+  if (dashSync && dataSource === 'supabase') {
+    dashSync.innerHTML = `<span class="live-dot"></span>Live sync${syncAge ? ' · ' + syncAge : ''}`;
+  }
+  const sbSync = document.getElementById('sbSyncText');
+  if (sbSync && dataSource === 'supabase') {
+    sbSync.textContent = syncAge ? `Synced ${syncAge}` : 'Live sync';
+  }
+  updateSyncBanner();
 }
 
 /** Try to match synced equipment item names against gear dropdowns. */
@@ -7807,7 +7984,7 @@ function startSystemHealthChecks() {
 
 /** Stamp footer/sidebar with package version + deploy SHA from version.build.json. */
 async function applyAppVersion() {
-  let info = { version: '1.1.0', commit: '', builtAt: '' };
+  let info = { version: '1.1.1', commit: '', builtAt: '' };
   try {
     const stamped = await fetch('version.build.json', { cache: 'no-store' });
     if (stamped.ok) {
@@ -8037,24 +8214,30 @@ let realtimeConnected = false;
 let realtimeDebounce = null;
 
 /**
- * Subscribe to postgres_changes for this RSN so plugin syncs appear within a
- * second instead of on the next poll. High-churn bank/inventory/equipment are
- * not in Realtime (WAL cost); the 90s poll still picks those up.
+ * Subscribe to postgres_changes for this RSN. Skill/quest/last_synced events
+ * patch those numbers in place — they must not rebuild the overview (that
+ * flashed every ~3s while training). Bank/inventory/equipment stay on the
+ * 90s poll.
  */
 function startRealtimeUpdates(rsn, onchange) {
   stopRealtimeUpdates();
   if (!supabaseClient || !rsn) return;
   try {
     const tables = ['players', 'player_skills', 'player_quests'];
+    const pending = new Set();
     let ch = supabaseClient.channel('journal-live-' + rsn.toLowerCase());
     for (const table of tables) {
       ch = ch.on(
         'postgres_changes',
         { event: '*', schema: 'public', table, filter: `rsn=eq.${rsn}` },
         () => {
+          pending.add(table);
           clearTimeout(realtimeDebounce);
-          // debounce: a login sync writes ~200 rows in quick succession
-          realtimeDebounce = setTimeout(onchange, 800);
+          realtimeDebounce = setTimeout(() => {
+            const batch = [...pending];
+            pending.clear();
+            onchange(batch);
+          }, 800);
         }
       );
     }
@@ -8087,7 +8270,7 @@ function startLiveRefresh(localSessionToken) {
     liveRefreshVisibilityHandler = null;
   }
 
-  async function pullLatest() {
+  async function pullLatest(tables) {
     if (dataSource !== 'supabase') return;
     if (localSessionToken && API_BASE_URL) {
       try {
@@ -8106,6 +8289,26 @@ function startLiveRefresh(localSessionToken) {
     const activeRsn = await getActiveRSN();
     const currentRsn = document.getElementById('rsnInput').value.trim();
     if (!activeRsn || activeRsn.toLowerCase() !== currentRsn.toLowerCase()) return;
+    // Realtime: patch only what changed. Full silent refetch is the 90s poll.
+    if (Array.isArray(tables) && tables.length) {
+      const onlySkills = tables.length === 1 && tables[0] === 'player_skills';
+      const onlyPlayers = tables.length === 1 && tables[0] === 'players';
+      const light = tables.every((t) => t === 'player_skills' || t === 'player_quests' || t === 'players');
+      if (onlySkills) {
+        await fetchSkillsOnly(activeRsn);
+        return;
+      }
+      if (onlyPlayers) {
+        await refreshLastSyncedOnly(activeRsn);
+        return;
+      }
+      if (light) {
+        if (tables.includes('player_skills')) await fetchSkillsOnly(activeRsn);
+        if (tables.includes('player_quests')) await fetchQuestsOnly(activeRsn);
+        if (tables.includes('players')) await refreshLastSyncedOnly(activeRsn);
+        return;
+      }
+    }
     await fetchPlayer(activeRsn, { silent: true });
   }
 
@@ -8124,7 +8327,9 @@ function startLiveRefresh(localSessionToken) {
   document.addEventListener('visibilitychange', liveRefreshVisibilityHandler);
 
   const liveRsn = playerRSN || document.getElementById('rsnInput').value.trim();
-  startRealtimeUpdates(liveRsn, () => { if (!document.hidden) pullLatest(); });
+  startRealtimeUpdates(liveRsn, (tables) => {
+    if (!document.hidden) pullLatest(tables);
+  });
 
   pullLatest();
 }
@@ -8140,7 +8345,7 @@ function startLiveRefresh(localSessionToken) {
     </a>
     <span id="systemStatusSep" style="display:none"> · </span><a href="/privacy.html">Privacy Policy</a>
     · <a href="https://stats.uptimerobot.com/aO38xlD5F5" target="_blank" rel="noopener noreferrer">Status</a>
-    · <span class="app-version" data-app-version>v1.1.0</span>
+    · <span class="app-version" data-app-version>v1.1.1</span>
     · OSRS Journal — not affiliated with Jagex or RuneLite
   </div>
 </footer>

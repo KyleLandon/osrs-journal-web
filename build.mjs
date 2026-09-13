@@ -19,7 +19,7 @@ function gitSha() {
 }
 
 function writeVersionStamp() {
-  let version = "1.1.0";
+  let version = "1.1.1";
   try {
     version = JSON.parse(readFileSync("package.json", "utf8")).version || version;
   } catch {
